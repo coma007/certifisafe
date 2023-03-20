@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/go,goland,jetbrains
-# Edit at https://www.toptal.com/developers/gitignore?templates=go,goland,jetbrains
+# Created by https://www.toptal.com/developers/gitignore/api/go,goland,jetbrains,visualstudiocode
+# Edit at https://www.toptal.com/developers/gitignore?templates=go,goland,jetbrains,visualstudiocode
 
 ### Go ###
 # If you prefer the allow list template instead of the deny list, see community template:
@@ -212,4 +212,23 @@ fabric.properties
 # Azure Toolkit for IntelliJ plugin
 # https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
 
-# End of https://www.toptal.com/developers/gitignore/api/go,goland,jetbrains
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
+# End of https://www.toptal.com/developers/gitignore/api/go,goland,jetbrains,visualstudiocode
