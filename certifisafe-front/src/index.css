@@ -4,6 +4,9 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Lato', sans-serif;
+html,
+body,
+#root,
+.App {
+  height: 100%;
 }
