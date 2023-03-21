@@ -42,7 +42,7 @@ a {
 .authTitle {
   font-size: 17px;
   color: var(--primary-color);
-  margin-bottom: 10%;
+  margin-bottom: 7%;
 }
 
 .authTitle h2 {
@@ -53,10 +53,10 @@ a {
 
 .authBottomMessage {
   position: absolute;
-  bottom: 10%;
+  bottom: 6%;
   width: 100%;
   color: var(--primary-color);
-  font-size: 17px;
+  font-size: 15px;
   text-align: center;
 }
 
@@ -68,7 +68,7 @@ a {
   --primary-color: #86919D;
   --primary-color-transparent: rgba(134, 145, 157, 0.9);
   --auth-page-main-width: 53%;
-  --auth-form-margin-top: 18%;
+  --auth-form-margin-top: 17%;
   --auth-form-margin-side: 17%;
   --auth-form-margin-bottom: 2%;
 }

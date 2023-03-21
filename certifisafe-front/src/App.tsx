@@ -1,7 +1,6 @@
-import Banner from 'components/navigation/Banner/Banner';
 import AppCSS from './App.module.scss';
-import LoginForm from 'features/auth/Login/components/LoginForm/LoginForm';
 import LoginPage from 'features/auth/Login/pages/LoginPage/LoginPage';
+import RegisterPage from 'features/auth/Register/pages/RegisterPage/RegisterPage';
 
 function App() {
   return (
