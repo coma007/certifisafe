@@ -1,13 +1,10 @@
 .form {
-    height: 40%;
-    width: calc(55% - 2*150px);
-    position: absolute;
-    top: 290px;
+    width: 100%;
 }
 
 .input {
     width: 100%;
-    margin: 10px 0px;
+    margin: 12px 0px;
 }
 
 .button {
@@ -19,8 +16,4 @@
     font-size: 17px;
     color: var(--primary-color);
     cursor: pointer;
-}
-
-.alignRight {
-    float: right;
 }

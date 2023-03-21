@@ -1,4 +1,5 @@
 .button {
+    display: inline-block;
     height: 40px;
     width: 120px;
     border: 0px;
@@ -7,7 +8,6 @@
     color: white;
     font-weight: 400;
     cursor: pointer;
-    display: inline-block;
 }
 
 .button:hover {

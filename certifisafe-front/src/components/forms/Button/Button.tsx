@@ -1,4 +1,3 @@
-import React from 'react'
 import ButtonCSS from './Button.module.scss'
 
 const Button = ({ text }: { text: string }) => {
