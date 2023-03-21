@@ -1,0 +1,26 @@
+.form {
+    height: 40%;
+    width: calc(55% - 2*150px);
+    position: absolute;
+    top: 290px;
+}
+
+.input {
+    width: 100%;
+    margin: 10px 0px;
+}
+
+.button {
+    margin-top: 20px;
+    position: relative;
+}
+
+.forgotPassword {
+    font-size: 17px;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+.alignRight {
+    float: right;
+}

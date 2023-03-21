@@ -1,0 +1,29 @@
+.rightCol {
+    margin: 150px 135px;
+}
+
+.title {
+    position: absolute;
+    top: 150px;
+    font-size: 17px;
+    color: var(--primary-color);
+}
+
+.title h2 {
+    color: black;
+    font-size: 35px;
+    margin-bottom: 15px;
+}
+
+.bottomMessage {
+    position: absolute;
+    bottom: 70px;
+    font-size: 17px;
+    color: var(--primary-color);
+    text-align: center;
+    width: 35%;
+}
+
+.bottomMessage a {
+    color: black;
+}

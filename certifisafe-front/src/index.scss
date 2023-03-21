@@ -1,0 +1,33 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root,
+.App {
+  height: 100%;
+  background-color: white;
+  overflow: hidden;
+  font-family: 'Lato', sans-serif;
+}
+
+.page-two-cols {
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 47% 53%;
+}
+
+a {
+  text-decoration: none;
+}
+
+
+#root {
+  --primary-color: #86919D;
+  --primary-color-transparent: rgba(134, 145, 157, 0.9);
+}
