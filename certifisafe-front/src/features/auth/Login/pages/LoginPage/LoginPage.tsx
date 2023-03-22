@@ -3,7 +3,7 @@ import Banner from 'components/navigation/Banner/Banner'
 
 const LoginPage = () => {
     return (
-        <div className="pageTwoCols">
+        <div className="page pageTwoCols">
             <div>
                 <Banner />
             </div>

@@ -22,10 +22,13 @@ a {
   float: right;
 }
 
+.page {
+  height: 100%;
+}
+
 .pageTwoCols {
   padding: 0;
   margin: 0;
-  height: 100%;
   display: grid;
   grid-template-columns: calc(100% - var(--auth-page-main-width)) var(--auth-page-main-width);
 }
