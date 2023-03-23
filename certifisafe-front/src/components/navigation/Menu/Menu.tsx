@@ -1,6 +1,6 @@
-import React from 'react'
 import MenuItem from '../MenuItem/MenuItem'
 import MenuCSS from './Menu.module.scss'
+
 import Logo from "assets/menu/logo.png"
 import Home from "assets/menu/home-white.png"
 import Certificate from "assets/menu/certificate-white.png"
