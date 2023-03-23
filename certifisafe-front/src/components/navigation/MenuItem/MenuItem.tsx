@@ -1,3 +1,4 @@
+import React from 'react'
 import Tooltip from '../Tooltip/Tooltip'
 import MenuItemCSS from './MenuItem.module.scss'
 import TooltipCSS from '../Tooltip/Tooltip.module.scss'

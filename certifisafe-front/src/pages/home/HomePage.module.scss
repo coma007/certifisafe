@@ -1,0 +1,23 @@
+.cols {
+    grid-template-columns: 5% 35% 60%;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid black;
+    padding: 0 20%;
+}
+
+.content div h2 {
+    margin-top: 0;
+    font-weight: 300;
+}
+
+.content div p {
+    width: 80%;
+    font-size: 16px;
+    color: var(--primary-color);
+}
