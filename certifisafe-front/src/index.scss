@@ -22,10 +22,18 @@ a {
   float: right;
 }
 
+.page {
+  height: 100%;
+}
+
+.pageWithCols {
+  display: grid;
+  grid-auto-flow: column;
+}
+
 .pageTwoCols {
   padding: 0;
   margin: 0;
-  height: 100%;
   display: grid;
   grid-template-columns: calc(100% - var(--auth-page-main-width)) var(--auth-page-main-width);
 }
@@ -71,4 +79,5 @@ a {
   --auth-form-margin-top: 17%;
   --auth-form-margin-side: 17%;
   --auth-form-margin-bottom: 2%;
+  --card-background: rgba(134, 145, 157, 0.1);
 }

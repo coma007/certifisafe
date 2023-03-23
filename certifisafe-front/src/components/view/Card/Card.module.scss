@@ -1,0 +1,11 @@
+.card {
+    padding: 10% 10%;
+    background-color: var(--card-background);
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: scale(1.05);
+}
