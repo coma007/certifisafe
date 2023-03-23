@@ -1,7 +1,6 @@
-import React from 'react'
-import Tooltip from '../Tooltip/Tooltip'
 import MenuItemCSS from './MenuItem.module.scss'
-import TooltipCSS from '../Tooltip/Tooltip.module.scss'
+import Tooltip from '../../view/Tooltip/Tooltip'
+import TooltipCSS from '../../view/Tooltip/Tooltip.module.scss'
 
 const MenuItem = ({ image, className, tooltipText, tooltip }:
     { image: string, className: string, tooltipText: string, tooltip: boolean }) => {
