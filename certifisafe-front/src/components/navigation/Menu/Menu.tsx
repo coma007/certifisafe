@@ -13,15 +13,15 @@ import Logout from "assets/menu/logout-white.png"
 const Menu = () => {
     return (
         <div className={MenuCSS.menu}>
-            <MenuItem className={MenuCSS.logo} image={Logo}></MenuItem>
-            <MenuItem className={MenuCSS.nonMainOption} image={Home}></MenuItem>
+            <MenuItem className={MenuCSS.logo} tooltipText="" tooltip={false} image={Logo} />
+            <MenuItem className={MenuCSS.nonMainOption} tooltipText="Homepage" tooltip={true} image={Home} />
             <hr className={MenuCSS.separator} />
-            <MenuItem className={MenuCSS.margin} image={Certificate}></MenuItem>
-            <MenuItem className={MenuCSS.margin} image={Verify}></MenuItem>
-            <MenuItem className={MenuCSS.margin} image={Create}></MenuItem>
-            <MenuItem className={MenuCSS.margin} image={Request}></MenuItem>
-            <MenuItem className={MenuCSS.nonMainOption} image={Profile}></MenuItem>
-            <MenuItem className={MenuCSS.nonMainOption} image={Logout}></MenuItem>
+            <MenuItem className={MenuCSS.margin} tooltipText="Certificates overview" tooltip={true} image={Certificate} />
+            <MenuItem className={MenuCSS.margin} tooltipText="Verify certificate" tooltip={true} image={Verify} />
+            <MenuItem className={MenuCSS.margin} tooltipText="New certificate" tooltip={true} image={Create} />
+            <MenuItem className={MenuCSS.margin} tooltipText="Requests" tooltip={true} image={Request} />
+            <MenuItem className={MenuCSS.nonMainOption} tooltipText="Profile" tooltip={true} image={Profile} />
+            <MenuItem className={MenuCSS.nonMainOption} tooltipText="Sign out" tooltip={true} image={Logout} />
         </div>
     )
 }
