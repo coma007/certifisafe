@@ -1,5 +1,5 @@
 .cols {
-    grid-template-columns: 5% 37% 58%;
+    grid-template-columns: var(--menu-width) 37% 58%;
 }
 
 .content {
