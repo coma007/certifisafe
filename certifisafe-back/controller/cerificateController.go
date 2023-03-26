@@ -5,8 +5,6 @@ import (
 	"certifisafe-back/service"
 	"encoding/json"
 	"errors"
-
-	//"errors"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strconv"
