@@ -10,7 +10,10 @@ var (
 )
 
 type ICertificateRepository interface {
-	UpdateCertificate(id int32, certificate model.Certificate) error
+	UpdateCertificate(id int32, certificate model.Certificate) (model.Certificate, error)
+	GetCertificate(id int32) (model.Certificate, error)
+	DeleteCertificate(id int32) error
+	CreateCertificate(id int32, certificate model.Certificate) (model.Certificate, error)
 }
 
 type InmemoryCertificateRepository struct {
@@ -29,7 +32,31 @@ func NewInMemoryCertificateRepository() *InmemoryCertificateRepository {
 	}
 }
 
-func (i *InmemoryCertificateRepository) UpdateCertificate(id int32, certificate model.Certificate) error {
+func (i *InmemoryCertificateRepository) UpdateCertificate(id int32, certificate model.Certificate) (model.Certificate, error) {
+	for k := 0; k < len(i.Certificates); k++ {
+		if i.Certificates[k].Id == id {
+			// i.Certificates[k].Title = movie.Title
+			return model.Certificate{}, nil
+		}
+	}
+
+	return model.Certificate{}, nil
+	//return ErrMovieNotFound
+}
+
+func (i *InmemoryCertificateRepository) GetCertificate(id int32) (model.Certificate, error) {
+	for k := 0; k < len(i.Certificates); k++ {
+		if i.Certificates[k].Id == id {
+			// i.Certificates[k].Title = movie.Title
+			return model.Certificate{}, nil
+		}
+	}
+
+	return model.Certificate{}, nil
+	//return ErrMovieNotFound
+}
+
+func (i *InmemoryCertificateRepository) DeleteCertificate(id int32) error {
 	for k := 0; k < len(i.Certificates); k++ {
 		if i.Certificates[k].Id == id {
 			// i.Certificates[k].Title = movie.Title
@@ -38,5 +65,17 @@ func (i *InmemoryCertificateRepository) UpdateCertificate(id int32, certificate 
 	}
 
 	return nil
+	//return ErrMovieNotFound
+}
+
+func (i *InmemoryCertificateRepository) CreateCertificate(id int32, certificate model.Certificate) (model.Certificate, error) {
+	for k := 0; k < len(i.Certificates); k++ {
+		if i.Certificates[k].Id == id {
+			// i.Certificates[k].Title = movie.Title
+			return model.Certificate{}, nil
+		}
+	}
+
+	return model.Certificate{}, nil
 	//return ErrMovieNotFound
 }
