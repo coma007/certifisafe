@@ -54,8 +54,8 @@ func (d *DefaultCertificateService) UpdateCertificate(id int32, certificate mode
 	return model.Certificate{}, nil
 }
 func (d *DefaultCertificateService) GetCertificate(id int32) (model.Certificate, error) {
-
-	return model.Certificate{}, nil
+	certificate, err := d.certificateRepo.GetCertificate(id)
+	return certificate, err
 }
 func (d *DefaultCertificateService) DeleteCertificate(id int32) error {
 

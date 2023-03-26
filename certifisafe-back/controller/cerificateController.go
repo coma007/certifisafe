@@ -35,14 +35,14 @@ func (ch *CertificateHandler) UpdateCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	err = json.NewEncoder(w).Encode(certificate)
 	if err != nil {
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 }
 
 func getErrorStatus(err error) int {
@@ -79,14 +79,14 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
 	err = json.NewEncoder(w).Encode(certificate)
 	if err != nil {
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
 }
 
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -99,14 +99,14 @@ func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
 	err = json.NewEncoder(w).Encode(certificate)
 	if err != nil {
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 }
 
 func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

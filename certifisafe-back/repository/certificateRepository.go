@@ -2,6 +2,8 @@ package repository
 
 import (
 	"certifisafe-back/model"
+	"certifisafe-back/utils"
+	"database/sql"
 	"errors"
 )
 
@@ -18,9 +20,10 @@ type ICertificateRepository interface {
 
 type InmemoryCertificateRepository struct {
 	Certificates []model.Certificate
+	DB           *sql.DB
 }
 
-func NewInMemoryCertificateRepository() *InmemoryCertificateRepository {
+func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository {
 	var certificates = []model.Certificate{
 		{Id: 1},
 		{Id: 2},
@@ -29,6 +32,7 @@ func NewInMemoryCertificateRepository() *InmemoryCertificateRepository {
 
 	return &InmemoryCertificateRepository{
 		Certificates: certificates,
+		DB:           db,
 	}
 }
 
@@ -45,15 +49,20 @@ func (i *InmemoryCertificateRepository) UpdateCertificate(id int32, certificate 
 }
 
 func (i *InmemoryCertificateRepository) GetCertificate(id int32) (model.Certificate, error) {
-	for k := 0; k < len(i.Certificates); k++ {
-		if i.Certificates[k].Id == id {
-			// i.Certificates[k].Title = movie.Title
-			return model.Certificate{}, nil
-		}
-	}
+	stmt, err := i.DB.Prepare("SELECT id FROM certificates WHERE id=$1")
+	utils.CheckError(err)
 
-	return model.Certificate{}, nil
-	//return ErrMovieNotFound
+	var certificate model.Certificate
+	err = stmt.QueryRow(id).Scan(&certificate.Id)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Handle the case of no rows returned.
+		}
+		return model.Certificate{}, err
+
+	}
+	return certificate, nil
 }
 
 func (i *InmemoryCertificateRepository) DeleteCertificate(id int32) error {
@@ -77,5 +86,4 @@ func (i *InmemoryCertificateRepository) CreateCertificate(id int32, certificate 
 	}
 
 	return model.Certificate{}, nil
-	//return ErrMovieNotFound
 }
