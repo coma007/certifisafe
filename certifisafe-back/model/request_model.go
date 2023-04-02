@@ -3,7 +3,7 @@ package model
 import "time"
 
 type Request struct {
-	Id                int32
+	Id                int
 	ParentCertificate *Certificate
 	Certificate       *Certificate
 	Datetime          time.Time

@@ -5,36 +5,38 @@ import (
 	"certifisafe-back/repository"
 )
 
-type ReqestService interface {
-	UpdateRequest(id int32, request model.Request) (model.Request, error)
-	GetRequest(id int32) (model.Request, error)
-	DeleteRequest(id int32) error
-	CreateRequest(request model.Request) (model.Request, error)
+type RequestService interface {
+	GetRequest(id int) (*model.Request, error)
+	GetAllRequests() ([]*model.Request, error)
+	CreateRequest(req *model.Request) (*model.Request, error)
+	UpdateRequest(req *model.Request) error
+	DeleteRequest(id int) error
 }
 
 type RequestServiceImpl struct {
-	repository repository.IRequestRepository
+	repository *repository.RequestRepositoryImpl
 }
 
-func NewRequestServiceImpl(repo repository.IRequestRepository) *RequestServiceImpl {
-	return &RequestServiceImpl{
-		repository: repo,
-	}
+func NewRequestServiceImpl(repo *repository.RequestRepositoryImpl) *RequestServiceImpl {
+	return &RequestServiceImpl{repo}
 }
 
-func (d *RequestServiceImpl) CreateRequest(request model.Request) (model.Request, error) {
-	return model.Request{}, nil
+func (service *RequestServiceImpl) GetRequest(id int) (*model.Request, error) {
+	return service.repository.GetRequest(id)
 }
 
-func (d *RequestServiceImpl) UpdateReqest(request model.Request) (model.Request, error) {
-	return model.Request{}, nil
+func (service *RequestServiceImpl) GetAllRequests() ([]*model.Request, error) {
+	return service.repository.GetAllRequests()
 }
 
-func (d *RequestServiceImpl) GetRequest(id int32) (model.Request, error) {
-	request, err := d.GetRequest(id)
-	return request, err
+func (service *RequestServiceImpl) CreateRequest(req *model.Request) (*model.Request, error) {
+	return service.repository.CreateRequest(req)
 }
 
-func (d *RequestServiceImpl) DeleteRequest(id int32) error {
-	return nil
+func (service *RequestServiceImpl) UpdateRequest(req *model.Request) error {
+	return service.repository.UpdateRequest(req)
+}
+
+func (service *RequestServiceImpl) DeleteRequest(id int) error {
+	return service.repository.DeleteRequest(id)
 }

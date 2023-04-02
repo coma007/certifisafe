@@ -1,6 +1,6 @@
 -- create db if it doesn't already exist
-SELECT 'CREATE DATABASE certisafe'
-    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'certisafe');
+SELECT 'CREATE DATABASE certifisafe'
+    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'certifisafe');
 DROP TABLE IF EXISTS requests;
 DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS users;

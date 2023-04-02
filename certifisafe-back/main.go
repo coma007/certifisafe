@@ -25,7 +25,7 @@ func main() {
 	password := config["password"]
 	user := config["user"]
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost/certisafe?sslmode=disable", user, password))
+	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", user, password))
 	utils.CheckError(err)
 
 	defer func(db *sql.DB) {
@@ -41,20 +41,28 @@ func main() {
 	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository)
 	certificateController := controller.NewCertificateHandler(certificateService)
 
-	requstInMemoryRepository := repository.NewInMemoryRequestRepository(db)
-
-	fmt.Println(certificateController)
+	requestRepository := repository.NewRequestRepository(db)
+	requestService := service.NewRequestServiceImpl(requestRepository)
+	requestController := controller.NewRequestController(requestService)
 
 	router := httprouter.New()
 
-	router.PATCH("/certificate/:id", certificateController.UpdateCertificate)
-	router.GET("/certificate/:id", certificateController.GetCertificate)
-	router.DELETE("/certificate/:id", certificateController.DeleteCertificate)
-	router.POST("/certificate", certificateController.CreateCertificate)
+	router.PATCH("/api/certificate/:id", certificateController.UpdateCertificate)
+	router.GET("/api/certificate/:id", certificateController.GetCertificate)
+	router.DELETE("/api/certificate/:id", certificateController.DeleteCertificate)
+	router.POST("/api/certificate", certificateController.CreateCertificate)
+
+	router.GET("/api/request", requestController.GetAllRequests)
+	router.GET("/api/request/:id", requestController.GetRequest)
+	router.POST("/api/request", requestController.CreateRequest)
+	router.PATCH("/api/request/accept/:id", requestController.AcceptRequest)
+	router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
+	router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
 	log.Fatal(err)
+
 }
 
 func runScript(db *sql.DB) {
@@ -63,7 +71,8 @@ func runScript(db *sql.DB) {
 	commands := string(c)
 	_, err := db.Exec(commands)
 	if err != nil {
-		panic("Couldn't load sql script")
+		//panic("Couldn't load sql script")
+		panic(err)
 	}
 }
 
