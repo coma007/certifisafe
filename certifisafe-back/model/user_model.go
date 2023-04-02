@@ -6,5 +6,6 @@ type User struct {
 	Password  string
 	FirstName string
 	LastName  string
+	Phone     string
 	IsAdmin   bool
 }
