@@ -9,19 +9,15 @@ import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
-	"gopkg.in/yaml.v2"
 	"log"
 	"net/http"
 	"os"
 )
 
-func main() {
-	yamlString, err := os.ReadFile("config.yaml")
-	utils.CheckError(err)
+var auth service.IAuthService
 
-	var config map[string]interface{}
-	err = yaml.Unmarshal([]byte(yamlString), &config)
-	utils.CheckError(err)
+func main() {
+	config := utils.Config()
 	password := config["password"]
 	user := config["user"]
 
@@ -44,6 +40,10 @@ func main() {
 	requestRepository := repository.NewRequestRepository(db, certificateInMemoryRepository)
 	requestService := service.NewRequestServiceImpl(requestRepository, certificateService)
 	requestController := controller.NewRequestController(requestService)
+  
+	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
+	auth = service.NewAuthService(userInMemoryRepository)
+	authController := controller.NewAuthHandler(auth)
 
 	router := httprouter.New()
 
@@ -58,6 +58,9 @@ func main() {
 	router.PATCH("/api/request/accept/:id", requestController.AcceptRequest)
 	router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
 	router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
+
+	router.POST("/login", authController.Login)
+	router.GET("/validate", authController.Validate)
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
@@ -76,15 +79,20 @@ func runScript(db *sql.DB) {
 	}
 }
 
-//func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		// Verify the user's credentials
-//		if !verifyCredentials(r) {
-//			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-//			return
-//		}
-//
-//		// If the credentials are valid, allow the request to proceed
-//		next(w, r)
-//	}
-//}
+func middleware(n httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			http.Error(w, "Missing token", http.StatusUnauthorized)
+			return
+		}
+
+		tokenValid, err := auth.ValidateToken(token)
+		if err != nil || !tokenValid {
+			http.Error(w, "Invalid token", http.StatusForbidden)
+			return
+		}
+
+		n(w, r, ps)
+	}
+}

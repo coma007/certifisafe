@@ -3,6 +3,7 @@ package controller
 import (
 	"certifisafe-back/model"
 	"certifisafe-back/service"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"github.com/julienschmidt/httprouter"
@@ -65,14 +66,14 @@ func getErrorStatus(err error) int {
 
 func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	var certificate model.Certificate
-	err := json.NewDecoder(r.Body).Decode(&certificate)
-	if err != nil {
-		http.Error(w, "error when decoding json", http.StatusInternalServerError)
-		return
-	}
+	//var certificate x509.Certificate
+	//err := json.NewDecoder(r.Body).Decode(&certificate)
+	//if err != nil {
+	//	http.Error(w, "error when decoding json", http.StatusInternalServerError)
+	//	return
+	//}
 
-	certificate, err = ch.service.CreateCertificate(certificate)
+	certificate, err := ch.service.CreateCertificate(x509.Certificate{})
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
