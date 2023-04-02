@@ -14,7 +14,6 @@ import (
 	"math/big"
 	"net"
 	"time"
-	// "errors"
 )
 
 var (
@@ -48,19 +47,6 @@ func NewDefaultCertificateService(cRepo repository.ICertificateRepository) *Defa
 }
 
 func (d *DefaultCertificateService) UpdateCertificate(id int32, certificate model.Certificate) (model.Certificate, error) {
-	// if id <= 0 {
-	// 	return ErrIDIsNotValid
-	// }
-
-	// if movie.Title == "" {
-	// 	return ErrTitleIsNotEmpty
-	// }
-
-	// err := d.certificateRepo.UpdateCertificate(id, certificate)
-	// if errors.Is(err, repository.ErrCertificateNotFound) {
-	// 	return ErrCertificateNotFound
-	// }
-
 	return model.Certificate{}, nil
 }
 func (d *DefaultCertificateService) GetCertificate(id int32) (model.Certificate, error) {
@@ -121,9 +107,13 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 		Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
 	})
 
+	//check if it already exists
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+
 	cert := &x509.Certificate{
 		Version:      3,
-		SerialNumber: big.NewInt(1658),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization:  []string{"Company, INC."},
 			Country:       []string{"US"},
@@ -158,7 +148,7 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 		return x509.Certificate{}, err
 	}
 
-	// create buffer and fill it with encoded value
+	//create buffer and fill it with encoded value
 	certPEM := new(bytes.Buffer)
 	pem.Encode(certPEM, &pem.Block{
 		Type:  "CERTIFICATE",
@@ -171,10 +161,13 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(certPrivKey),
 	})
+	certResponse, err := d.certificateRepo.CreateCertificate(*cert.SerialNumber, *certPEM, *certPrivKeyPEM)
+	if err != nil {
+		return x509.Certificate{}, err
+	}
+	//verifySignature(caPEM, certPEM)
 
-	verifySignature(caPEM, certPEM)
-
-	return *cert, nil
+	return certResponse, nil
 }
 
 func verifySignature(rootPEM *bytes.Buffer, certPEM *bytes.Buffer) {
