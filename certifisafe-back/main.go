@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
-	"gopkg.in/yaml.v2"
 	"log"
 	"net/http"
 	"os"
@@ -18,12 +17,7 @@ import (
 var auth service.IAuthService
 
 func main() {
-	yamlString, err := os.ReadFile("config.yaml")
-	utils.CheckError(err)
-
-	var config map[string]interface{}
-	err = yaml.Unmarshal([]byte(yamlString), &config)
-	utils.CheckError(err)
+	config := utils.Config()
 	password := config["password"]
 	user := config["user"]
 
