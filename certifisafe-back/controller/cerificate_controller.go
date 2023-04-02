@@ -19,33 +19,6 @@ func NewCertificateHandler(cs service.ICertificateService) *CertificateHandler {
 	return &CertificateHandler{service: cs}
 }
 
-func (ch *CertificateHandler) UpdateCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, _ := strconv.Atoi(ps.ByName("id"))
-
-	var certificate model.Certificate
-	err := json.NewDecoder(r.Body).Decode(&certificate)
-	if err != nil {
-		http.Error(w, "error when decoding json", http.StatusInternalServerError)
-		return
-	}
-
-	certificate, err = ch.service.UpdateCertificate(int32(id), certificate)
-
-	if err != nil {
-		http.Error(w, err.Error(), getErrorStatus(err))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err = json.NewEncoder(w).Encode(certificate)
-	if err != nil {
-		http.Error(w, "error when encoding json", http.StatusInternalServerError)
-		return
-	}
-}
-
 func getErrorStatus(err error) int {
 	if errors.Is(err, service.ErrIDIsNotValid) ||
 		errors.Is(err, service.ErrIssuerNameIsNotValid) ||
@@ -93,7 +66,7 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := strconv.Atoi(ps.ByName("id"))
 
-	certificate, err := ch.service.GetCertificate(int32(id))
+	certificate, err := ch.service.GetCertificate(int64(id))
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -120,7 +93,7 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err = ch.service.DeleteCertificate(int32(id))
+	err = ch.service.DeleteCertificate(int64(id))
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))

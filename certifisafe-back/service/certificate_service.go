@@ -30,9 +30,8 @@ var (
 )
 
 type ICertificateService interface {
-	UpdateCertificate(id int32, certificate model.Certificate) (model.Certificate, error)
-	GetCertificate(id int32) (model.Certificate, error)
-	DeleteCertificate(id int32) error
+	GetCertificate(id int64) (model.Certificate, error)
+	DeleteCertificate(id int64) error
 	CreateCertificate(certificate x509.Certificate) (x509.Certificate, error)
 }
 
@@ -46,14 +45,11 @@ func NewDefaultCertificateService(cRepo repository.ICertificateRepository) *Defa
 	}
 }
 
-func (d *DefaultCertificateService) UpdateCertificate(id int32, certificate model.Certificate) (model.Certificate, error) {
+func (d *DefaultCertificateService) GetCertificate(id int64) (model.Certificate, error) {
+	//certificate, err := d.certificateRepo.GetCertificate(id)
 	return model.Certificate{}, nil
 }
-func (d *DefaultCertificateService) GetCertificate(id int32) (model.Certificate, error) {
-	certificate, err := d.certificateRepo.GetCertificate(id)
-	return certificate, err
-}
-func (d *DefaultCertificateService) DeleteCertificate(id int32) error {
+func (d *DefaultCertificateService) DeleteCertificate(id int64) error {
 
 	return nil
 }
