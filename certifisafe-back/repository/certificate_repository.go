@@ -23,10 +23,8 @@ var (
 )
 
 type ICertificateRepository interface {
-
-	UpdateCertificate(id int32, certificate model.Certificate) (model.Certificate, error)
-	GetCertificate(id int32) (model.Certificate, error)
-	DeleteCertificate(id int32) error
+	GetCertificate(id int64) (model.Certificate, error)
+	DeleteCertificate(id int64) error
 	CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
 }
 
@@ -46,18 +44,6 @@ func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository
 		Certificates: certificates,
 		DB:           db,
 	}
-}
-
-func (i *InmemoryCertificateRepository) UpdateCertificate(id int64, certificate model.Certificate) (model.Certificate, error) {
-	for k := 0; k < len(i.Certificates); k++ {
-		//if i.Certificates[k].Id == id {
-		//	// i.Certificates[k].Title = movie.Title
-		//	return model.Certificate{}, nil
-		//}
-	}
-
-	return model.Certificate{}, nil
-	//return ErrMovieNotFound
 }
 
 func (i *InmemoryCertificateRepository) GetCertificate(id int64) (model.Certificate, error) {

@@ -40,14 +40,13 @@ func main() {
 	requestRepository := repository.NewRequestRepository(db, certificateInMemoryRepository)
 	requestService := service.NewRequestServiceImpl(requestRepository, certificateService)
 	requestController := controller.NewRequestController(requestService)
-  
+
 	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
 	auth = service.NewAuthService(userInMemoryRepository)
 	authController := controller.NewAuthHandler(auth)
 
 	router := httprouter.New()
 
-	router.PATCH("/api/certificate/:id", certificateController.UpdateCertificate)
 	router.GET("/api/certificate/:id", certificateController.GetCertificate)
 	router.DELETE("/api/certificate/:id", certificateController.DeleteCertificate)
 	router.POST("/api/certificate", certificateController.CreateCertificate)

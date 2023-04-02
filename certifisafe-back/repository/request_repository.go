@@ -36,8 +36,8 @@ func (repository *RequestRepositoryImpl) GetRequest(id int) (*model.Request, err
 	var parentCertificateId int64
 	var certificateId int64
 	err := repository.DB.QueryRow("SELECT id, datetime, status, parent_certificate_id, certificate_id FROM requests WHERE id = $1", id).Scan(&request.Id, &request.Datetime, &request.Status, parentCertificateId, certificateId)
-	repository.certificateRepository.GetCertificate(parentCertificateId)
-	repository.certificateRepository.GetCertificate(certificateId)
+	//repository.certificateRepository.GetCertificate(parentCertificateId)
+	//repository.certificateRepository.GetCertificate(certificateId)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
