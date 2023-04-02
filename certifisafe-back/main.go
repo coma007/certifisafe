@@ -15,6 +15,8 @@ import (
 	"os"
 )
 
+var auth service.IAuthService
+
 func main() {
 	yamlString, err := os.ReadFile("config.yaml")
 	utils.CheckError(err)
@@ -41,14 +43,21 @@ func main() {
 	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository)
 	certificateController := controller.NewCertificateHandler(certificateService)
 
+	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
+	auth = service.NewAuthService(userInMemoryRepository)
+	authController := controller.NewAuthHandler(auth)
+
 	fmt.Println(certificateController)
 
 	router := httprouter.New()
 
 	router.PATCH("/certificate/:id", certificateController.UpdateCertificate)
-	router.GET("/certificate/:id", certificateController.GetCertificate)
+	router.GET("/certificate/:id", middleware(certificateController.GetCertificate))
 	router.DELETE("/certificate/:id", certificateController.DeleteCertificate)
 	router.POST("/certificate", certificateController.CreateCertificate)
+
+	router.POST("/login", authController.Login)
+	router.GET("/validate", authController.Validate)
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
@@ -65,15 +74,20 @@ func runScript(db *sql.DB) {
 	}
 }
 
-//func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		// Verify the user's credentials
-//		if !verifyCredentials(r) {
-//			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-//			return
-//		}
-//
-//		// If the credentials are valid, allow the request to proceed
-//		next(w, r)
-//	}
-//}
+func middleware(n httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			http.Error(w, "Missing token", http.StatusUnauthorized)
+			return
+		}
+
+		tokenValid, err := auth.ValidateToken(token)
+		if err != nil || !tokenValid {
+			http.Error(w, "Invalid token", http.StatusForbidden)
+			return
+		}
+
+		n(w, r, ps)
+	}
+}
