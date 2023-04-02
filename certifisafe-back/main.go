@@ -41,8 +41,8 @@ func main() {
 	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository)
 	certificateController := controller.NewCertificateHandler(certificateService)
 
-	requestRepository := repository.NewRequestRepository(db)
-	requestService := service.NewRequestServiceImpl(requestRepository)
+	requestRepository := repository.NewRequestRepository(db, certificateInMemoryRepository)
+	requestService := service.NewRequestServiceImpl(requestRepository, certificateService)
 	requestController := controller.NewRequestController(requestService)
 
 	router := httprouter.New()

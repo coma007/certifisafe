@@ -15,7 +15,7 @@ CREATE TABLE users (
 );
 
 CREATE TABLE certificates (
-     id SERIAL PRIMARY KEY,
+     id  BIGSERIAL PRIMARY KEY,
      name VARCHAR(30),
      valid_from DATE,
      valid_to DATE,
@@ -28,8 +28,8 @@ CREATE TABLE certificates (
 CREATE TABLE requests (
       id SERIAL PRIMARY KEY,
       datetime DATE,
-      parent_certificate_pk SMALLINT REFERENCES certificates(id),
-      certificate_pk SMALLINT NOT NULL REFERENCES certificates(id),
+      parent_certificate_id SMALLINT REFERENCES certificates(id),
+      certificate_id SMALLINT NOT NULL REFERENCES certificates(id),
       status SMALLINT
 );
 
@@ -42,7 +42,7 @@ INSERT INTO users(email, password, first_name, last_name, is_admin) VALUES('proj
 INSERT INTO certificates(name, valid_from, valid_to, subject_id, subject_pk, issuer_id, signature)
 VALUES('Certificate #1', '2022-01-01', '2024-01-01', 2, 'asd', 1, 'asdasd');
 
-INSERT INTO requests(datetime, parent_certificate_pk, certificate_pk, status)
+INSERT INTO requests(datetime, parent_certificate_id, certificate_id, status)
 VALUES('2023-01-01', null, 1, 0);
 
 

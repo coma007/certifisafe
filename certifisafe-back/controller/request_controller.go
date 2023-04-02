@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"certifisafe-back/model"
+	"certifisafe-back/dto"
 	"certifisafe-back/service"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
@@ -62,12 +62,13 @@ func (controller *RequestController) GetAllRequests(w http.ResponseWriter, r *ht
 }
 
 func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	var req model.Request
+	var req dto.NewRequestDTO
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
+
 	request, err := c.service.CreateRequest(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -75,7 +76,6 @@ func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-
 	err = json.NewEncoder(w).Encode(request)
 	if err != nil {
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)

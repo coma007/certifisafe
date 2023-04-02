@@ -28,7 +28,7 @@ func (ch *CertificateHandler) UpdateCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	certificate, err = ch.service.UpdateCertificate(int32(id), certificate)
+	certificate, err = ch.service.UpdateCertificate(int64(id), certificate)
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -92,7 +92,7 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := strconv.Atoi(ps.ByName("id"))
 
-	certificate, err := ch.service.GetCertificate(int32(id))
+	certificate, err := ch.service.GetCertificate(int64(int(id)))
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -119,7 +119,7 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err = ch.service.DeleteCertificate(int32(id))
+	err = ch.service.DeleteCertificate(int64(int(id)))
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))

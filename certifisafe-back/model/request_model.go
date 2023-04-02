@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Request struct {
 	Id                int
@@ -13,7 +15,7 @@ type Request struct {
 type RequestStatus int64
 
 const (
-	Pending RequestStatus = iota
-	Accepted
-	Rejected
+	PENDING RequestStatus = iota
+	ACCEPTED
+	REJECTED
 )

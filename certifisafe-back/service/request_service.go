@@ -1,36 +1,48 @@
 package service
 
 import (
+	"certifisafe-back/dto"
 	"certifisafe-back/model"
 	"certifisafe-back/repository"
 )
 
 type RequestService interface {
-	GetRequest(id int) (*model.Request, error)
-	GetAllRequests() ([]*model.Request, error)
-	CreateRequest(req *model.Request) (*model.Request, error)
+	GetRequest(id int) (*dto.RequestDTO, error)
+	GetAllRequests() ([]*dto.RequestDTO, error)
+	CreateRequest(req *dto.NewRequestDTO) (*dto.RequestDTO, error)
 	UpdateRequest(req *model.Request) error
 	DeleteRequest(id int) error
 }
 
 type RequestServiceImpl struct {
-	repository *repository.RequestRepositoryImpl
+	repository         *repository.RequestRepositoryImpl
+	certificateService *DefaultCertificateService
 }
 
-func NewRequestServiceImpl(repo *repository.RequestRepositoryImpl) *RequestServiceImpl {
-	return &RequestServiceImpl{repo}
+func NewRequestServiceImpl(repo *repository.RequestRepositoryImpl, certificateService *DefaultCertificateService) *RequestServiceImpl {
+	return &RequestServiceImpl{repo, certificateService}
 }
 
-func (service *RequestServiceImpl) GetRequest(id int) (*model.Request, error) {
-	return service.repository.GetRequest(id)
+func (service *RequestServiceImpl) GetRequest(id int) (*dto.RequestDTO, error) {
+	request, err := service.repository.GetRequest(id)
+	return dto.RequestToDTO(request), err
 }
 
-func (service *RequestServiceImpl) GetAllRequests() ([]*model.Request, error) {
-	return service.repository.GetAllRequests()
+func (service *RequestServiceImpl) GetAllRequests() ([]*dto.RequestDTO, error) {
+	requests, err := service.repository.GetAllRequests()
+	var requestsDTO []*dto.RequestDTO
+	for i := 0; i < len(requests); i++ {
+		requestsDTO = append(requestsDTO, dto.RequestToDTO(requests[i]))
+	}
+	return requestsDTO, err
 }
 
-func (service *RequestServiceImpl) CreateRequest(req *model.Request) (*model.Request, error) {
-	return service.repository.CreateRequest(req)
+func (service *RequestServiceImpl) CreateRequest(req *dto.NewRequestDTO) (*dto.RequestDTO, error) {
+	request := dto.NewRequestDTOtoModel(req)
+	// TODO create certificate
+	//request.Certificate = service.certificateService.CreateCertificate(request.Certificate)
+	request, err := service.repository.CreateRequest(request)
+	return dto.RequestToDTO(request), err
 }
 
 func (service *RequestServiceImpl) UpdateRequest(req *model.Request) error {

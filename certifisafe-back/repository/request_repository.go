@@ -12,26 +12,32 @@ var (
 
 type RequestRepository interface {
 	GetRequest(id int) (*model.Request, error)
+	CreateRequest(request *model.Request) (*model.Request, error)
+	UpdateRequest(request *model.Request) error
+	DeleteRequest(id int) error
 	GetAllRequests() ([]*model.Request, error)
-	CreateRequest(id int32, request model.Request) (model.Request, error)
-	UpdateRequest(id int32, request model.Request) (model.Request, error)
-	DeleteRequest(id int32) error
 }
 
 type RequestRepositoryImpl struct {
-	DB *sql.DB
+	DB                    *sql.DB
+	certificateRepository ICertificateRepository
 }
 
-func NewRequestRepository(db *sql.DB) *RequestRepositoryImpl {
+func NewRequestRepository(db *sql.DB, certificateRepo ICertificateRepository) *RequestRepositoryImpl {
 	return &RequestRepositoryImpl{
-		DB: db,
+		DB:                    db,
+		certificateRepository: certificateRepo,
 	}
 }
 
 func (repository *RequestRepositoryImpl) GetRequest(id int) (*model.Request, error) {
 	request := &model.Request{}
-	// TODO add parent certificate and certificate
-	err := repository.DB.QueryRow("SELECT id, datetime, status FROM requests WHERE id = $1", id).Scan(&request.Id, &request.Datetime, &request.Status)
+
+	var parentCertificateId int64
+	var certificateId int64
+	err := repository.DB.QueryRow("SELECT id, datetime, status, parent_certificate_id, certificate_id FROM requests WHERE id = $1", id).Scan(&request.Id, &request.Datetime, &request.Status, parentCertificateId, certificateId)
+	repository.certificateRepository.GetCertificate(parentCertificateId)
+	repository.certificateRepository.GetCertificate(certificateId)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
