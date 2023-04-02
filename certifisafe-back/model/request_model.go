@@ -4,16 +4,16 @@ import "time"
 
 type Request struct {
 	Id                int32
-	parentCertificate Certificate
-	certificate       Certificate
-	datetime          time.Time
-	status            Status
+	ParentCertificate *Certificate
+	Certificate       *Certificate
+	Datetime          time.Time
+	Status            RequestStatus
 }
 
-type Status int64
+type RequestStatus int64
 
 const (
-	Pending Status = iota
+	Pending RequestStatus = iota
 	Accepted
 	Rejected
 )
