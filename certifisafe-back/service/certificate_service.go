@@ -115,12 +115,26 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		}
 	}
 
-	createCertificate, err := d.certificateKeyStoreRepo.CreateCertificate(*certificate.SerialNumber, certificatePEM, certificatePrivKeyPEM)
+	certificateKeyStore, err := d.certificateKeyStoreRepo.CreateCertificate(*certificate.SerialNumber, certificatePEM, certificatePrivKeyPEM)
 	if err != nil {
 		return dto.CertificateDTO{}, err
 	}
+	certificateDB := model.Certificate{
+		certificate.SerialNumber.Int64(),
+		certificate.Subject.CommonName,
+		// TODO fix nil values
+		nil,
+		nil,
+		certificate.NotBefore,
+		certificate.NotAfter,
+		model.NOT_ACTIVE,
+		dto.StringToType(cert.Certificate.Type),
+		certificateKeyStore.PublicKey.(int64),
+	}
 
-	return *dto.X509CertificateToCertificateDTO(&createCertificate), nil
+	certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
+
+	return *dto.X509CertificateToCertificateDTO(&certificateKeyStore), nil
 }
 
 func (d *DefaultCertificateService) IsValid(id big.Int) (bool, error) {
