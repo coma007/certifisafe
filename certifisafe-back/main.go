@@ -57,6 +57,7 @@ func main() {
 	router := httprouter.New()
 
 	router.GET("/api/certificate/:id", certificateController.GetCertificate)
+	router.GET("/api/certificate", certificateController.GetCertificates)
 	router.DELETE("/api/certificate/:id", certificateController.DeleteCertificate)
 	router.POST("/api/certificate", certificateController.CreateCertificate)
 	router.GET("/api/certificate/:id/valid", certificateController.IsValid)

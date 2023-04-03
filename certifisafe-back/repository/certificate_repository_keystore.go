@@ -25,7 +25,7 @@ type IKeyStoreCertificateRepository interface {
 	GetCertificate(id big.Int) (x509.Certificate, error)
 	DeleteCertificate(id big.Int) error
 	CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
-	GetKey(serial big.Int) rsa.PrivateKey
+	GetKey(serial big.Int) (rsa.PrivateKey, error)
 }
 
 func NewInMemoryCertificateKeyStoreRepository(db *sql.DB) *InmemoryKeyStoreCertificateRepository {
