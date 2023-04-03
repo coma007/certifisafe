@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"certifisafe-back/controller"
+	"certifisafe-back/model"
 	"certifisafe-back/repository"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
@@ -70,7 +71,7 @@ func main() {
 	router.GET("/validate", authController.Validate)
 
 	runScript(db, "utils/schema.sql")
-	createRoot(certificateInMemoryRepository)
+	createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)
 
 	runScript(db, "utils/data.sql")
 
@@ -79,13 +80,14 @@ func main() {
 	log.Fatal(err)
 }
 
-func createRoot(certificateRepository repository.ICertificateRepository) (x509.Certificate, error) {
+func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db repository.ICertificateRepository) error {
 	config := utils.Config()
 	// CA, root
 	root := &x509.Certificate{
 		Version:      3,
 		SerialNumber: big.NewInt(1658),
 		Subject: pkix.Name{
+			CommonName:    config["name"],
 			Organization:  []string{config["organization"]},
 			Country:       []string{config["country"]},
 			StreetAddress: []string{config["street"]},
@@ -106,13 +108,13 @@ func createRoot(certificateRepository repository.ICertificateRepository) (x509.C
 	// generate private key for CA (private key contains public)
 	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	// create CA root certificate
 	caBytes, err := x509.CreateCertificate(rand.Reader, root, root, &caPrivKey.PublicKey, caPrivKey)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	// create encoder
@@ -129,12 +131,24 @@ func createRoot(certificateRepository repository.ICertificateRepository) (x509.C
 		Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
 	})
 
-	certificate, err := certificateRepository.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
-	// TODO put root in database
-	if err != nil {
-		return x509.Certificate{}, err
+	rootModel := &model.Certificate{
+		Id:        root.SerialNumber.Int64(),
+		Name:      root.Subject.CommonName,
+		Issuer:    nil,
+		Subject:   nil,
+		ValidFrom: time.Time{},
+		ValidTo:   time.Time{},
+		Status:    model.CertificateStatus(model.ACTIVE),
+		Type:      model.CertificateType(model.ROOT),
+		PublicKey: 0,
 	}
-	return certificate, nil
+
+	err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
+	err = db.CreateCertificate(*rootModel)
+	if err != nil {
+		panic(err)
+	}
+	return nil
 }
 
 func runScript(db *sql.DB, script string) {

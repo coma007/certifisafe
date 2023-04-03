@@ -32,7 +32,7 @@ var (
 type ICertificateService interface {
 	GetCertificate(id big.Int) (model.Certificate, error)
 	DeleteCertificate(id big.Int) error
-	CreateCertificate(certificate x509.Certificate) (x509.Certificate, error)
+	CreateCertificate(certificate x509.Certificate) error
 	IsValid(id big.Int) (bool, error)
 }
 
@@ -56,7 +56,7 @@ func (d *DefaultCertificateService) DeleteCertificate(id big.Int) error {
 
 	return nil
 }
-func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certificate) (x509.Certificate, error) {
+func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certificate) error {
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
@@ -85,13 +85,13 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 	// generate private key for CA (private key contains public)
 	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	// create CA root certificate
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	// create encoder
@@ -138,13 +138,13 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 	//generate private key
 	certPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	// create certificate and sign it with CA key
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, ca, &certPrivKey.PublicKey, caPrivKey)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	//create buffer and fill it with encoded value
@@ -161,46 +161,17 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 		Bytes: x509.MarshalPKCS1PrivateKey(certPrivKey),
 	})
 
-	certModel := &model.Certificate{
-		Id: 12,
-		Issuer: &model.User{
-			Id:        10000,
-			Email:     "",
-			Password:  "",
-			FirstName: "",
-			LastName:  "",
-			Phone:     "",
-			IsAdmin:   false,
-		},
-		Subject: &model.User{
-			Id:        10000,
-			Email:     "",
-			Password:  "",
-			FirstName: "",
-			LastName:  "",
-			Phone:     "",
-			IsAdmin:   false,
-		},
-		ValidFrom: time.Time{},
-		ValidTo:   time.Time{},
-		Status:    0,
-		Type:      0,
-		PublicKey: 0,
-	}
-
-	certResponse, err := d.certificateRepo.CreateCertificate(*certModel)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
-	fmt.Println(certResponse)
 	//verifySignature(caPEM, certPEM)
 
-	createCertificate, err := d.certificateKeyStoreRepo.CreateCertificate(*cert.SerialNumber, *certPEM, *certPrivKeyPEM)
+	err = d.certificateKeyStoreRepo.CreateCertificate(*cert.SerialNumber, *certPEM, *certPrivKeyPEM)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
-	return createCertificate, nil
+	return nil
 }
 
 func verifySignature(rootPEM *bytes.Buffer, certPEM *bytes.Buffer) {

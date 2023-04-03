@@ -20,7 +20,6 @@ CREATE TABLE certificates (
      name VARCHAR(30),
      valid_from DATE,
      valid_to DATE,
-     subject_pk VARCHAR(30),
      subject_id INTEGER REFERENCES users(id),
      issuer_id INTEGER REFERENCES users(id),
      status SMALLINT,
