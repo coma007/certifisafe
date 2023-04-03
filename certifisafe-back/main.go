@@ -41,6 +41,10 @@ func main() {
 		}
 	}(db)
 
+	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
+	auth = service.NewAuthService(userInMemoryRepository)
+	authController := controller.NewAuthHandler(auth)
+
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
 	certificateKeyStoreInMemoryRepository := repository.NewInMemoryCertificateKeyStoreRepository(db)
 	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository, certificateKeyStoreInMemoryRepository)
@@ -48,11 +52,7 @@ func main() {
 
 	requestRepository := repository.NewRequestRepository(db, certificateInMemoryRepository)
 	requestService := service.NewRequestServiceImpl(requestRepository, certificateService)
-	requestController := controller.NewRequestController(requestService)
-
-	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
-	auth = service.NewAuthService(userInMemoryRepository)
-	authController := controller.NewAuthHandler(auth)
+	requestController := controller.NewRequestController(requestService, auth)
 
 	router := httprouter.New()
 

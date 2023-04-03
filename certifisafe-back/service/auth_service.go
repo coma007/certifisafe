@@ -26,6 +26,8 @@ type IAuthService interface {
 	Login(email string, password string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
 	Register(user *model.User) (*model.User, error)
+	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
+	GetUserByEmail(email string) (model.User, error)
 }
 
 type AuthService struct {
@@ -44,7 +46,7 @@ type Claims struct {
 }
 
 func (s *AuthService) Login(email string, password string) (string, error) {
-	user, err := s.repository.GetUserByEmail(email)
+	user, err := s.GetUserByEmail(email)
 	if err != nil {
 		if err == repository.ErrNoUserWithEmail {
 			return "", ErrBadCredentials
@@ -71,6 +73,10 @@ func (s *AuthService) Login(email string, password string) (string, error) {
 	}
 
 	return "", ErrBadCredentials
+}
+
+func (s *AuthService) GetUserByEmail(email string) (model.User, error) {
+	return s.repository.GetUserByEmail(email)
 }
 
 func (s *AuthService) Register(user *model.User) (*model.User, error) {
@@ -100,12 +106,25 @@ func (s *AuthService) Register(user *model.User) (*model.User, error) {
 
 func (s *AuthService) ValidateToken(tokenString string) (bool, error) {
 
+	token, _, b, err2 := s.GetClaims(tokenString)
+	if err2 != nil {
+		return b, err2
+	}
+
+	if token.Valid {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (s *AuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {
 	tokens := strings.Split(tokenString, " ")
 	tokenString, schema := tokens[0], tokens[1]
 	//tokenString = tokenString[1 : len(tokenString)-1]
 
 	if schema != "Bearer" {
-		return false, errors.New("New")
+		return nil, nil, false, errors.New("New")
 	}
 
 	claims := &Claims{}
@@ -115,14 +134,9 @@ func (s *AuthService) ValidateToken(tokenString string) (bool, error) {
 		})
 
 	if err != nil {
-		return false, err
+		return nil, claims, false, err
 	}
-
-	if token.Valid {
-		return true, nil
-	}
-
-	return false, nil
+	return token, claims, false, nil
 }
 
 func (s *AuthService) validateRegistrationData(u *model.User) (bool, error) {

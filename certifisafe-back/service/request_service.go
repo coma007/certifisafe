@@ -9,6 +9,7 @@ import (
 type RequestService interface {
 	GetRequest(id int) (*dto.RequestDTO, error)
 	GetAllRequests() ([]*dto.RequestDTO, error)
+	GetAllRequestsByUser(userId int) ([]*dto.RequestDTO, error)
 	CreateRequest(req *dto.NewRequestDTO) (*dto.RequestDTO, error)
 	UpdateRequest(req *model.Request) error
 	DeleteRequest(id int) error
@@ -32,6 +33,15 @@ func (service *RequestServiceImpl) GetRequest(id int) (*dto.RequestDTO, error) {
 
 func (service *RequestServiceImpl) GetAllRequests() ([]*dto.RequestDTO, error) {
 	requests, err := service.repository.GetAllRequests()
+	var requestsDTO []*dto.RequestDTO
+	for i := 0; i < len(requests); i++ {
+		requestsDTO = append(requestsDTO, dto.RequestToDTO(requests[i]))
+	}
+	return requestsDTO, err
+}
+
+func (service *RequestServiceImpl) GetAllRequestsByUser(userId int) ([]*dto.RequestDTO, error) {
+	requests, err := service.repository.GetAllRequestsByUser(userId)
 	var requestsDTO []*dto.RequestDTO
 	for i := 0; i < len(requests); i++ {
 		requestsDTO = append(requestsDTO, dto.RequestToDTO(requests[i]))

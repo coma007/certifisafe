@@ -12,10 +12,11 @@ var (
 
 type RequestRepository interface {
 	GetRequest(id int) (*model.Request, error)
+	GetAllRequests() ([]*model.Request, error)
+	GetAllRequestsByUser() ([]*model.Request, error)
 	CreateRequest(request *model.Request) (*model.Request, error)
 	UpdateRequest(request *model.Request) error
 	DeleteRequest(id int) error
-	GetAllRequests() ([]*model.Request, error)
 }
 
 type RequestRepositoryImpl struct {
@@ -50,6 +51,27 @@ func (repository *RequestRepositoryImpl) GetRequest(id int) (*model.Request, err
 
 func (repository *RequestRepositoryImpl) GetAllRequests() ([]*model.Request, error) {
 	rows, err := repository.DB.Query("SELECT id, datetime, status FROM requests")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	requests := []*model.Request{}
+
+	for rows.Next() {
+		r := &model.Request{}
+		err := rows.Scan(&r.Id, &r.Datetime, &r.Status)
+		if err != nil {
+			return nil, err
+		}
+		requests = append(requests, r)
+	}
+
+	return requests, nil
+}
+
+func (repository *RequestRepositoryImpl) GetAllRequestsByUser(userId int) ([]*model.Request, error) {
+	rows, err := repository.DB.Query("SELECT id, datetime, status FROM requests WHERE subject_id = $1", userId)
 	if err != nil {
 		return nil, err
 	}
