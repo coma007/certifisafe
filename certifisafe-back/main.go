@@ -34,7 +34,8 @@ func main() {
 	runScript(db)
 
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
-	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository)
+	certificateKeyStoreInMemoryRepository := repository.NewInMemoryCertificateKeyStoreRepository(db)
+	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository, certificateKeyStoreInMemoryRepository)
 	certificateController := controller.NewCertificateHandler(certificateService)
 
 	requestRepository := repository.NewRequestRepository(db, certificateInMemoryRepository)

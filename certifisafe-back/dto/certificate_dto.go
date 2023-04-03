@@ -37,13 +37,14 @@ func CertificateDTOtoModel(cert *CertificateDTO) *model.Certificate {
 		return nil
 	}
 	certificate := model.Certificate{
-		cert.Serial,
-		nil,
-		nil,
-		cert.ValidFrom,
-		cert.ValidTo,
-		StringToStatus(cert.Status),
-		StringToType(cert.Type),
+		Id:        cert.Serial,
+		Issuer:    nil,
+		Subject:   nil,
+		ValidFrom: cert.ValidFrom,
+		ValidTo:   cert.ValidTo,
+		Status:    StringToStatus(cert.Status),
+		Type:      StringToType(cert.Type),
+		PublicKey: 123123,
 	}
 	return &certificate
 }

@@ -26,14 +26,14 @@ type IKeyStoreCertificateRepository interface {
 	CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
 }
 
-func NewInMemoryCertificateKeyStoreRepository(db *sql.DB) *InmemoryCertificateRepository {
+func NewInMemoryCertificateKeyStoreRepository(db *sql.DB) *InmemoryKeyStoreCertificateRepository {
 	var certificates = []model.Certificate{
 		{Id: 1},
 		{Id: 2},
 		{Id: 3},
 	}
 
-	return &InmemoryCertificateRepository{
+	return &InmemoryKeyStoreCertificateRepository{
 		Certificates: certificates,
 		DB:           db,
 	}

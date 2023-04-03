@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -107,13 +108,13 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) ValidateCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	err := ch.service.IsValid(id)
-
+	result, err := ch.service.IsValid(id)
+	fmt.Print(result)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	w.Write([]byte("Successfully deleted"))
+	//w.Write(result)
 }
