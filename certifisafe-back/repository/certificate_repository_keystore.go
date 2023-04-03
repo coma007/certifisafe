@@ -105,12 +105,13 @@ func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber b
 	}
 
 	block, _ := pem.Decode(certificate.CertificateChain[0].Content)
-	_, err = x509.ParseCertificate(block.Bytes)
+	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
 		return x509.Certificate{}, err
 	}
 
-	return x509.Certificate{}, err
+	return *cert, nil
+
 }
 
 func (i *InmemoryKeyStoreCertificateRepository) GetKey(serial big.Int) (rsa.PrivateKey, error) {

@@ -140,9 +140,13 @@ func (d *DefaultCertificateService) IsValid(id big.Int) (bool, error) {
 	return true, nil
 }
 
-// TODO TEST
 func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) bool {
-	if certificate.IsCA {
+	serial, err := utils.StringToBigInt(certificate.Issuer.SerialNumber)
+	if err != nil {
+		return false
+	}
+	// if it is root check if it is self-signed
+	if certificate.IsCA && serial.Cmp(certificate.SerialNumber) != 0 {
 		err := certificate.CheckSignatureFrom(&certificate)
 		if err != nil {
 			return false

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
+	"time"
 )
 
 type CertificateHandler struct {
@@ -134,5 +135,74 @@ func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	//w.Write(result)
+	if result {
+		w.Write([]byte("true"))
+	} else {
+		w.Write([]byte("false"))
+	}
+}
+
+func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	rootDTO := &dto.NewRequestDTO{
+		ParentCertificate: nil,
+		Certificate: &dto.CertificateDTO{
+			Serial:      123123,
+			Name:        "",
+			ValidFrom:   time.Now(),
+			ValidTo:     time.Now(),
+			IssuerName:  "",
+			SubjectName: "",
+			Status:      "",
+			Type:        "INTERMEDIATE",
+		},
+		Datetime: time.Time{},
+	}
+
+	intermediateDTO := &dto.NewRequestDTO{
+		ParentCertificate: nil,
+		Certificate: &dto.CertificateDTO{
+			Serial:      6546456,
+			Name:        "",
+			ValidFrom:   time.Now(),
+			ValidTo:     time.Now(),
+			IssuerName:  "",
+			SubjectName: "",
+			Status:      "",
+			Type:        "INTERMEDIATE",
+		},
+		Datetime: time.Time{},
+	}
+
+	leafDTO := &dto.NewRequestDTO{
+		ParentCertificate: nil,
+		Certificate: &dto.CertificateDTO{
+			Serial:      87846345,
+			Name:        "",
+			ValidFrom:   time.Now(),
+			ValidTo:     time.Now(),
+			IssuerName:  "",
+			SubjectName: "",
+			Status:      "",
+			Type:        "LEAF",
+		},
+		Datetime: time.Time{},
+	}
+	root, err := ch.service.CreateCertificate(*rootDTO)
+	intermidiate, err := ch.service.CreateCertificate(*intermediateDTO)
+	leaf, err := ch.service.CreateCertificate(*leafDTO)
+
+	if err != nil {
+		http.Error(w, err.Error(), getErrorStatus(err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode([]dto.CertificateDTO{root, intermidiate, leaf})
+	if err != nil {
+		http.Error(w, "error when encoding json", http.StatusInternalServerError)
+		return
+	}
 }

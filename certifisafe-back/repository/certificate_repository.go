@@ -91,5 +91,6 @@ func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Cert
 		return model.Certificate{}, err.Err()
 	}
 
-	return model.Certificate{}, err.Err()
+	return certificate, nil
+
 }
