@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"certifisafe-back/model"
 	"certifisafe-back/utils"
+	"crypto/rsa"
 	"crypto/x509"
 	"database/sql"
 	"encoding/pem"
@@ -24,6 +25,7 @@ type IKeyStoreCertificateRepository interface {
 	GetCertificate(id big.Int) (x509.Certificate, error)
 	DeleteCertificate(id big.Int) error
 	CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
+	GetKey(serial big.Int) rsa.PrivateKey
 }
 
 func NewInMemoryCertificateKeyStoreRepository(db *sql.DB) *InmemoryKeyStoreCertificateRepository {
@@ -109,6 +111,25 @@ func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber b
 	}
 
 	return *cert, nil
+}
+
+func (i *InmemoryKeyStoreCertificateRepository) GetKey(serial big.Int) (rsa.PrivateKey, error) {
+	config := utils.Config()
+	password := []byte(config["keystore-password"])
+	ks := keystore.New()
+	ks = readKeyStore(store, password)
+	certificate, err := ks.GetPrivateKeyEntry(fmt.Sprint(serial), password)
+	if err != nil {
+		return rsa.PrivateKey{}, err
+	}
+
+	block, _ := pem.Decode(certificate.PrivateKey)
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return rsa.PrivateKey{}, err
+	}
+
+	return *privateKey, nil
 }
 
 func readKeyStore(filename string, password []byte) keystore.KeyStore {

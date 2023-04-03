@@ -105,7 +105,7 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 	w.Write([]byte("Successfully deleted"))
 }
 
-func (ch *CertificateHandler) ValidateCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
 	result, err := ch.service.IsValid(id)
