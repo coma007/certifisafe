@@ -36,6 +36,7 @@ CREATE TABLE requests (
       status SMALLINT
 );
 
-INSERT INTO users(email, password, first_name, last_name, phone, is_admin) VALUES('project.usertest+sladic@outlook.com', '$2a$12$u9LD12t.4WxM/nmMiNCB2e0Tj9pVfQcSyJiIzm4vMvEl/zemkKoee', 'Goran', 'Sladic', '065482564', true);
+INSERT INTO users(email, password, first_name, last_name, phone, is_admin)
+VALUES('project.usertest+sladic@outlook.com', '$2a$12$u9LD12t.4WxM/nmMiNCB2e0Tj9pVfQcSyJiIzm4vMvEl/zemkKoee', 'Goran', 'Sladic', '065482564', true);
 
 
