@@ -12,6 +12,8 @@ type RequestService interface {
 	CreateRequest(req *dto.NewRequestDTO) (*dto.RequestDTO, error)
 	UpdateRequest(req *model.Request) error
 	DeleteRequest(id int) error
+	AcceptRequest(id int) error
+	DeclineRequest(id int) error
 }
 
 type RequestServiceImpl struct {
@@ -51,4 +53,22 @@ func (service *RequestServiceImpl) UpdateRequest(req *model.Request) error {
 
 func (service *RequestServiceImpl) DeleteRequest(id int) error {
 	return service.repository.DeleteRequest(id)
+}
+
+func (service *RequestServiceImpl) AcceptRequest(id int) error {
+	request, err := service.repository.GetRequest(id)
+	if err != nil {
+		return err
+	}
+	request.Status = model.ACCEPTED
+	return service.repository.UpdateRequest(request)
+}
+
+func (service *RequestServiceImpl) DeclineRequest(id int) error {
+	request, err := service.repository.GetRequest(id)
+	if err != nil {
+		return err
+	}
+	request.Status = model.REJECTED
+	return service.repository.UpdateRequest(request)
 }
