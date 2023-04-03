@@ -1,17 +1,26 @@
 package main
 
 import (
+	"bytes"
 	"certifisafe-back/controller"
 	"certifisafe-back/repository"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"database/sql"
+	"encoding/pem"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 	"log"
+	"math/big"
+	"net"
 	"net/http"
 	"os"
+	"time"
 )
 
 var auth service.IAuthService
@@ -30,8 +39,6 @@ func main() {
 			panic(err)
 		}
 	}(db)
-
-	runScript(db)
 
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
 	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository)
@@ -61,14 +68,76 @@ func main() {
 	router.POST("/login", authController.Login)
 	router.GET("/validate", authController.Validate)
 
+	runScript(db, "utils/schema.sql")
+	createRoot(certificateInMemoryRepository)
+
+	runScript(db, "utils/data.sql")
+
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
 	log.Fatal(err)
-
 }
 
-func runScript(db *sql.DB) {
-	c, ioErr := os.ReadFile("utils/data.sql")
+func createRoot(certificateRepository repository.ICertificateRepository) (x509.Certificate, error) {
+	config := utils.Config()
+	// CA, root
+	root := &x509.Certificate{
+		Version:      3,
+		SerialNumber: big.NewInt(1658),
+		Subject: pkix.Name{
+			Organization:  []string{config["organization"]},
+			Country:       []string{config["country"]},
+			StreetAddress: []string{config["street"]},
+			PostalCode:    []string{config["postal"]},
+		},
+		SignatureAlgorithm:    x509.SHA256WithRSA,
+		PublicKeyAlgorithm:    x509.RSA,
+		IPAddresses:           []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		SubjectKeyId:          []byte{1, 2, 3, 4, 6},
+		IsCA:                  true,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+	}
+
+	// generate private key for CA (private key contains public)
+	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return x509.Certificate{}, err
+	}
+
+	// create CA root certificate
+	caBytes, err := x509.CreateCertificate(rand.Reader, root, root, &caPrivKey.PublicKey, caPrivKey)
+	if err != nil {
+		return x509.Certificate{}, err
+	}
+
+	// create encoder
+	rootPEM := new(bytes.Buffer)
+	pem.Encode(rootPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: caBytes,
+	})
+
+	// encode private key
+	rootPrivateKeyPEM := new(bytes.Buffer)
+	pem.Encode(rootPrivateKeyPEM, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
+	})
+
+	certificate, err := certificateRepository.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
+	// TODO put root in database
+	if err != nil {
+		return x509.Certificate{}, err
+	}
+	return certificate, nil
+}
+
+func runScript(db *sql.DB, script string) {
+	c, ioErr := os.ReadFile(script)
 	utils.CheckError(ioErr)
 	commands := string(c)
 	_, err := db.Exec(commands)

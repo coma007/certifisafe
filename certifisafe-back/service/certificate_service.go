@@ -61,8 +61,6 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 		Subject: pkix.Name{
 			Organization:  []string{"Company, INC."},
 			Country:       []string{"US"},
-			Province:      []string{""},
-			Locality:      []string{"San Francisco"},
 			StreetAddress: []string{"Golden Gate Bridge"},
 			PostalCode:    []string{"94016"},
 		},

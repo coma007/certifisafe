@@ -6,6 +6,7 @@ import (
 
 type Certificate struct {
 	Id        int64
+	Name      string
 	Issuer    *User
 	Subject   *User
 	ValidFrom time.Time
