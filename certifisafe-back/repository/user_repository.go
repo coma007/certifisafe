@@ -4,6 +4,11 @@ import (
 	"certifisafe-back/model"
 	"certifisafe-back/utils"
 	"database/sql"
+	"errors"
+)
+
+var (
+	ErrNoUserWithEmail = errors.New("no user for given email")
 )
 
 type IUserRepository interface {
@@ -94,8 +99,7 @@ func (i *InMemoryUserRepository) GetUserByEmail(email string) (model.User, error
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Handle the case of no rows returned.
-			panic(err)
+			return model.User{}, ErrNoUserWithEmail
 		}
 		return model.User{}, err
 

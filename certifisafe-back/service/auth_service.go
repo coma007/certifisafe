@@ -7,18 +7,25 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
+	"regexp"
 	"strings"
 	"time"
+	"unicode"
 )
 
 var (
-	ErrBadCredentials = errors.New("bad username or password")
+	ErrBadCredentials      = errors.New("bad username or password")
+	ErrTakenEmail          = errors.New("email already taken")
+	ErrWrongEmailFormat    = errors.New("not valid email")
+	ErrEmptyName           = errors.New("name cannot be empty")
+	ErrWrongPhoneFormat    = errors.New("not valid phone")
+	ErrWrongPasswordFormat = errors.New("not valid password")
 )
 
 type IAuthService interface {
 	Login(email string, password string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
-	Register(user model.User) (model.User, error)
+	Register(user *model.User) (*model.User, error)
 }
 
 type AuthService struct {
@@ -38,7 +45,13 @@ type Claims struct {
 
 func (s *AuthService) Login(email string, password string) (string, error) {
 	user, err := s.repository.GetUserByEmail(email)
-	utils.CheckError(err)
+	if err != nil {
+		if err == repository.ErrNoUserWithEmail {
+			return "", ErrBadCredentials
+		} else {
+			return "", err
+		}
+	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil {
 		expirationTime := time.Now().Add(time.Minute * 60)
@@ -60,9 +73,29 @@ func (s *AuthService) Login(email string, password string) (string, error) {
 	return "", ErrBadCredentials
 }
 
-func (s *AuthService) Register(user model.User) (model.User, error) {
-	//TODO implement me
-	panic("implement me")
+func (s *AuthService) Register(user *model.User) (*model.User, error) {
+
+	_, err := s.validateRegistrationData(user)
+	if err != nil {
+		return &model.User{}, err
+	}
+	_, err = s.repository.GetUserByEmail(user.Email)
+	if err != nil {
+		if err == repository.ErrNoUserWithEmail {
+			passwordBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+			utils.CheckError(err)
+			user.Password = string(passwordBytes)
+			createdUser, err := s.repository.CreateUser(0, *user)
+			if err != nil {
+				return &model.User{}, err
+			}
+			return &createdUser, nil
+		} else {
+			return &model.User{}, ErrTakenEmail
+		}
+	}
+
+	return &model.User{}, ErrTakenEmail
 }
 
 func (s *AuthService) ValidateToken(tokenString string) (bool, error) {
@@ -90,4 +123,40 @@ func (s *AuthService) ValidateToken(tokenString string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (s *AuthService) validateRegistrationData(u *model.User) (bool, error) {
+	match, err := regexp.Match("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", []byte(u.Email))
+	if err != nil || !match || u.Email == "" {
+		return false, ErrWrongEmailFormat
+	} else if u.FirstName == "" || u.LastName == "" {
+		return false, ErrEmptyName
+	}
+
+	if !s.verifyPassword(u.Password) {
+		return false, ErrWrongPasswordFormat
+	}
+	match, err = regexp.Match("^[0-9]*$", []byte(u.Phone))
+	if err != nil || !match || u.Phone == "" || (len(u.Phone) != 9 && len(u.Phone) != 10) {
+		return false, ErrWrongPhoneFormat
+	}
+	return true, nil
+}
+
+func (s *AuthService) verifyPassword(password string) bool {
+	number, upper, lower := false, false, false
+
+	for _, c := range password {
+		switch {
+		case unicode.IsNumber(c):
+			number = true
+		case unicode.IsUpper(c):
+			upper = true
+		case unicode.IsLower(c):
+			lower = true
+		default:
+			continue
+		}
+	}
+	return number && upper && lower && len(password) >= 8
 }

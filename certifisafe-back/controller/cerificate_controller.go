@@ -4,7 +4,6 @@ import (
 	"certifisafe-back/model"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,21 +46,21 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 	//	return
 	//}
 
-	certificate, err := ch.service.CreateCertificate(x509.Certificate{})
-
-	if err != nil {
-		http.Error(w, err.Error(), getErrorStatus(err))
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	err = json.NewEncoder(w).Encode(certificate)
-	if err != nil {
-		http.Error(w, "error when encoding json", http.StatusInternalServerError)
-		return
-	}
+	//err := ch.service.CreateCertificate(x509.Certificate{})
+	//
+	//if err != nil {
+	//	http.Error(w, err.Error(), getErrorStatus(err))
+	//	return
+	//}
+	//
+	//w.Header().Set("Content-Type", "application/json")
+	//w.WriteHeader(http.StatusCreated)
+	//
+	//err = json.NewEncoder(w).Encode(certificate)
+	//if err != nil {
+	//	http.Error(w, "error when encoding json", http.StatusInternalServerError)
+	//	return
+	//}
 }
 
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
