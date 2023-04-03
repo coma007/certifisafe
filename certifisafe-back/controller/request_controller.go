@@ -10,11 +10,12 @@ import (
 )
 
 type RequestController struct {
-	service service.RequestService
+	service     service.RequestService
+	authService service.IAuthService
 }
 
-func NewRequestController(service service.RequestService) *RequestController {
-	return &RequestController{service: service}
+func NewRequestController(service service.RequestService, authService service.IAuthService) *RequestController {
+	return &RequestController{service: service, authService: authService}
 }
 
 func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -47,6 +48,32 @@ func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request, p
 
 func (controller *RequestController) GetAllRequests(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	requests, err := controller.service.GetAllRequests()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(requests)
+	if err != nil {
+		http.Error(w, "error when encoding json", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	_, claims, _, _ := controller.authService.GetClaims(r.Header.Get("Authorization"))
+	email := claims.Email
+	user, _ := controller.authService.GetUserByEmail(email)
+
+	var requests []*dto.RequestDTO
+	var err error
+	if user.IsAdmin {
+		requests, err = controller.service.GetAllRequests()
+	} else {
+		requests, err = controller.service.GetAllRequestsByUser(user.Id)
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
