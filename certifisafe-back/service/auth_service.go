@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrBadCredentials = errors.New("bad username or password")
+	ErrTakenEmail     = errors.New("email already taken")
 )
 
 type IAuthService interface {
@@ -38,7 +39,13 @@ type Claims struct {
 
 func (s *AuthService) Login(email string, password string) (string, error) {
 	user, err := s.repository.GetUserByEmail(email)
-	utils.CheckError(err)
+	if err != nil {
+		if err == repository.ErrNoUserWithEmail {
+			return "", ErrBadCredentials
+		} else {
+			return "", err
+		}
+	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil {
 		expirationTime := time.Now().Add(time.Minute * 60)
@@ -61,8 +68,24 @@ func (s *AuthService) Login(email string, password string) (string, error) {
 }
 
 func (s *AuthService) Register(user model.User) (model.User, error) {
-	//TODO implement me
-	panic("implement me")
+
+	_, err := s.repository.GetUserByEmail(user.Email)
+	if err != nil {
+		if err == repository.ErrNoUserWithEmail {
+			passwordBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+			utils.CheckError(err)
+			user.Password = string(passwordBytes)
+			createdUser, err := s.repository.CreateUser(0, user)
+			if err != nil {
+				return model.User{}, err
+			}
+			return createdUser, nil
+		} else {
+			return model.User{}, ErrTakenEmail
+		}
+	}
+
+	return model.User{}, ErrTakenEmail
 }
 
 func (s *AuthService) ValidateToken(tokenString string) (bool, error) {
