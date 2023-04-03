@@ -66,8 +66,8 @@ func main() {
 	router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
 	router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
 
-	router.POST("/login", authController.Login)
-	router.GET("/validate", authController.Validate)
+	router.POST("/api/login", authController.Login)
+	router.POST("/api/register", authController.Register)
 
 	runScript(db, "utils/schema.sql")
 	createRoot(certificateInMemoryRepository)
