@@ -84,9 +84,35 @@ func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request
 }
 
 func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := strconv.Atoi(ps.ByName("id"))
+	if err != nil {
+		http.Error(w, "invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	err = controller.service.AcceptRequest(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := strconv.Atoi(ps.ByName("id"))
+	if err != nil {
+		http.Error(w, "invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	err = controller.service.DeclineRequest(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
