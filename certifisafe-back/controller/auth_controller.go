@@ -29,13 +29,13 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request, ps httprout
 	token, err := ah.service.Login(credentials.Email, credentials.Password)
 
 	if err != nil {
-		http.Error(w, err.Error(), getErrorLoginStatus(err))
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(token)
+	err = json.NewEncoder(w).Encode(token)
 
 	if err != nil {
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)
@@ -43,15 +43,38 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request, ps httprout
 	}
 }
 
-func getErrorLoginStatus(err error) int {
-	if errors.Is(err, service.ErrBadCredentials) {
+func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	var user dto.UserRegisterDTO
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		http.Error(w, "error when decoding json", http.StatusInternalServerError)
+		return
+	}
+	newUser, err := ah.service.Register(dto.UserRegisterDTOtoModel(&user))
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(dto.ModelToUserBaseDTO(newUser))
+
+	if err != nil {
+		http.Error(w, "error when encoding json", http.StatusInternalServerError)
+		return
+	}
+}
+
+func getAuthErrorStatus(err error) int {
+	if errors.Is(err, service.ErrBadCredentials) ||
+		errors.Is(err, service.ErrTakenEmail) ||
+		errors.Is(err, service.ErrWrongEmailFormat) ||
+		errors.Is(err, service.ErrEmptyName) ||
+		errors.Is(err, service.ErrWrongPhoneFormat) ||
+		errors.Is(err, service.ErrWrongPasswordFormat) {
 		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError
-}
-
-func (ah *AuthHandler) Validate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	token := r.Header.Get("Authorization")
-
-	ah.service.ValidateToken(token)
 }
