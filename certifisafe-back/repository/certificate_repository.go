@@ -22,20 +22,12 @@ type ICertificateRepository interface {
 }
 
 type InmemoryCertificateRepository struct {
-	Certificates []model.Certificate
-	DB           *sql.DB
+	DB *sql.DB
 }
 
 func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository {
-	var certificates = []model.Certificate{
-		{Id: 1},
-		{Id: 2},
-		{Id: 3},
-	}
-
 	return &InmemoryCertificateRepository{
-		Certificates: certificates,
-		DB:           db,
+		DB: db,
 	}
 }
 
@@ -74,18 +66,11 @@ func (i *InmemoryCertificateRepository) GetCertificates() ([]model.Certificate, 
 }
 
 func (i *InmemoryCertificateRepository) DeleteCertificate(id big.Int) error {
-	for k := 0; k < len(i.Certificates); k++ {
-		//if i.Certificates[k].Id == id {
-		//	// i.Certificates[k].Title = movie.Title
-		//	return nil
-		//}
-	}
-
 	return nil
 	//return ErrMovieNotFound
 }
 
-func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Certificate) error {
+func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Certificate) (model.Certificate, error) {
 	subject := 1
 	if certificate.Subject != nil {
 		subject = certificate.Subject.Id
@@ -103,8 +88,8 @@ func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Cert
 	err := i.DB.QueryRow(
 		"INSERT INTO certificates(id, name, valid_from, valid_to, subject_id, issuer_id, type, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8)", certificate.Id, certificate.Name, certificate.ValidFrom, certificate.ValidTo, subject, issuer, t, model.NOT_ACTIVE)
 	if err != nil {
-		return err.Err()
+		return model.Certificate{}, err.Err()
 	}
 
-	return nil
+	return model.Certificate{}, err.Err()
 }

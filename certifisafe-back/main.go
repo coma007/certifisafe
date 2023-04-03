@@ -145,8 +145,8 @@ func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db re
 		PublicKey: 0,
 	}
 
-	err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
-	err = db.CreateCertificate(*rootModel)
+	_, err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
+	_, err = db.CreateCertificate(*rootModel)
 	if err != nil {
 		panic(err)
 	}

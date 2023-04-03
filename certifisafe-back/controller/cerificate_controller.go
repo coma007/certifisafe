@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"certifisafe-back/dto"
 	"certifisafe-back/model"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
@@ -8,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"math/big"
 	"net/http"
 )
 
@@ -40,14 +40,14 @@ func getErrorStatus(err error) int {
 
 func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	//var certificate x509.Certificate
-	//err := json.NewDecoder(r.Body).Decode(&certificate)
-	//if err != nil {
-	//	http.Error(w, "error when decoding json", http.StatusInternalServerError)
-	//	return
-	//}
+	var request dto.NewRequestDTO
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "error when decoding json", http.StatusInternalServerError)
+		return
+	}
 
-	certificate, err := ch.service.CreateCertificate(x509.Certificate{}, big.Int{})
+	certificate, err := ch.service.CreateCertificate(request)
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
