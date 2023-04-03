@@ -51,7 +51,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request, ps httpr
 		http.Error(w, "error when decoding json", http.StatusInternalServerError)
 		return
 	}
-	newUser, err := ah.service.Register(*dto.UserRegisterDTOtoModel(&user))
+	newUser, err := ah.service.Register(dto.UserRegisterDTOtoModel(&user))
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -69,7 +69,11 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request, ps httpr
 
 func getAuthErrorStatus(err error) int {
 	if errors.Is(err, service.ErrBadCredentials) ||
-		errors.Is(err, service.ErrTakenEmail) {
+		errors.Is(err, service.ErrTakenEmail) ||
+		errors.Is(err, service.ErrWrongEmailFormat) ||
+		errors.Is(err, service.ErrEmptyName) ||
+		errors.Is(err, service.ErrWrongPhoneFormat) ||
+		errors.Is(err, service.ErrWrongPasswordFormat) {
 		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError
