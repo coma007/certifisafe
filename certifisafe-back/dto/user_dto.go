@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+type UserBaseDTO struct {
+	Email     string
+	FirstName string
+	LastName  string
+	Phone     string
+}
+
 type UserRegisterDTO struct {
 	Email     string
 	Password  string
@@ -27,5 +34,14 @@ func UserRegisterDTOtoModel(u *UserRegisterDTO) *model.User {
 		LastName:  strings.TrimSpace(u.LastName),
 		Phone:     strings.TrimSpace(u.Phone),
 		IsAdmin:   false,
+	}
+}
+
+func ModelToUserBaseDTO(u *model.User) *UserBaseDTO {
+	return &UserBaseDTO{
+		Email:     u.Email,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Phone:     u.Phone,
 	}
 }
