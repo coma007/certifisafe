@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
+	"math/big"
 	"os"
 )
 
@@ -43,4 +45,13 @@ func convertToStringMap(mapInterface map[string]interface{}) map[string]string {
 		mapString[strKey] = strValue
 	}
 	return mapString
+}
+func StringToBigInt(val string) (big.Int, error) {
+	n := new(big.Int)
+	n, ok := n.SetString(val, 10)
+	if !ok {
+		fmt.Println("Error converting value")
+		return big.Int{}, errors.New("SetString: error")
+	}
+	return *n, nil
 }

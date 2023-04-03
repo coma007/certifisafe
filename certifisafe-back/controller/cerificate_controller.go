@@ -3,12 +3,12 @@ package controller
 import (
 	"certifisafe-back/model"
 	"certifisafe-back/service"
+	"certifisafe-back/utils"
 	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"strconv"
 )
 
 type CertificateHandler struct {
@@ -64,9 +64,9 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 }
 
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, _ := strconv.Atoi(ps.ByName("id"))
+	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	certificate, err := ch.service.GetCertificate(int64(id))
+	certificate, err := ch.service.GetCertificate(id)
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -84,7 +84,7 @@ func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Requ
 }
 
 func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, _ := strconv.Atoi(ps.ByName("id"))
+	//id, _ := utils.StringToBigInt(ps.ByName("id"))
 
 	var certificate model.Certificate
 	err := json.NewDecoder(r.Body).Decode(&certificate)
@@ -93,7 +93,21 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err = ch.service.DeleteCertificate(int64(id))
+	//err = ch.service.DeleteCertificate(int64(id))
+
+	if err != nil {
+		http.Error(w, err.Error(), getErrorStatus(err))
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+	w.Write([]byte("Successfully deleted"))
+}
+
+func (ch *CertificateHandler) ValidateCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, _ := utils.StringToBigInt(ps.ByName("id"))
+
+	err := ch.service.IsValid(id)
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))

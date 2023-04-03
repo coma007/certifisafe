@@ -10,9 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/pavlo-v-chernykh/keystore-go/v4"
-	"log"
 	"math/big"
-	"os"
 	"time"
 )
 
@@ -23,8 +21,8 @@ var (
 )
 
 type ICertificateRepository interface {
-	GetCertificate(id int64) (model.Certificate, error)
-	DeleteCertificate(id int64) error
+	GetCertificate(id big.Int) (model.Certificate, error)
+	DeleteCertificate(id big.Int) error
 	CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
 }
 
@@ -46,7 +44,7 @@ func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository
 	}
 }
 
-func (i *InmemoryCertificateRepository) GetCertificate(id int64) (model.Certificate, error) {
+func (i *InmemoryCertificateRepository) GetCertificate(id big.Int) (model.Certificate, error) {
 	stmt, err := i.DB.Prepare("SELECT id FROM certificates WHERE id=$1")
 	utils.CheckError(err)
 
@@ -63,7 +61,7 @@ func (i *InmemoryCertificateRepository) GetCertificate(id int64) (model.Certific
 	return certificate, nil
 }
 
-func (i *InmemoryCertificateRepository) DeleteCertificate(id int64) error {
+func (i *InmemoryCertificateRepository) DeleteCertificate(id big.Int) error {
 	for k := 0; k < len(i.Certificates); k++ {
 		//if i.Certificates[k].Id == id {
 		//	// i.Certificates[k].Title = movie.Title
@@ -112,42 +110,4 @@ func (i *InmemoryCertificateRepository) CreateCertificate(serialNumber big.Int, 
 	}
 
 	return *cert, nil
-}
-
-func readKeyStore(filename string, password []byte) keystore.KeyStore {
-	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	ks := keystore.New()
-	if err := ks.Load(f, password); err != nil {
-		log.Fatal(err) // nolint: gocritic
-	}
-
-	return ks
-}
-
-func writeKeyStore(ks keystore.KeyStore, filename string, password []byte) {
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	err = ks.Store(f, password)
-	if err != nil {
-		log.Fatal(err) // nolint: gocritic
-	}
 }
