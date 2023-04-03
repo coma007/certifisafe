@@ -26,8 +26,9 @@ var (
 
 type ICertificateService interface {
 	GetCertificate(id big.Int) (model.Certificate, error)
+	GetCertificates() ([]model.Certificate, error)
 	DeleteCertificate(id big.Int) error
-	CreateCertificate(certificate x509.Certificate) (x509.Certificate, error)
+	CreateCertificate(certificate x509.Certificate, parentSerial big.Int) (x509.Certificate, error)
 	IsValid(id big.Int) (bool, error)
 }
 
@@ -47,6 +48,15 @@ func (d *DefaultCertificateService) GetCertificate(id big.Int) (model.Certificat
 	//certificate, err := d.certificateRepo.GetCertificate(id)
 	return model.Certificate{}, nil
 }
+
+func (d *DefaultCertificateService) GetCertificates() ([]model.Certificate, error) {
+	certificates, err := d.certificateRepo.GetCertificates()
+	if err != nil {
+		return nil, err
+	}
+	return certificates, nil
+}
+
 func (d *DefaultCertificateService) DeleteCertificate(id big.Int) error {
 
 	return nil
@@ -65,7 +75,8 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 		CommonName:         "",
 		Names:              nil,
 	}
-	cert, certPEM, certPrivKeyPEM, err := GenerateLeafCert(subject, &parent, d.certificateKeyStoreRepo.GetKey(parentSerial))
+	privateKey, err := d.certificateKeyStoreRepo.GetKey(parentSerial)
+	cert, certPEM, certPrivKeyPEM, err := GenerateLeafCert(subject, &parent, privateKey)
 	if err != nil {
 		return x509.Certificate{}, err
 	}

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"math/big"
 	"net/http"
 )
 
@@ -47,7 +48,7 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 	//	return
 	//}
 
-	certificate, err := ch.service.CreateCertificate(x509.Certificate{})
+	certificate, err := ch.service.CreateCertificate(x509.Certificate{}, big.Int{})
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -78,6 +79,24 @@ func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusOK)
 
 	err = json.NewEncoder(w).Encode(certificate)
+	if err != nil {
+		http.Error(w, "error when encoding json", http.StatusInternalServerError)
+		return
+	}
+}
+
+func (ch *CertificateHandler) GetCertificates(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	certificates, err := ch.service.GetCertificates()
+
+	if err != nil {
+		http.Error(w, err.Error(), getErrorStatus(err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(certificates)
 	if err != nil {
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)
 		return

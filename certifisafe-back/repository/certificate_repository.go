@@ -18,6 +18,7 @@ type ICertificateRepository interface {
 	GetCertificate(id big.Int) (model.Certificate, error)
 	DeleteCertificate(id big.Int) error
 	CreateCertificate(certificate model.Certificate) (model.Certificate, error)
+	GetCertificates() ([]model.Certificate, error)
 }
 
 type InmemoryCertificateRepository struct {
@@ -53,6 +54,23 @@ func (i *InmemoryCertificateRepository) GetCertificate(id big.Int) (model.Certif
 
 	}
 	return certificate, nil
+}
+
+func (i *InmemoryCertificateRepository) GetCertificates() ([]model.Certificate, error) {
+	var result []model.Certificate
+	rows, err := i.DB.Query("SELECT name, valid_from, valid_to  FROM certificates")
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var certificate model.Certificate
+		rows.Scan(&certificate.Subject, &certificate.ValidFrom, &certificate.ValidTo)
+		result = append(result, certificate)
+	}
+	utils.CheckError(err)
+
+	return result, nil
 }
 
 func (i *InmemoryCertificateRepository) DeleteCertificate(id big.Int) error {
