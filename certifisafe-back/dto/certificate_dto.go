@@ -2,6 +2,7 @@ package dto
 
 import (
 	"certifisafe-back/model"
+	"crypto/x509"
 	"time"
 )
 
@@ -47,6 +48,22 @@ func CertificateDTOtoModel(cert *CertificateDTO) *model.Certificate {
 		Status:    StringToStatus(cert.Status),
 		Type:      StringToType(cert.Type),
 		PublicKey: 123123,
+	}
+	return &certificate
+}
+
+func X509CertificateToCertificateDTO(cert *x509.Certificate) *CertificateDTO {
+	if cert == nil {
+		return nil
+	}
+	certificate := CertificateDTO{
+		Serial:    cert.SerialNumber.Int64(),
+		Name:      cert.Subject.CommonName,
+		ValidFrom: cert.NotBefore,
+		ValidTo:   cert.NotAfter,
+		// TODO make nested object user
+		IssuerName:  cert.Issuer.CommonName,
+		SubjectName: cert.Subject.CommonName,
 	}
 	return &certificate
 }

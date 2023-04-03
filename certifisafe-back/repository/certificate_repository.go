@@ -22,20 +22,12 @@ type ICertificateRepository interface {
 }
 
 type InmemoryCertificateRepository struct {
-	Certificates []model.Certificate
-	DB           *sql.DB
+	DB *sql.DB
 }
 
 func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository {
-	var certificates = []model.Certificate{
-		{Id: 1},
-		{Id: 2},
-		{Id: 3},
-	}
-
 	return &InmemoryCertificateRepository{
-		Certificates: certificates,
-		DB:           db,
+		DB: db,
 	}
 }
 
@@ -74,13 +66,6 @@ func (i *InmemoryCertificateRepository) GetCertificates() ([]model.Certificate, 
 }
 
 func (i *InmemoryCertificateRepository) DeleteCertificate(id big.Int) error {
-	for k := 0; k < len(i.Certificates); k++ {
-		//if i.Certificates[k].Id == id {
-		//	// i.Certificates[k].Title = movie.Title
-		//	return nil
-		//}
-	}
-
 	return nil
 	//return ErrMovieNotFound
 }
@@ -107,4 +92,5 @@ func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Cert
 	}
 
 	return certificate, nil
+
 }

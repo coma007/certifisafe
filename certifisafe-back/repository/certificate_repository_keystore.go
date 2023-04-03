@@ -111,6 +111,7 @@ func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber b
 	}
 
 	return *cert, nil
+
 }
 
 func (i *InmemoryKeyStoreCertificateRepository) GetKey(serial big.Int) (rsa.PrivateKey, error) {

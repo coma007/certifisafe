@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"certifisafe-back/dto"
 	"certifisafe-back/model"
 	"certifisafe-back/repository"
 	"certifisafe-back/utils"
@@ -29,7 +30,7 @@ type ICertificateService interface {
 	GetCertificate(id big.Int) (model.Certificate, error)
 	GetCertificates() ([]model.Certificate, error)
 	DeleteCertificate(id big.Int) error
-	CreateCertificate(subject pkix.Name, parentSerial big.Int, certificateType model.CertificateType) (x509.Certificate, error)
+	CreateCertificate(cert dto.NewRequestDTO) (dto.CertificateDTO, error)
 	IsValid(id big.Int) (bool, error)
 }
 
@@ -63,60 +64,63 @@ func (d *DefaultCertificateService) DeleteCertificate(id big.Int) error {
 	return nil
 }
 
-func (d *DefaultCertificateService) CreateCertificate(subject pkix.Name, parentSerial big.Int, kind model.CertificateType) (x509.Certificate, error) {
-	var cert x509.Certificate
-	var certPEM bytes.Buffer
-	var certPrivKeyPEM bytes.Buffer
+func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (dto.CertificateDTO, error) {
+	// creating of leaf node
+
+	var certificate x509.Certificate
+	var certificatePEM bytes.Buffer
+	var certificatePrivKeyPEM bytes.Buffer
 	var err error
 
-	switch kind {
+	subject := pkix.Name{
+		CommonName:    cert.Certificate.Name,
+		Organization:  []string{cert.Certificate.Name},
+		Country:       []string{cert.Certificate.Name},
+		StreetAddress: []string{cert.Certificate.Name},
+		PostalCode:    []string{cert.Certificate.Name},
+	}
+
+	switch dto.StringToType(cert.Certificate.Type) {
 	case model.ROOT:
-		{
-			cert, certPEM, certPrivKeyPEM, err = GenerateRootCa(subject)
-			if err != nil {
-				return x509.Certificate{}, err
-			}
-			break
+		certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject)
+		if err != nil {
+			return dto.CertificateDTO{}, err
 		}
+		break
 	case model.INTERMEDIATE:
 		{
-			parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial)
+			parent, err := d.certificateKeyStoreRepo.GetCertificate(*big.NewInt(cert.ParentCertificate.Serial))
 			if err != nil {
-				return x509.Certificate{}, err
+				return dto.CertificateDTO{}, err
 			}
 
-			privateKey, err := d.certificateKeyStoreRepo.GetKey(parentSerial)
-			cert, certPEM, certPrivKeyPEM, err = GenerateSubordinateCa(subject, &parent, privateKey)
+			privateKey, err := d.certificateKeyStoreRepo.GetKey(*big.NewInt(cert.ParentCertificate.Serial))
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, &parent, privateKey)
 			if err != nil {
-				return x509.Certificate{}, err
+				return dto.CertificateDTO{}, err
 			}
 		}
 	case model.END:
 		{
-			parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial)
+			parent, err := d.certificateKeyStoreRepo.GetCertificate(*big.NewInt(cert.ParentCertificate.Serial))
 			if err != nil {
-				return x509.Certificate{}, err
+				return dto.CertificateDTO{}, err
 			}
 
-			privateKey, err := d.certificateKeyStoreRepo.GetKey(parentSerial)
-			cert, certPEM, certPrivKeyPEM, err = GenerateLeafCert(subject, &parent, privateKey)
+			privateKey, err := d.certificateKeyStoreRepo.GetKey(*big.NewInt(cert.ParentCertificate.Serial))
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, &parent, privateKey)
 			if err != nil {
-				return x509.Certificate{}, err
+				return dto.CertificateDTO{}, err
 			}
 		}
 	}
 
-	//certResponse, err := d.certificateRepo.CreateCertificate(*certModel)
-	//if err != nil {
-	//	return x509.Certificate{}, err
-	//}
-
-	createCertificate, err := d.certificateKeyStoreRepo.CreateCertificate(*cert.SerialNumber, certPEM, certPrivKeyPEM)
+	createCertificate, err := d.certificateKeyStoreRepo.CreateCertificate(*certificate.SerialNumber, certificatePEM, certificatePrivKeyPEM)
 	if err != nil {
-		return x509.Certificate{}, err
+		return dto.CertificateDTO{}, err
 	}
 
-	return createCertificate, nil
+	return *dto.X509CertificateToCertificateDTO(&createCertificate), nil
 }
 
 func (d *DefaultCertificateService) IsValid(id big.Int) (bool, error) {

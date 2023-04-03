@@ -1,17 +1,16 @@
 package controller
 
 import (
+	"certifisafe-back/dto"
 	"certifisafe-back/model"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
-	"crypto/x509"
-	"crypto/x509/pkix"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"math/big"
 	"net/http"
+	"time"
 )
 
 type CertificateHandler struct {
@@ -42,23 +41,14 @@ func getErrorStatus(err error) int {
 
 func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	//var certificate x509.Certificate
-	//err := json.NewDecoder(r.Body).Decode(&certificate)
-	//if err != nil {
-	//	http.Error(w, "error when decoding json", http.StatusInternalServerError)
-	//	return
-	//}
-	subject := pkix.Name{
-		Country:            nil,
-		Organization:       nil,
-		OrganizationalUnit: nil,
-		PostalCode:         nil,
-		CommonName:         "",
-		Names:              nil,
+	var request dto.NewRequestDTO
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "error when decoding json", http.StatusInternalServerError)
+		return
 	}
-	kind := model.INTERMEDIATE
 
-	certificate, err := ch.service.CreateCertificate(subject, big.Int{}, kind)
+	certificate, err := ch.service.CreateCertificate(request)
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -154,17 +144,53 @@ func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps
 
 func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	subject := pkix.Name{
-		Country:            nil,
-		Organization:       nil,
-		OrganizationalUnit: nil,
-		PostalCode:         nil,
-		CommonName:         "",
-		Names:              nil,
+	rootDTO := &dto.NewRequestDTO{
+		ParentCertificate: nil,
+		Certificate: &dto.CertificateDTO{
+			Serial:      123123,
+			Name:        "",
+			ValidFrom:   time.Now(),
+			ValidTo:     time.Now(),
+			IssuerName:  "",
+			SubjectName: "",
+			Status:      "",
+			Type:        "INTERMEDIATE",
+		},
+		Datetime: time.Time{},
 	}
-	root, err := ch.service.CreateCertificate(subject, big.Int{}, model.ROOT)
-	intermidiate, err := ch.service.CreateCertificate(subject, *root.SerialNumber, model.INTERMEDIATE)
-	leaf, err := ch.service.CreateCertificate(subject, *intermidiate.SerialNumber, model.END)
+
+	intermediateDTO := &dto.NewRequestDTO{
+		ParentCertificate: nil,
+		Certificate: &dto.CertificateDTO{
+			Serial:      6546456,
+			Name:        "",
+			ValidFrom:   time.Now(),
+			ValidTo:     time.Now(),
+			IssuerName:  "",
+			SubjectName: "",
+			Status:      "",
+			Type:        "INTERMEDIATE",
+		},
+		Datetime: time.Time{},
+	}
+
+	leafDTO := &dto.NewRequestDTO{
+		ParentCertificate: nil,
+		Certificate: &dto.CertificateDTO{
+			Serial:      87846345,
+			Name:        "",
+			ValidFrom:   time.Now(),
+			ValidTo:     time.Now(),
+			IssuerName:  "",
+			SubjectName: "",
+			Status:      "",
+			Type:        "LEAF",
+		},
+		Datetime: time.Time{},
+	}
+	root, err := ch.service.CreateCertificate(*rootDTO)
+	intermidiate, err := ch.service.CreateCertificate(*intermediateDTO)
+	leaf, err := ch.service.CreateCertificate(*leafDTO)
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -174,7 +200,7 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	err = json.NewEncoder(w).Encode([]x509.Certificate{root, intermidiate, leaf})
+	err = json.NewEncoder(w).Encode([]dto.CertificateDTO{root, intermidiate, leaf})
 	if err != nil {
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)
 		return
