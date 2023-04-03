@@ -13,6 +13,7 @@ type Certificate struct {
 	ValidTo   time.Time
 	Status    CertificateStatus
 	Type      CertificateType
+	PublicKey int64
 }
 
 type CertificateType int64

@@ -1,19 +1,11 @@
 package repository
 
 import (
-	"bytes"
 	"certifisafe-back/model"
 	"certifisafe-back/utils"
-	"crypto/x509"
 	"database/sql"
-	"encoding/pem"
 	"errors"
-	"fmt"
-	"github.com/pavlo-v-chernykh/keystore-go/v4"
-	"log"
 	"math/big"
-	"os"
-	"time"
 )
 
 const store = "keystore.jsk"
@@ -23,9 +15,9 @@ var (
 )
 
 type ICertificateRepository interface {
-	GetCertificate(id int64) (model.Certificate, error)
-	DeleteCertificate(id int64) error
-	CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
+	GetCertificate(id big.Int) (model.Certificate, error)
+	DeleteCertificate(id big.Int) error
+	CreateCertificate(certificate model.Certificate) (model.Certificate, error)
 }
 
 type InmemoryCertificateRepository struct {
@@ -46,7 +38,7 @@ func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository
 	}
 }
 
-func (i *InmemoryCertificateRepository) GetCertificate(id int64) (model.Certificate, error) {
+func (i *InmemoryCertificateRepository) GetCertificate(id big.Int) (model.Certificate, error) {
 	stmt, err := i.DB.Prepare("SELECT id FROM certificates WHERE id=$1")
 	utils.CheckError(err)
 
@@ -63,7 +55,7 @@ func (i *InmemoryCertificateRepository) GetCertificate(id int64) (model.Certific
 	return certificate, nil
 }
 
-func (i *InmemoryCertificateRepository) DeleteCertificate(id int64) error {
+func (i *InmemoryCertificateRepository) DeleteCertificate(id big.Int) error {
 	for k := 0; k < len(i.Certificates); k++ {
 		//if i.Certificates[k].Id == id {
 		//	// i.Certificates[k].Title = movie.Title
@@ -75,79 +67,21 @@ func (i *InmemoryCertificateRepository) DeleteCertificate(id int64) error {
 	//return ErrMovieNotFound
 }
 
-func (i *InmemoryCertificateRepository) CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer,
-	certPrivKeyPEM bytes.Buffer) (x509.Certificate, error) {
-	config := utils.Config()
-	password := []byte(config["keystore-password"])
-	defer utils.Zeroing(password)
+func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Certificate) (model.Certificate, error) {
+	stmt, err := i.DB.Prepare(
+		"INSERT INTO certificates(name, valid_from, valid_to, subject_id, subject_pk, issuer_id)" +
+			"VALUES($1, $2, $3, $4, $5, $6);")
+	utils.CheckError(err)
 
-	pkeIn := keystore.PrivateKeyEntry{
-		CreationTime: time.Now(),
-		PrivateKey:   certPrivKeyPEM.Bytes(),
-		CertificateChain: []keystore.Certificate{
-			{
-				Type:    "X509",
-				Content: certPEM.Bytes(),
-			},
-		},
-	}
-	ks := keystore.New()
-	if err := ks.SetPrivateKeyEntry(fmt.Sprint(serialNumber), pkeIn, password); err != nil {
-		return x509.Certificate{}, err
-	}
+	err = stmt.QueryRow(certificate.Id, certificate.ValidFrom, certificate.ValidTo, 1,
+		certificate.PublicKey, 1).Scan()
 
-	writeKeyStore(ks, store, password)
-
-	ks = keystore.New()
-	ks = readKeyStore(store, password)
-	certificate, err := ks.GetPrivateKeyEntry(fmt.Sprint(serialNumber), password)
 	if err != nil {
-		return x509.Certificate{}, err
-	}
-
-	block, _ := pem.Decode(certificate.CertificateChain[0].Content)
-	cert, err := x509.ParseCertificate(block.Bytes)
-	if err != nil {
-		return x509.Certificate{}, err
-	}
-
-	return *cert, nil
-}
-
-func readKeyStore(filename string, password []byte) keystore.KeyStore {
-	f, err := os.Open(filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Fatal(err)
+		if err == sql.ErrNoRows {
+			// Handle the case of no rows returned.
 		}
-	}()
+		return model.Certificate{}, err
 
-	ks := keystore.New()
-	if err := ks.Load(f, password); err != nil {
-		log.Fatal(err) // nolint: gocritic
 	}
-
-	return ks
-}
-
-func writeKeyStore(ks keystore.KeyStore, filename string, password []byte) {
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	err = ks.Store(f, password)
-	if err != nil {
-		log.Fatal(err) // nolint: gocritic
-	}
+	return certificate, nil
 }
