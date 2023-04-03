@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"certifisafe-back/model"
 	"certifisafe-back/repository"
 	"certifisafe-back/utils"
@@ -28,7 +29,7 @@ type ICertificateService interface {
 	GetCertificate(id big.Int) (model.Certificate, error)
 	GetCertificates() ([]model.Certificate, error)
 	DeleteCertificate(id big.Int) error
-	CreateCertificate(certificate x509.Certificate, parentSerial big.Int) (x509.Certificate, error)
+	CreateCertificate(subject pkix.Name, parentSerial big.Int, certificateType model.CertificateType) (x509.Certificate, error)
 	IsValid(id big.Int) (bool, error)
 }
 
@@ -62,24 +63,47 @@ func (d *DefaultCertificateService) DeleteCertificate(id big.Int) error {
 	return nil
 }
 
-func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certificate, parentSerial big.Int) (x509.Certificate, error) {
-	// creating of leaf node
-	parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial)
-	if err != nil {
-		return err
-	}
-	subject := pkix.Name{
-		Country:            nil,
-		Organization:       nil,
-		OrganizationalUnit: nil,
-		PostalCode:         nil,
-		CommonName:         "",
-		Names:              nil,
-	}
-	privateKey, err := d.certificateKeyStoreRepo.GetKey(parentSerial)
-	cert, certPEM, certPrivKeyPEM, err := GenerateLeafCert(subject, &parent, privateKey)
-	if err != nil {
-		return err
+func (d *DefaultCertificateService) CreateCertificate(subject pkix.Name, parentSerial big.Int, kind model.CertificateType) (x509.Certificate, error) {
+	var cert x509.Certificate
+	var certPEM bytes.Buffer
+	var certPrivKeyPEM bytes.Buffer
+	var err error
+
+	switch kind {
+	case model.ROOT:
+		{
+			cert, certPEM, certPrivKeyPEM, err = GenerateRootCa(subject)
+			if err != nil {
+				return x509.Certificate{}, err
+			}
+			break
+		}
+	case model.INTERMEDIATE:
+		{
+			parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial)
+			if err != nil {
+				return x509.Certificate{}, err
+			}
+
+			privateKey, err := d.certificateKeyStoreRepo.GetKey(parentSerial)
+			cert, certPEM, certPrivKeyPEM, err = GenerateSubordinateCa(subject, &parent, privateKey)
+			if err != nil {
+				return x509.Certificate{}, err
+			}
+		}
+	case model.END:
+		{
+			parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial)
+			if err != nil {
+				return x509.Certificate{}, err
+			}
+
+			privateKey, err := d.certificateKeyStoreRepo.GetKey(parentSerial)
+			cert, certPEM, certPrivKeyPEM, err = GenerateLeafCert(subject, &parent, privateKey)
+			if err != nil {
+				return x509.Certificate{}, err
+			}
+		}
 	}
 
 	//certResponse, err := d.certificateRepo.CreateCertificate(*certModel)
@@ -89,7 +113,7 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 
 	createCertificate, err := d.certificateKeyStoreRepo.CreateCertificate(*cert.SerialNumber, certPEM, certPrivKeyPEM)
 	if err != nil {
-		return err
+		return x509.Certificate{}, err
 	}
 
 	return createCertificate, nil
@@ -112,9 +136,13 @@ func (d *DefaultCertificateService) IsValid(id big.Int) (bool, error) {
 	return true, nil
 }
 
-// TODO TEST
 func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) bool {
-	if certificate.IsCA {
+	serial, err := utils.StringToBigInt(certificate.Issuer.SerialNumber)
+	if err != nil {
+		return false
+	}
+	// if it is root check if it is self-signed
+	if certificate.IsCA && serial.Cmp(certificate.SerialNumber) != 0 {
 		err := certificate.CheckSignatureFrom(&certificate)
 		if err != nil {
 			return false

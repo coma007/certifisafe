@@ -60,6 +60,7 @@ func main() {
 	router.GET("/api/certificate", certificateController.GetCertificates)
 	router.DELETE("/api/certificate/:id", certificateController.DeleteCertificate)
 	router.POST("/api/certificate", certificateController.CreateCertificate)
+	router.POST("/api/certificate/generate", certificateController.Generate)
 	router.GET("/api/certificate/:id/valid", certificateController.IsValid)
 
 	router.GET("/api/request", requestController.GetAllRequests)
@@ -145,8 +146,8 @@ func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db re
 		PublicKey: 0,
 	}
 
-	err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
-	err = db.CreateCertificate(*rootModel)
+	_, err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
+	_, err = db.CreateCertificate(*rootModel)
 	if err != nil {
 		panic(err)
 	}

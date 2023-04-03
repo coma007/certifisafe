@@ -4,6 +4,8 @@ import (
 	"certifisafe-back/model"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,8 +48,17 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 	//	http.Error(w, "error when decoding json", http.StatusInternalServerError)
 	//	return
 	//}
+	subject := pkix.Name{
+		Country:            nil,
+		Organization:       nil,
+		OrganizationalUnit: nil,
+		PostalCode:         nil,
+		CommonName:         "",
+		Names:              nil,
+	}
+	kind := model.INTERMEDIATE
 
-	certificate, err := ch.service.CreateCertificate(x509.Certificate{}, big.Int{})
+	certificate, err := ch.service.CreateCertificate(subject, big.Int{}, kind)
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -134,5 +145,38 @@ func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	//w.Write(result)
+	if result {
+		w.Write([]byte("true"))
+	} else {
+		w.Write([]byte("false"))
+	}
+}
+
+func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+
+	subject := pkix.Name{
+		Country:            nil,
+		Organization:       nil,
+		OrganizationalUnit: nil,
+		PostalCode:         nil,
+		CommonName:         "",
+		Names:              nil,
+	}
+	root, err := ch.service.CreateCertificate(subject, big.Int{}, model.ROOT)
+	intermidiate, err := ch.service.CreateCertificate(subject, *root.SerialNumber, model.INTERMEDIATE)
+	leaf, err := ch.service.CreateCertificate(subject, *intermidiate.SerialNumber, model.END)
+
+	if err != nil {
+		http.Error(w, err.Error(), getErrorStatus(err))
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode([]x509.Certificate{root, intermidiate, leaf})
+	if err != nil {
+		http.Error(w, "error when encoding json", http.StatusInternalServerError)
+		return
+	}
 }
