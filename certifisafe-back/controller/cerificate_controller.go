@@ -4,7 +4,6 @@ import (
 	"certifisafe-back/model"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"

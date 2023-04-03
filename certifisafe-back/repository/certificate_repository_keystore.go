@@ -75,7 +75,7 @@ func (i *InmemoryKeyStoreCertificateRepository) DeleteCertificate(id big.Int) er
 }
 
 func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer,
-	certPrivKeyPEM bytes.Buffer) (x509.Certificate, error) {
+	certPrivKeyPEM bytes.Buffer) error {
 	config := utils.Config()
 	password := []byte(config["keystore-password"])
 	defer utils.Zeroing(password)
@@ -92,7 +92,7 @@ func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber b
 	}
 	ks := keystore.New()
 	if err := ks.SetPrivateKeyEntry(fmt.Sprint(serialNumber), pkeIn, password); err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	writeKeyStore(ks, store, password)
@@ -101,16 +101,16 @@ func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber b
 	ks = readKeyStore(store, password)
 	certificate, err := ks.GetPrivateKeyEntry(fmt.Sprint(serialNumber), password)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	block, _ := pem.Decode(certificate.CertificateChain[0].Content)
-	cert, err := x509.ParseCertificate(block.Bytes)
+	_, err = x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
-	return *cert, nil
+	return nil
 }
 
 func (i *InmemoryKeyStoreCertificateRepository) GetKey(serial big.Int) (rsa.PrivateKey, error) {

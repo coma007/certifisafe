@@ -7,6 +7,7 @@ import (
 
 type CertificateDTO struct {
 	Serial      int64
+	Name        string
 	ValidFrom   time.Time
 	ValidTo     time.Time
 	IssuerName  string
@@ -21,6 +22,7 @@ func CertificateToDTO(cert *model.Certificate) *CertificateDTO {
 	}
 	certificate := CertificateDTO{
 		cert.Id,
+		cert.Name,
 		cert.ValidFrom,
 		cert.ValidTo,
 		// TODO make nested object user

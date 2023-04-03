@@ -1,17 +1,27 @@
 package main
 
 import (
+	"bytes"
 	"certifisafe-back/controller"
+	"certifisafe-back/model"
 	"certifisafe-back/repository"
 	"certifisafe-back/service"
 	"certifisafe-back/utils"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"database/sql"
+	"encoding/pem"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 	"log"
+	"math/big"
+	"net"
 	"net/http"
 	"os"
+	"time"
 )
 
 var auth service.IAuthService
@@ -30,8 +40,6 @@ func main() {
 			panic(err)
 		}
 	}(db)
-
-	runScript(db)
 
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
 	certificateKeyStoreInMemoryRepository := repository.NewInMemoryCertificateKeyStoreRepository(db)
@@ -61,17 +69,92 @@ func main() {
 	router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
 	router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
 
-	router.POST("/login", authController.Login)
-	router.GET("/validate", authController.Validate)
+	router.POST("/api/login", authController.Login)
+	router.POST("/api/register", authController.Register)
+
+	runScript(db, "utils/schema.sql")
+	createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)
+
+	runScript(db, "utils/data.sql")
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
 	log.Fatal(err)
-
 }
 
-func runScript(db *sql.DB) {
-	c, ioErr := os.ReadFile("utils/data.sql")
+func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db repository.ICertificateRepository) error {
+	config := utils.Config()
+	// CA, root
+	root := &x509.Certificate{
+		Version:      3,
+		SerialNumber: big.NewInt(1658),
+		Subject: pkix.Name{
+			CommonName:    config["name"],
+			Organization:  []string{config["organization"]},
+			Country:       []string{config["country"]},
+			StreetAddress: []string{config["street"]},
+			PostalCode:    []string{config["postal"]},
+		},
+		SignatureAlgorithm:    x509.SHA256WithRSA,
+		PublicKeyAlgorithm:    x509.RSA,
+		IPAddresses:           []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
+		SubjectKeyId:          []byte{1, 2, 3, 4, 6},
+		IsCA:                  true,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		BasicConstraintsValid: true,
+	}
+
+	// generate private key for CA (private key contains public)
+	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return err
+	}
+
+	// create CA root certificate
+	caBytes, err := x509.CreateCertificate(rand.Reader, root, root, &caPrivKey.PublicKey, caPrivKey)
+	if err != nil {
+		return err
+	}
+
+	// create encoder
+	rootPEM := new(bytes.Buffer)
+	pem.Encode(rootPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: caBytes,
+	})
+
+	// encode private key
+	rootPrivateKeyPEM := new(bytes.Buffer)
+	pem.Encode(rootPrivateKeyPEM, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
+	})
+
+	rootModel := &model.Certificate{
+		Id:        root.SerialNumber.Int64(),
+		Name:      root.Subject.CommonName,
+		Issuer:    nil,
+		Subject:   nil,
+		ValidFrom: time.Time{},
+		ValidTo:   time.Time{},
+		Status:    model.CertificateStatus(model.ACTIVE),
+		Type:      model.CertificateType(model.ROOT),
+		PublicKey: 0,
+	}
+
+	err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
+	err = db.CreateCertificate(*rootModel)
+	if err != nil {
+		panic(err)
+	}
+	return nil
+}
+
+func runScript(db *sql.DB, script string) {
+	c, ioErr := os.ReadFile(script)
 	utils.CheckError(ioErr)
 	commands := string(c)
 	_, err := db.Exec(commands)

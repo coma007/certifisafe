@@ -61,11 +61,12 @@ func (d *DefaultCertificateService) DeleteCertificate(id big.Int) error {
 
 	return nil
 }
+
 func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certificate, parentSerial big.Int) (x509.Certificate, error) {
 	// creating of leaf node
 	parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 	subject := pkix.Name{
 		Country:            nil,
@@ -78,7 +79,7 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 	privateKey, err := d.certificateKeyStoreRepo.GetKey(parentSerial)
 	cert, certPEM, certPrivKeyPEM, err := GenerateLeafCert(subject, &parent, privateKey)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	//certResponse, err := d.certificateRepo.CreateCertificate(*certModel)
@@ -88,7 +89,7 @@ func (d *DefaultCertificateService) CreateCertificate(certificate x509.Certifica
 
 	createCertificate, err := d.certificateKeyStoreRepo.CreateCertificate(*cert.SerialNumber, certPEM, certPrivKeyPEM)
 	if err != nil {
-		return x509.Certificate{}, err
+		return err
 	}
 
 	return createCertificate, nil
