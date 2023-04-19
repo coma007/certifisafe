@@ -4,9 +4,11 @@ import (
 	"certifisafe-back/model"
 	"certifisafe-back/repository"
 	"certifisafe-back/utils"
+	"crypto/rand"
 	"errors"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
+	"math/big"
 	"regexp"
 	"strings"
 	"time"
@@ -31,11 +33,13 @@ type IAuthService interface {
 }
 
 type AuthService struct {
-	repository repository.IUserRepository
+	repository                  repository.IUserRepository
+	verificationTokenCharacters string
 }
 
 func NewAuthService(repository repository.IUserRepository) *AuthService {
-	return &AuthService{repository: repository}
+	return &AuthService{repository: repository,
+		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
 }
 
 var jwtKey = []byte("secret-key")
@@ -80,7 +84,6 @@ func (s *AuthService) GetUserByEmail(email string) (model.User, error) {
 }
 
 func (s *AuthService) Register(user *model.User) (*model.User, error) {
-
 	_, err := s.validateRegistrationData(user)
 	if err != nil {
 		return &model.User{}, err
@@ -137,6 +140,23 @@ func (s *AuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, 
 		return nil, claims, false, err
 	}
 	return token, claims, false, nil
+}
+
+func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
+
+}
+
+func (s *AuthService) getVerificationToken() (string, error) {
+
+	verificationString := ""
+	for i := 0; i < 4; i++ {
+		nBig, err := rand.Int(rand.Reader, big.NewInt(int64(len(s.verificationTokenCharacters))))
+		if err != nil {
+			return "", err
+		}
+		verificationString += string(s.verificationTokenCharacters[nBig.Int64()])
+	}
+	return verificationString, nil
 }
 
 func (s *AuthService) hashToken(password string) ([]byte, error) {
