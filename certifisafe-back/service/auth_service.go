@@ -1,16 +1,21 @@
 package service
 
 import (
+	"bytes"
 	"certifisafe-back/model"
 	"certifisafe-back/repository"
 	"certifisafe-back/utils"
 	"crypto/rand"
 	"errors"
+	"fmt"
 	"github.com/golang-jwt/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"math/big"
+	"net/smtp"
+	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 	"time"
 	"unicode"
 )
@@ -30,15 +35,18 @@ type IAuthService interface {
 	Register(user *model.User) (*model.User, error)
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
 	GetUserByEmail(email string) (model.User, error)
+	RequestPasswordRecoveryToken(email string) error
 }
 
 type AuthService struct {
-	repository                  repository.IUserRepository
+	userRepository              repository.IUserRepository
+	passwordRecoveryRepository  repository.IPasswordRecoveryRepository
 	verificationTokenCharacters string
 }
 
-func NewAuthService(repository repository.IUserRepository) *AuthService {
-	return &AuthService{repository: repository,
+func NewAuthService(userRepository repository.IUserRepository, passwordRecoveryRepository repository.IPasswordRecoveryRepository) *AuthService {
+	return &AuthService{userRepository: userRepository,
+		passwordRecoveryRepository:  passwordRecoveryRepository,
 		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
 }
 
@@ -80,7 +88,7 @@ func (s *AuthService) Login(email string, password string) (string, error) {
 }
 
 func (s *AuthService) GetUserByEmail(email string) (model.User, error) {
-	return s.repository.GetUserByEmail(email)
+	return s.userRepository.GetUserByEmail(email)
 }
 
 func (s *AuthService) Register(user *model.User) (*model.User, error) {
@@ -88,13 +96,13 @@ func (s *AuthService) Register(user *model.User) (*model.User, error) {
 	if err != nil {
 		return &model.User{}, err
 	}
-	_, err = s.repository.GetUserByEmail(user.Email)
+	_, err = s.userRepository.GetUserByEmail(user.Email)
 	if err != nil {
 		if err == repository.ErrNoUserWithEmail {
 			passwordBytes, err := s.hashToken(user.Password)
 			utils.CheckError(err)
 			user.Password = string(passwordBytes)
-			createdUser, err := s.repository.CreateUser(0, *user)
+			createdUser, err := s.userRepository.CreateUser(0, *user)
 			if err != nil {
 				return &model.User{}, err
 			}
@@ -143,7 +151,82 @@ func (s *AuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, 
 }
 
 func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
+	from := "ftn.project.usertest@gmail.com"
+	password := "zmiwmhfweojejlqy"
 
+	user, err := s.userRepository.GetUserByEmail(email)
+	if err != nil {
+		return err
+	}
+
+	//request, err := s.passwordRecoveryRepository.GetRequestsByEmail(email)
+
+	//if err == nil {
+	//fmt.Println(request)
+	//err := s.passwordRecoveryRepository.DeleteRequest(int32(request.Id))
+	//if err != nil {
+	//	return err
+	//}
+	//}
+
+	to := []string{user.Email}
+
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	templateFile, _ := filepath.Abs("utils/passwordRecovery.html")
+	t, err := template.ParseFiles(templateFile)
+
+	if err != nil {
+		return err
+	}
+
+	var body bytes.Buffer
+	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%s\n\n", mimeHeaders)))
+
+	verificationToken, err := s.getVerificationToken()
+
+	if err != nil {
+		return err
+	}
+
+	t.Execute(&body, struct {
+		Name string
+		Code string
+	}{
+		Name: user.FirstName + " " + user.LastName,
+		Code: verificationToken,
+	})
+
+	token, err := s.hashToken(verificationToken)
+	if err != nil {
+		return err
+	}
+	_, err = s.passwordRecoveryRepository.CreateRequest(1, model.PasswordRecoveryRequest{Id: 1, Email: user.Email, Code: string(token)})
+	if err != nil {
+		return err
+	}
+
+	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	//req, err := s.passwordRecoveryRepository.GetRequestsByEmail(user.Email)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//for i := 0; i < len(req); i++ {
+	//	fmt.Println(*req[i])
+	//}
+	//fmt.Println("Email Sent!")
+
+	return nil
 }
 
 func (s *AuthService) getVerificationToken() (string, error) {

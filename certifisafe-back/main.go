@@ -42,7 +42,8 @@ func main() {
 	}(db)
 
 	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
-	auth = service.NewAuthService(userInMemoryRepository)
+	passwordRecoveryInMemoryRepository := repository.NewInMemoryPasswordRecoveryRepository(db)
+	auth = service.NewAuthService(userInMemoryRepository, passwordRecoveryInMemoryRepository)
 	authController := controller.NewAuthHandler(auth)
 
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
@@ -72,6 +73,7 @@ func main() {
 
 	router.POST("/api/login", authController.Login)
 	router.POST("/api/register", authController.Register)
+	router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
 
 	runScript(db, "utils/schema.sql")
 	createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)

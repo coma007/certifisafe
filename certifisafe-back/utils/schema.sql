@@ -4,6 +4,7 @@ SELECT 'CREATE DATABASE certifisafe'
 DROP TABLE IF EXISTS requests;
 DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS passwordRecovery;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -13,6 +14,12 @@ CREATE TABLE users (
     last_name VARCHAR(30),
     phone VARCHAR(30),
     is_admin BOOLEAN
+);
+
+CREATE TABLE passwordRecovery (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(50),
+    code VARCHAR(100)
 );
 
 CREATE TABLE certificates (
