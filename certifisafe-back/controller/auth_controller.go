@@ -83,6 +83,22 @@ func (ah *AuthHandler) PasswordRecoveryRequest(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (ah *AuthHandler) PasswordRecovery(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var request dto.PasswordResetDTO
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, "error when decoding json", http.StatusInternalServerError)
+		return
+	}
+
+	err = ah.service.PasswordRecovery(dto.PasswordResetDTOtoModel(&request))
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func getAuthErrorStatus(err error) int {
 	if errors.Is(err, service.ErrBadCredentials) ||
 		errors.Is(err, service.ErrTakenEmail) ||

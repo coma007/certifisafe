@@ -36,6 +36,7 @@ type IAuthService interface {
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
 	GetUserByEmail(email string) (model.User, error)
 	RequestPasswordRecoveryToken(email string) error
+	PasswordRecovery(request *model.PasswordRecovery) error
 }
 
 type AuthService struct {
@@ -201,11 +202,11 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 		Code: verificationToken,
 	})
 
-	token, err := s.hashToken(verificationToken)
-	if err != nil {
-		return err
-	}
-	_, err = s.passwordRecoveryRepository.CreateRequest(1, model.PasswordRecoveryRequest{Id: 1, Email: user.Email, Code: string(token)})
+	//token, err := s.hashToken(verificationToken)
+	//if err != nil {
+	//	return err
+	//}
+	_, err = s.passwordRecoveryRepository.CreateRequest(1, model.PasswordRecoveryRequest{Id: 1, Email: user.Email, Code: string(verificationToken)})
 	if err != nil {
 		return err
 	}
@@ -226,6 +227,27 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 	//}
 	//fmt.Println("Email Sent!")
 
+	return nil
+}
+
+func (s *AuthService) PasswordRecovery(request *model.PasswordRecovery) error {
+	//token, err := s.hashToken(request.Code)
+	//if err != nil {
+	//	return err
+	//}
+	r, err := s.passwordRecoveryRepository.GetRequestByCode(string(request.Code))
+	if err != nil {
+		return err
+	}
+
+	user, err := s.userRepository.GetUserByEmail(r.Email)
+	//verify password
+	hashedPassword, err := s.hashToken(request.NewPassword)
+	if err != nil {
+		return err
+	}
+	user.Password = string(hashedPassword)
+	s.userRepository.UpdateUser(int32(user.Id), user)
 	return nil
 }
 

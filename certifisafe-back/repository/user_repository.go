@@ -58,7 +58,7 @@ func (i *InMemoryUserRepository) GetUser(id int32) (model.User, error) {
 
 func (i *InMemoryUserRepository) UpdateUser(id int32, user model.User) (model.User, error) {
 	stmt, err := i.DB.Prepare("UPDATE users" +
-		" SET email=$1, password=$2, first_name=$3, last_name=$4, phone=$5, is_admin=$6)" +
+		" SET email=$1, password=$2, first_name=$3, last_name=$4, phone=$5, is_admin=$6" +
 		" WHERE id=$7")
 
 	utils.CheckError(err)

@@ -5,3 +5,8 @@ type PasswordRecoveryRequest struct {
 	Email string
 	Code  string
 }
+
+type PasswordRecovery struct {
+	Code        string
+	NewPassword string
+}
