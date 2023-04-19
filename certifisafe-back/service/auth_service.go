@@ -88,7 +88,7 @@ func (s *AuthService) Register(user *model.User) (*model.User, error) {
 	_, err = s.repository.GetUserByEmail(user.Email)
 	if err != nil {
 		if err == repository.ErrNoUserWithEmail {
-			passwordBytes, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+			passwordBytes, err := s.hashToken(user.Password)
 			utils.CheckError(err)
 			user.Password = string(passwordBytes)
 			createdUser, err := s.repository.CreateUser(0, *user)
@@ -137,6 +137,11 @@ func (s *AuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, 
 		return nil, claims, false, err
 	}
 	return token, claims, false, nil
+}
+
+func (s *AuthService) hashToken(password string) ([]byte, error) {
+	passwordBytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	return passwordBytes, err
 }
 
 func (s *AuthService) validateRegistrationData(u *model.User) (bool, error) {
