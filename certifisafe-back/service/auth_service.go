@@ -43,12 +43,15 @@ type IAuthService interface {
 type AuthService struct {
 	userRepository              repository.IUserRepository
 	passwordRecoveryRepository  repository.IPasswordRecoveryRepository
+	verificationRepository      repository.IVerificationRepository
 	verificationTokenCharacters string
 }
 
-func NewAuthService(userRepository repository.IUserRepository, passwordRecoveryRepository repository.IPasswordRecoveryRepository) *AuthService {
+func NewAuthService(userRepository repository.IUserRepository, passwordRecoveryRepository repository.IPasswordRecoveryRepository,
+	verificationRepository repository.IVerificationRepository) *AuthService {
 	return &AuthService{userRepository: userRepository,
 		passwordRecoveryRepository:  passwordRecoveryRepository,
+		verificationRepository:      verificationRepository,
 		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
 }
 
@@ -94,6 +97,7 @@ func (s *AuthService) GetUserByEmail(email string) (model.User, error) {
 }
 
 func (s *AuthService) Register(user *model.User) (*model.User, error) {
+	user.IsActive = false
 	_, err := s.validateRegistrationData(user)
 	if err != nil {
 		return &model.User{}, err
@@ -108,6 +112,10 @@ func (s *AuthService) Register(user *model.User) (*model.User, error) {
 			if err != nil {
 				return &model.User{}, err
 			}
+
+			//add phone option
+			s.sendVerification(user)
+
 			return &createdUser, nil
 		} else {
 			return &model.User{}, ErrTakenEmail
@@ -171,7 +179,7 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%s\n\n", mimeHeaders)))
 
-	verificationToken, err := s.getVerificationToken(4)
+	verificationToken, err := s.getVerificationToken(4, false)
 
 	if err != nil {
 		return err
@@ -190,9 +198,9 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 		return err
 	}
 
-	err2 := s.sendMail(to, body)
-	if err2 != nil {
-		return err2
+	err = s.sendMail(to, body)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -240,7 +248,39 @@ func (s *AuthService) sendMail(to []string, body bytes.Buffer) error {
 	return nil
 }
 
-func (s *AuthService) getVerificationToken(length int) (string, error) {
+func (s *AuthService) sendVerification(user *model.User) error {
+	to := []string{user.Email}
+
+	templateFile, _ := filepath.Abs("utils/emailVerification.html")
+	t, err := template.ParseFiles(templateFile)
+
+	if err != nil {
+		return err
+	}
+
+	var body bytes.Buffer
+	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%s\n\n", mimeHeaders)))
+
+	verificationToken, err := s.getVerificationToken(10, true)
+
+	if err != nil {
+		return err
+	}
+
+	t.Execute(&body, struct {
+		Name string
+		Code string
+	}{
+		Name: user.FirstName + " " + user.LastName,
+		Code: verificationToken,
+	})
+
+	s.sendMail(to, body)
+	return nil
+}
+
+func (s *AuthService) getVerificationToken(length int, verification bool) (string, error) {
 
 	verificationString := ""
 	for true {
@@ -251,11 +291,15 @@ func (s *AuthService) getVerificationToken(length int) (string, error) {
 			}
 			verificationString += string(s.verificationTokenCharacters[nBig.Int64()])
 		}
-		_, err := s.passwordRecoveryRepository.GetRequestByCode(verificationString)
+		var err error
+		if verification {
+			_, err = s.verificationRepository.GetVerificationByCode(verificationString)
+		} else {
+			_, err = s.passwordRecoveryRepository.GetRequestByCode(verificationString)
+		}
 		if err != nil {
 			break
 		} else {
-			fmt.Println("kukuu")
 			verificationString = ""
 		}
 	}
@@ -268,7 +312,7 @@ func (s *AuthService) hashToken(password string) ([]byte, error) {
 }
 
 func (s *AuthService) validateRegistrationData(u *model.User) (bool, error) {
-	match, err := regexp.Match("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", []byte(u.Email))
+	match, err := regexp.Match("^[\\w-\\+\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", []byte(u.Email))
 	if err != nil || !match || u.Email == "" {
 		return false, ErrWrongEmailFormat
 	} else if u.FirstName == "" || u.LastName == "" {

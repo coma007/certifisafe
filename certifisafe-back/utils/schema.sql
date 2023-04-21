@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS requests;
 DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS passwordRecovery;
+DROP TABLE IF EXISTS verifications;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -13,7 +14,8 @@ CREATE TABLE users (
     first_name VARCHAR(30),
     last_name VARCHAR(30),
     phone VARCHAR(30),
-    is_admin BOOLEAN
+    is_admin BOOLEAN,
+    is_active BOOLEAN
 );
 
 CREATE TABLE passwordRecovery (
@@ -21,6 +23,12 @@ CREATE TABLE passwordRecovery (
     email VARCHAR(50),
     code VARCHAR(100),
     is_used BOOLEAN
+);
+
+CREATE TABLE verifications (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(50),
+      code VARCHAR(100)
 );
 
 CREATE TABLE certificates (

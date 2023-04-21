@@ -43,7 +43,8 @@ func main() {
 
 	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
 	passwordRecoveryInMemoryRepository := repository.NewInMemoryPasswordRecoveryRepository(db)
-	auth = service.NewAuthService(userInMemoryRepository, passwordRecoveryInMemoryRepository)
+	verificationInMemoryRepository := repository.NewInMemoryVerificationRepository(db)
+	auth = service.NewAuthService(userInMemoryRepository, passwordRecoveryInMemoryRepository, verificationInMemoryRepository)
 	authController := controller.NewAuthHandler(auth)
 
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)

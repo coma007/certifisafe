@@ -43,7 +43,7 @@ func (i *InMemoryUserRepository) GetUser(id int32) (model.User, error) {
 	utils.CheckError(err)
 
 	var u model.User
-	err = stmt.QueryRow(id).Scan(u.Id, u.Email, u.Password, u.FirstName, u.LastName, u.Phone, u.IsAdmin)
+	err = stmt.QueryRow(id).Scan(u.Id, u.Email, u.Password, u.FirstName, u.LastName, u.Phone, u.IsAdmin, u.IsActive)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -58,12 +58,12 @@ func (i *InMemoryUserRepository) GetUser(id int32) (model.User, error) {
 
 func (i *InMemoryUserRepository) UpdateUser(id int32, user model.User) (model.User, error) {
 	stmt, err := i.DB.Prepare("UPDATE users" +
-		" SET email=$1, password=$2, first_name=$3, last_name=$4, phone=$5, is_admin=$6" +
-		" WHERE id=$7")
+		" SET email=$1, password=$2, first_name=$3, last_name=$4, phone=$5, is_admin=$6, is_active=$7" +
+		" WHERE id=$8")
 
 	utils.CheckError(err)
 
-	_, err = stmt.Exec(user.Email, user.Password, user.FirstName, user.LastName, user.Phone, user.IsAdmin, user.Id)
+	_, err = stmt.Exec(user.Email, user.Password, user.FirstName, user.LastName, user.Phone, user.IsAdmin, user.IsActive, user.Id)
 
 	utils.CheckError(err)
 	return user, nil
@@ -78,12 +78,12 @@ func (i *InMemoryUserRepository) DeleteUser(id int32) error {
 }
 
 func (i *InMemoryUserRepository) CreateUser(id int32, user model.User) (model.User, error) {
-	stmt, err := i.DB.Prepare("INSERT INTO users(email, password, first_name, last_name, phone, is_admin)" +
-		" VALUES($1, $2, $3, $4, $5, $6)")
+	stmt, err := i.DB.Prepare("INSERT INTO users(email, password, first_name, last_name, phone, is_admin, is_active)" +
+		" VALUES($1, $2, $3, $4, $5, $6, $7)")
 
 	utils.CheckError(err)
 
-	_, err = stmt.Exec(user.Email, user.Password, user.FirstName, user.LastName, user.Phone, user.IsAdmin)
+	_, err = stmt.Exec(user.Email, user.Password, user.FirstName, user.LastName, user.Phone, user.IsAdmin, user.IsActive)
 
 	utils.CheckError(err)
 	return user, nil
@@ -95,7 +95,7 @@ func (i *InMemoryUserRepository) GetUserByEmail(email string) (model.User, error
 	utils.CheckError(err)
 
 	var u model.User
-	err = stmt.QueryRow(email).Scan(&u.Id, &u.Email, &u.Password, &u.FirstName, &u.LastName, &u.Phone, &u.IsAdmin)
+	err = stmt.QueryRow(email).Scan(&u.Id, &u.Email, &u.Password, &u.FirstName, &u.LastName, &u.Phone, &u.IsAdmin, &u.IsActive)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
