@@ -171,7 +171,7 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
 	body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%s\n\n", mimeHeaders)))
 
-	verificationToken, err := s.getVerificationToken()
+	verificationToken, err := s.getVerificationToken(4)
 
 	if err != nil {
 		return err
@@ -194,19 +194,6 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 	if err2 != nil {
 		return err2
 	}
-	return nil
-}
-
-func (s *AuthService) sendMail(to []string, body bytes.Buffer) error {
-	from := "ftn.project.usertest@gmail.com"
-	password := "zmiwmhfweojejlqy"
-
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
-
-	auth := smtp.PlainAuth("", from, password, smtpHost)
-
-	go smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
 	return nil
 }
 
@@ -240,11 +227,24 @@ func (s *AuthService) PasswordRecovery(request *model.PasswordRecovery) error {
 	return nil
 }
 
-func (s *AuthService) getVerificationToken() (string, error) {
+func (s *AuthService) sendMail(to []string, body bytes.Buffer) error {
+	from := "ftn.project.usertest@gmail.com"
+	password := "zmiwmhfweojejlqy"
+
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	go smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
+	return nil
+}
+
+func (s *AuthService) getVerificationToken(length int) (string, error) {
 
 	verificationString := ""
 	for true {
-		for i := 0; i < 4; i++ {
+		for i := 0; i < length; i++ {
 			nBig, err := rand.Int(rand.Reader, big.NewInt(int64(len(s.verificationTokenCharacters))))
 			if err != nil {
 				return "", err
