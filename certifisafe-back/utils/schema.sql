@@ -19,7 +19,8 @@ CREATE TABLE users (
 CREATE TABLE passwordRecovery (
     id SERIAL PRIMARY KEY,
     email VARCHAR(50),
-    code VARCHAR(100)
+    code VARCHAR(100),
+    is_used BOOLEAN
 );
 
 CREATE TABLE certificates (

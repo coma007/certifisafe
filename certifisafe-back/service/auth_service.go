@@ -27,6 +27,7 @@ var (
 	ErrEmptyName           = errors.New("name cannot be empty")
 	ErrWrongPhoneFormat    = errors.New("not valid phone")
 	ErrWrongPasswordFormat = errors.New("not valid password")
+	ErrCodeUsed            = errors.New("recovery code is used")
 )
 
 type IAuthService interface {
@@ -152,30 +153,12 @@ func (s *AuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, 
 }
 
 func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
-	from := "ftn.project.usertest@gmail.com"
-	password := "zmiwmhfweojejlqy"
-
 	user, err := s.userRepository.GetUserByEmail(email)
 	if err != nil {
 		return err
 	}
 
-	//request, err := s.passwordRecoveryRepository.GetRequestsByEmail(email)
-
-	//if err == nil {
-	//fmt.Println(request)
-	//err := s.passwordRecoveryRepository.DeleteRequest(int32(request.Id))
-	//if err != nil {
-	//	return err
-	//}
-	//}
-
 	to := []string{user.Email}
-
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
-
-	auth := smtp.PlainAuth("", from, password, smtpHost)
 
 	templateFile, _ := filepath.Abs("utils/passwordRecovery.html")
 	t, err := template.ParseFiles(templateFile)
@@ -202,31 +185,28 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 		Code: verificationToken,
 	})
 
-	//token, err := s.hashToken(verificationToken)
-	//if err != nil {
-	//	return err
-	//}
 	_, err = s.passwordRecoveryRepository.CreateRequest(1, model.PasswordRecoveryRequest{Id: 1, Email: user.Email, Code: string(verificationToken)})
 	if err != nil {
 		return err
 	}
 
-	err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
-	if err != nil {
-		fmt.Println(err)
-		return err
+	err2 := s.sendMail(to, body)
+	if err2 != nil {
+		return err2
 	}
+	return nil
+}
 
-	//req, err := s.passwordRecoveryRepository.GetRequestsByEmail(user.Email)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//for i := 0; i < len(req); i++ {
-	//	fmt.Println(*req[i])
-	//}
-	//fmt.Println("Email Sent!")
+func (s *AuthService) sendMail(to []string, body bytes.Buffer) error {
+	from := "ftn.project.usertest@gmail.com"
+	password := "zmiwmhfweojejlqy"
 
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	go smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
 	return nil
 }
 
@@ -239,27 +219,45 @@ func (s *AuthService) PasswordRecovery(request *model.PasswordRecovery) error {
 	if err != nil {
 		return err
 	}
+	if r.IsUsed {
+		return ErrCodeUsed
+	}
 
 	user, err := s.userRepository.GetUserByEmail(r.Email)
+
 	//verify password
+	if !s.verifyPassword(request.NewPassword) {
+		return ErrWrongPasswordFormat
+	}
+
 	hashedPassword, err := s.hashToken(request.NewPassword)
 	if err != nil {
 		return err
 	}
 	user.Password = string(hashedPassword)
 	s.userRepository.UpdateUser(int32(user.Id), user)
+	s.passwordRecoveryRepository.UseRequestsForEmail(user.Email)
 	return nil
 }
 
 func (s *AuthService) getVerificationToken() (string, error) {
 
 	verificationString := ""
-	for i := 0; i < 4; i++ {
-		nBig, err := rand.Int(rand.Reader, big.NewInt(int64(len(s.verificationTokenCharacters))))
-		if err != nil {
-			return "", err
+	for true {
+		for i := 0; i < 4; i++ {
+			nBig, err := rand.Int(rand.Reader, big.NewInt(int64(len(s.verificationTokenCharacters))))
+			if err != nil {
+				return "", err
+			}
+			verificationString += string(s.verificationTokenCharacters[nBig.Int64()])
 		}
-		verificationString += string(s.verificationTokenCharacters[nBig.Int64()])
+		_, err := s.passwordRecoveryRepository.GetRequestByCode(verificationString)
+		if err != nil {
+			break
+		} else {
+			fmt.Println("kukuu")
+			verificationString = ""
+		}
 	}
 	return verificationString, nil
 }

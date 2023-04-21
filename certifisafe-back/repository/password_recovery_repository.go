@@ -16,9 +16,11 @@ var (
 type IPasswordRecoveryRepository interface {
 	GetRequest(id int32) (model.PasswordRecoveryRequest, error)
 	DeleteRequest(id int32) error
+	UseRequestsForEmail(email string) error
 	CreateRequest(id int32, user model.PasswordRecoveryRequest) (model.PasswordRecoveryRequest, error)
 	GetRequestByCode(code string) (model.PasswordRecoveryRequest, error)
 	GetRequestsByEmail(email string) ([]*model.PasswordRecoveryRequest, error)
+	UpdateRequest(id int32, req model.PasswordRecoveryRequest) (model.PasswordRecoveryRequest, error)
 }
 
 type InMemoryPasswordRecoveryRepository struct {
@@ -45,7 +47,7 @@ func (i *InMemoryPasswordRecoveryRepository) GetRequest(id int32) (model.Passwor
 	utils.CheckError(err)
 
 	var r model.PasswordRecoveryRequest
-	err = stmt.QueryRow(id).Scan(r.Id, r.Email, r.Code)
+	err = stmt.QueryRow(id).Scan(r.Id, r.Email, r.Code, r.IsUsed)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -58,6 +60,19 @@ func (i *InMemoryPasswordRecoveryRepository) GetRequest(id int32) (model.Passwor
 	return r, nil
 }
 
+func (i *InMemoryPasswordRecoveryRepository) UpdateRequest(id int32, req model.PasswordRecoveryRequest) (model.PasswordRecoveryRequest, error) {
+	stmt, err := i.DB.Prepare("UPDATE passwordRecovery" +
+		" SET email=$1, code=$2, is_used=$3" +
+		" WHERE id=$4")
+
+	utils.CheckError(err)
+
+	_, err = stmt.Exec(req.Email, req.Code, req.IsUsed, id)
+
+	utils.CheckError(err)
+	return req, nil
+}
+
 func (i *InMemoryPasswordRecoveryRepository) DeleteRequest(id int32) error {
 	stmt, err := i.DB.Prepare("DELETE FROM passwordRecovery WHERE id=$1")
 	utils.CheckError(err)
@@ -67,8 +82,8 @@ func (i *InMemoryPasswordRecoveryRepository) DeleteRequest(id int32) error {
 }
 
 func (i *InMemoryPasswordRecoveryRepository) CreateRequest(id int32, user model.PasswordRecoveryRequest) (model.PasswordRecoveryRequest, error) {
-	stmt, err := i.DB.Prepare("INSERT INTO passwordRecovery(email, code)" +
-		" VALUES($1, $2)")
+	stmt, err := i.DB.Prepare("INSERT INTO passwordRecovery(email, code, is_used)" +
+		" VALUES($1, $2, false)")
 
 	utils.CheckError(err)
 
@@ -83,8 +98,8 @@ func (i *InMemoryPasswordRecoveryRepository) GetRequestByCode(code string) (mode
 
 	utils.CheckError(err)
 
-	var u model.PasswordRecoveryRequest
-	err = stmt.QueryRow(code).Scan(&u.Id, &u.Email, &u.Code)
+	var r model.PasswordRecoveryRequest
+	err = stmt.QueryRow(code).Scan(&r.Id, &r.Email, &r.Code, &r.IsUsed)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -93,11 +108,11 @@ func (i *InMemoryPasswordRecoveryRepository) GetRequestByCode(code string) (mode
 		return model.PasswordRecoveryRequest{}, err
 
 	}
-	return u, nil
+	return r, nil
 }
 
 func (i *InMemoryPasswordRecoveryRepository) GetRequestsByEmail(email string) ([]*model.PasswordRecoveryRequest, error) {
-	stmt, err := i.DB.Prepare("SELECT id, email, code FROM passwordRecovery WHERE email=$1")
+	stmt, err := i.DB.Prepare("SELECT id, email, code, is_used FROM passwordRecovery WHERE email=$1")
 
 	utils.CheckError(err)
 
@@ -112,7 +127,7 @@ func (i *InMemoryPasswordRecoveryRepository) GetRequestsByEmail(email string) ([
 
 	for rows.Next() {
 		var r model.PasswordRecoveryRequest
-		err := rows.Scan(&r.Id, &r.Email, &r.Code)
+		err := rows.Scan(&r.Id, &r.Email, &r.Code, &r.IsUsed)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -126,4 +141,22 @@ func (i *InMemoryPasswordRecoveryRepository) GetRequestsByEmail(email string) ([
 	}
 
 	return requests, nil
+}
+
+func (i *InMemoryPasswordRecoveryRepository) UseRequestsForEmail(email string) error {
+	requests, err := i.GetRequestsByEmail(email)
+	if err != nil {
+		return err
+	}
+	for j := 0; j < len(requests); j++ {
+		if requests[j].IsUsed {
+			continue
+		}
+		requests[j].IsUsed = true
+		_, err = i.UpdateRequest(int32(requests[j].Id), *requests[j])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

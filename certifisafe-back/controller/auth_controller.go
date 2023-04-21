@@ -105,7 +105,8 @@ func getAuthErrorStatus(err error) int {
 		errors.Is(err, service.ErrWrongEmailFormat) ||
 		errors.Is(err, service.ErrEmptyName) ||
 		errors.Is(err, service.ErrWrongPhoneFormat) ||
-		errors.Is(err, service.ErrWrongPasswordFormat) {
+		errors.Is(err, service.ErrWrongPasswordFormat) ||
+		errors.Is(err, service.ErrCodeUsed) {
 		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError
