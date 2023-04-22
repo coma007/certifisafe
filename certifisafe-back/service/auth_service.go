@@ -22,18 +22,21 @@ import (
 
 var (
 	ErrBadCredentials      = errors.New("bad username or password")
+	ErrNotActivated        = errors.New("account is not activated")
 	ErrTakenEmail          = errors.New("email already taken")
 	ErrWrongEmailFormat    = errors.New("not valid email")
 	ErrEmptyName           = errors.New("name cannot be empty")
 	ErrWrongPhoneFormat    = errors.New("not valid phone")
 	ErrWrongPasswordFormat = errors.New("not valid password")
-	ErrCodeUsed            = errors.New("recovery code is used")
+	ErrCodeUsed            = errors.New("verification code is used")
+	ErrCodeNotFound        = errors.New("verification code cannot be found")
 )
 
 type IAuthService interface {
 	Login(email string, password string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
 	Register(user *model.User) (*model.User, error)
+	VerifyEmail(verificationCode string) error
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
 	GetUserByEmail(email string) (model.User, error)
 	RequestPasswordRecoveryToken(email string) error
@@ -73,6 +76,9 @@ func (s *AuthService) Login(email string, password string) (string, error) {
 	}
 
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil {
+		if !user.IsActive {
+			return "", ErrNotActivated
+		}
 		expirationTime := time.Now().Add(time.Minute * 60)
 
 		claims := &Claims{
@@ -235,6 +241,23 @@ func (s *AuthService) PasswordRecovery(request *model.PasswordRecovery) error {
 	return nil
 }
 
+func (s *AuthService) VerifyEmail(verificationCode string) error {
+	verification, err := s.verificationRepository.GetVerificationByCode(verificationCode)
+	if err != nil {
+		return ErrCodeNotFound
+	}
+	user, err := s.userRepository.GetUserByEmail(verification.Email)
+	if err != nil {
+		return err
+	}
+	user.IsActive = true
+	_, err = s.userRepository.UpdateUser(int32(user.Id), user)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *AuthService) sendMail(to []string, body bytes.Buffer) error {
 	from := "ftn.project.usertest@gmail.com"
 	password := "zmiwmhfweojejlqy"
@@ -263,6 +286,15 @@ func (s *AuthService) sendVerification(user *model.User) error {
 	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%s\n\n", mimeHeaders)))
 
 	verificationToken, err := s.getVerificationToken(10, true)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.verificationRepository.CreateVerification(0, model.Verification{
+		Id:    0,
+		Email: user.Email,
+		Code:  verificationToken,
+	})
 
 	if err != nil {
 		return err

@@ -74,6 +74,7 @@ func main() {
 
 	router.POST("/api/login", authController.Login)
 	router.POST("/api/register", authController.Register)
+	router.GET("/api/verify-email/:verificationCode", authController.VerifyEmail)
 	router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
 	router.POST("/api/password-recovery", authController.PasswordRecovery)
 
