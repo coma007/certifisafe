@@ -77,9 +77,9 @@ func main() {
 	router.POST("/api/password-recovery", authController.PasswordRecovery)
 
 	runScript(db, "utils/schema.sql")
-	createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)
+	//createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)
 
-	runScript(db, "utils/data.sql")
+	//runScript(db, "utils/data.sql")
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
@@ -138,7 +138,7 @@ func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db re
 	})
 
 	rootModel := &model.Certificate{
-		Id:        root.SerialNumber.Int64(),
+		Id:        root.SerialNumber.String(),
 		Name:      root.Subject.CommonName,
 		Issuer:    nil,
 		Subject:   nil,

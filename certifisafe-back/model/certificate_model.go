@@ -5,7 +5,7 @@ import (
 )
 
 type Certificate struct {
-	Id        int64
+	Id        string
 	Name      string
 	Issuer    *User
 	Subject   *User

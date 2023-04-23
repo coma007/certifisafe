@@ -7,7 +7,7 @@ import (
 )
 
 type CertificateDTO struct {
-	Serial      int64
+	Serial      string
 	Name        string
 	ValidFrom   time.Time
 	ValidTo     time.Time
@@ -57,7 +57,7 @@ func X509CertificateToCertificateDTO(cert *x509.Certificate) *CertificateDTO {
 		return nil
 	}
 	certificate := CertificateDTO{
-		Serial:    cert.SerialNumber.Int64(),
+		Serial:    cert.SerialNumber.String(),
 		Name:      cert.Subject.CommonName,
 		ValidFrom: cert.NotBefore,
 		ValidTo:   cert.NotAfter,

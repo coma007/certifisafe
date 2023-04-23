@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"math/big"
 	"net/http"
 	"time"
 )
@@ -147,22 +148,33 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	rootDTO := &dto.NewRequestDTO{
 		ParentCertificate: nil,
 		Certificate: &dto.CertificateDTO{
-			Serial:      123123,
+			Serial:      "",
 			Name:        "",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
 			IssuerName:  "",
 			SubjectName: "",
 			Status:      "",
-			Type:        "INTERMEDIATE",
+			Type:        "ROOT",
 		},
 		Datetime: time.Time{},
+	}
+
+	root, err := ch.service.CreateCertificate(*rootDTO)
+	if err != nil {
+		panic(err)
+	}
+	rootSerial := new(big.Int)
+	rootSerial.SetString(root.Serial, 10)
+	rootCreated, err := ch.service.GetCertificate(*rootSerial)
+	if err != nil {
+		panic(err)
 	}
 
 	intermediateDTO := &dto.NewRequestDTO{
-		ParentCertificate: nil,
+		ParentCertificate: dto.CertificateToDTO(&rootCreated),
 		Certificate: &dto.CertificateDTO{
-			Serial:      6546456,
+			Serial:      "",
 			Name:        "",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
@@ -173,11 +185,12 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 		},
 		Datetime: time.Time{},
 	}
+	intermidiate, err := ch.service.CreateCertificate(*intermediateDTO)
 
 	leafDTO := &dto.NewRequestDTO{
-		ParentCertificate: nil,
+		ParentCertificate: &intermidiate,
 		Certificate: &dto.CertificateDTO{
-			Serial:      87846345,
+			Serial:      "",
 			Name:        "",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
@@ -188,8 +201,7 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 		},
 		Datetime: time.Time{},
 	}
-	root, err := ch.service.CreateCertificate(*rootDTO)
-	intermidiate, err := ch.service.CreateCertificate(*intermediateDTO)
+
 	leaf, err := ch.service.CreateCertificate(*leafDTO)
 
 	if err != nil {
