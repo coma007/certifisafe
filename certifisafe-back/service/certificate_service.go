@@ -80,7 +80,7 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		StreetAddress: []string{cert.Certificate.Name},
 		PostalCode:    []string{cert.Certificate.Name},
 	}
-	var parent *x509.Certificate = nil
+	var parent x509.Certificate
 
 	switch dto.StringToType(cert.Certificate.Type) {
 	case model.ROOT:
@@ -93,13 +93,13 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		{
 			parentSerial := new(big.Int)
 			parentSerial.SetString(cert.ParentCertificate.Serial, 10)
-			*parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
+			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}
 
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, &parent, privateKey)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}
@@ -108,13 +108,13 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		{
 			parentSerial := new(big.Int)
 			parentSerial.SetString(cert.ParentCertificate.Serial, 10)
-			*parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
+			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}
 
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, &parent, privateKey)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}

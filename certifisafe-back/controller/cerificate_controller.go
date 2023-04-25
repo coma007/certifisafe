@@ -149,7 +149,7 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 		ParentCertificate: nil,
 		Certificate: &dto.CertificateDTO{
 			Serial:      "",
-			Name:        "",
+			Name:        "Root",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
 			IssuerName:  "",
@@ -175,7 +175,7 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 		ParentCertificate: &root,
 		Certificate: &dto.CertificateDTO{
 			Serial:      "",
-			Name:        "",
+			Name:        "SUB",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
 			IssuerName:  "",
@@ -191,13 +191,13 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 		ParentCertificate: &intermidiate,
 		Certificate: &dto.CertificateDTO{
 			Serial:      "",
-			Name:        "",
+			Name:        "LEAF",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
 			IssuerName:  "",
 			SubjectName: "",
 			Status:      "",
-			Type:        "LEAF",
+			Type:        "END",
 		},
 		Datetime: time.Time{},
 	}

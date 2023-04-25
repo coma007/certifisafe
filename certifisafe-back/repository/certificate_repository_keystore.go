@@ -21,7 +21,7 @@ type IKeyStoreCertificateRepository interface {
 	GetCertificate(id big.Int) (x509.Certificate, error)
 	DeleteCertificate(id big.Int) error
 	CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
-	GetPrivateKey(serial big.Int) (rsa.PrivateKey, error)
+	GetPrivateKey(serial big.Int) (*rsa.PrivateKey, error)
 }
 
 func NewInMemoryCertificateKeyStoreRepository(db *sql.DB) *InmemoryKeyStoreCertificateRepository {
@@ -62,16 +62,16 @@ func (i *InmemoryKeyStoreCertificateRepository) DeleteCertificate(id big.Int) er
 	//return ErrMovieNotFound
 }
 
-func (i *InmemoryKeyStoreCertificateRepository) GetPrivateKey(serial big.Int) (rsa.PrivateKey, error) {
+func (i *InmemoryKeyStoreCertificateRepository) GetPrivateKey(serial big.Int) (*rsa.PrivateKey, error) {
 	keyIn, err := os.ReadFile(getPrivateName(serial))
 
 	block, _ := pem.Decode(keyIn)
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return rsa.PrivateKey{}, err
+		return &rsa.PrivateKey{}, err
 	}
 
-	return *privateKey, nil
+	return privateKey, nil
 }
 
 func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber big.Int, certPEM bytes.Buffer,
