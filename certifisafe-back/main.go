@@ -43,7 +43,8 @@ func main() {
 
 	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
 	passwordRecoveryInMemoryRepository := repository.NewInMemoryPasswordRecoveryRepository(db)
-	auth = service.NewAuthService(userInMemoryRepository, passwordRecoveryInMemoryRepository)
+	verificationInMemoryRepository := repository.NewInMemoryVerificationRepository(db)
+	auth = service.NewAuthService(userInMemoryRepository, passwordRecoveryInMemoryRepository, verificationInMemoryRepository)
 	authController := controller.NewAuthHandler(auth)
 
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
@@ -73,6 +74,7 @@ func main() {
 
 	router.POST("/api/login", authController.Login)
 	router.POST("/api/register", authController.Register)
+	router.GET("/api/verify-email/:verificationCode", authController.VerifyEmail)
 	router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
 	router.POST("/api/password-recovery", authController.PasswordRecovery)
 
