@@ -47,7 +47,6 @@ func CertificateDTOtoModel(cert *CertificateDTO) *model.Certificate {
 		ValidTo:   cert.ValidTo,
 		Status:    StringToStatus(cert.Status),
 		Type:      StringToType(cert.Type),
-		PublicKey: 123123,
 	}
 	return &certificate
 }

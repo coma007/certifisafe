@@ -32,6 +32,19 @@ func main() {
 	user := config["user"]
 
 	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", user, password))
+	//db, err := gorm.Open(postgres.Open(fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", user, password)), &gorm.Config{})
+	//utils.CheckError(err)
+	//
+	//defer func(db *gorm.DB) {
+	//	sqlDb, err := db.DB()
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	err = sqlDb.Close()
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//}(dbPostgree)
 	utils.CheckError(err)
 
 	defer func(db *sql.DB) {
@@ -146,7 +159,6 @@ func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db re
 		ValidTo:   time.Time{},
 		Status:    model.CertificateStatus(model.ACTIVE),
 		Type:      model.CertificateType(model.ROOT),
-		PublicKey: 0,
 	}
 
 	_, err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)

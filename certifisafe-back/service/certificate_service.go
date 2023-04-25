@@ -47,6 +47,7 @@ func NewDefaultCertificateService(cRepo repository.ICertificateRepository, cKSRe
 }
 
 func (d *DefaultCertificateService) GetCertificate(id big.Int) (model.Certificate, error) {
+	panic("asd")
 	certificate, err := d.certificateRepo.GetCertificate(id)
 	return certificate, err
 }
@@ -124,23 +125,20 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 	if err != nil {
 		return dto.CertificateDTO{}, err
 	}
-	// should change so that it is not int64 anymore
-	publicKey := certificateKeyStore.PublicKey
 
-	certificateDB := model.Certificate{
-		certificate.SerialNumber.String(),
-		certificate.Subject.CommonName,
-		// TODO fix nil values
-		nil,
-		nil,
-		certificate.NotBefore,
-		certificate.NotAfter,
-		model.NOT_ACTIVE,
-		dto.StringToType(cert.Certificate.Type),
-		publicKey,
-	}
-
-	certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
+	//certificateDB := model.Certificate{
+	//	certificate.SerialNumber.String(),
+	//	certificate.Subject.CommonName,
+	//	// TODO fix nil values
+	//	nil,
+	//	nil,
+	//	certificate.NotBefore,
+	//	certificate.NotAfter,
+	//	model.NOT_ACTIVE,
+	//	dto.StringToType(cert.Certificate.Type),
+	//}
+	//
+	//certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
 
 	return *dto.X509CertificateToCertificateDTO(&certificateKeyStore), nil
 }

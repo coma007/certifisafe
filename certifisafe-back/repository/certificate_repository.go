@@ -32,11 +32,11 @@ func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository
 }
 
 func (i *InmemoryCertificateRepository) GetCertificate(id big.Int) (model.Certificate, error) {
-	stmt, err := i.DB.Prepare("SELECT id FROM certificates WHERE id=$1")
+	stmt, err := i.DB.Prepare("SELECT id::decimal FROM certificates WHERE id=$1")
 	utils.CheckError(err)
 
 	var certificate model.Certificate
-	err = stmt.QueryRow(id).Scan(&certificate.Id)
+	err = stmt.QueryRow(id.String()).Scan(&certificate.Id)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

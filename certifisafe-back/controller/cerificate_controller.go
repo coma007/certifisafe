@@ -166,13 +166,13 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	}
 	rootSerial := new(big.Int)
 	rootSerial.SetString(root.Serial, 10)
-	rootCreated, err := ch.service.GetCertificate(*rootSerial)
+	//rootCreated, err := ch.service.GetCertificate(*rootSerial)
 	if err != nil {
 		panic(err)
 	}
 
 	intermediateDTO := &dto.NewRequestDTO{
-		ParentCertificate: dto.CertificateToDTO(&rootCreated),
+		ParentCertificate: &root,
 		Certificate: &dto.CertificateDTO{
 			Serial:      "",
 			Name:        "",
