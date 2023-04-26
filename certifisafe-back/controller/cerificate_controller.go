@@ -121,6 +121,7 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// TODO: response has content, fix header
 	w.WriteHeader(http.StatusNoContent)
 	w.Write([]byte("Successfully deleted"))
 }
@@ -135,6 +136,7 @@ func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps
 		return
 	}
 
+	// TODO: response has content, fix header
 	w.WriteHeader(http.StatusNoContent)
 	if result {
 		w.Write([]byte("true"))

@@ -32,11 +32,13 @@ func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository
 }
 
 func (i *InmemoryCertificateRepository) GetCertificate(id big.Int) (model.Certificate, error) {
-	stmt, err := i.DB.Prepare("SELECT id::decimal FROM certificates WHERE id=$1")
+	//TODO add subject and issuer
+	stmt, err := i.DB.Prepare("SELECT id, name, valid_from, valid_to, type, status  FROM certificates WHERE id=$1")
 	utils.CheckError(err)
 
 	var certificate model.Certificate
-	err = stmt.QueryRow(id.String()).Scan(&certificate.Id)
+	err = stmt.QueryRow(id.String()).Scan(&certificate.Id, &certificate.Name, &certificate.ValidFrom, &certificate.ValidTo,
+		&certificate.Type, &certificate.Status)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -50,14 +52,16 @@ func (i *InmemoryCertificateRepository) GetCertificate(id big.Int) (model.Certif
 
 func (i *InmemoryCertificateRepository) GetCertificates() ([]model.Certificate, error) {
 	var result []model.Certificate
-	rows, err := i.DB.Query("SELECT name, valid_from, valid_to  FROM certificates")
+	//TODO add subject and issuer
+	rows, err := i.DB.Query("SELECT id, name, valid_from, valid_to, type, status  FROM certificates")
 	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
 	for rows.Next() {
 		var certificate model.Certificate
-		rows.Scan(&certificate.Subject, &certificate.ValidFrom, &certificate.ValidTo)
+		rows.Scan(&certificate.Id, &certificate.Name, &certificate.ValidFrom, &certificate.ValidTo,
+			&certificate.Type, &certificate.Status)
 		result = append(result, certificate)
 	}
 	utils.CheckError(err)
@@ -86,8 +90,8 @@ func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Cert
 	}
 
 	err := i.DB.QueryRow(
-		"INSERT INTO certificates(id, name, valid_from, valid_to, subject_id, issuer_id, type, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8)", certificate.Id, certificate.Name, certificate.ValidFrom, certificate.ValidTo, subject, issuer, t, model.NOT_ACTIVE)
-	if err != nil {
+		"INSERT INTO certificates(name, valid_from, valid_to, subject_id, issuer_id, type, status) VALUES($1, $2, $3, $4, $5, $6, $7)", certificate.Name, certificate.ValidFrom, certificate.ValidTo, subject, issuer, t, model.NOT_ACTIVE)
+	if err.Err() != nil {
 		return model.Certificate{}, err.Err()
 	}
 

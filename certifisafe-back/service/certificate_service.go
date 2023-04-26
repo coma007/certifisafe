@@ -47,7 +47,6 @@ func NewDefaultCertificateService(cRepo repository.ICertificateRepository, cKSRe
 }
 
 func (d *DefaultCertificateService) GetCertificate(id big.Int) (model.Certificate, error) {
-	panic("asd")
 	certificate, err := d.certificateRepo.GetCertificate(id)
 	return certificate, err
 }
@@ -81,6 +80,17 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		PostalCode:    []string{cert.Certificate.Name},
 	}
 	var parent x509.Certificate
+
+	//chain
+	//conf := tls.Config { }
+	//conf.RootCAs = x509.NewCertPool()
+	//for _, cert := range certChain.Certificate {
+	//	x509Cert, err := x509.ParseCertificate(cert)
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//	conf.RootCAs.AddCert(x509Cert)
+	//}
 
 	switch dto.StringToType(cert.Certificate.Type) {
 	case model.ROOT:
@@ -119,6 +129,10 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 				return dto.CertificateDTO{}, err
 			}
 		}
+	default:
+		{
+			return dto.CertificateDTO{}, errors.New("invalid type of certificate given, try END, INTERMEDIATE or ROOT")
+		}
 	}
 
 	certificateKeyStore, err := d.certificateKeyStoreRepo.CreateCertificate(*certificate.SerialNumber, certificatePEM, certificatePrivKeyPEM)
@@ -126,19 +140,19 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		return dto.CertificateDTO{}, err
 	}
 
-	//certificateDB := model.Certificate{
-	//	certificate.SerialNumber.String(),
-	//	certificate.Subject.CommonName,
-	//	// TODO fix nil values
-	//	nil,
-	//	nil,
-	//	certificate.NotBefore,
-	//	certificate.NotAfter,
-	//	model.NOT_ACTIVE,
-	//	dto.StringToType(cert.Certificate.Type),
-	//}
-	//
-	//certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
+	certificateDB := model.Certificate{
+		certificate.SerialNumber.String(),
+		certificate.Subject.CommonName,
+		// TODO fix nil values
+		nil,
+		nil,
+		certificate.NotBefore,
+		certificate.NotAfter,
+		model.NOT_ACTIVE,
+		dto.StringToType(cert.Certificate.Type),
+	}
+
+	certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
 
 	return *dto.X509CertificateToCertificateDTO(&certificateKeyStore), nil
 }
