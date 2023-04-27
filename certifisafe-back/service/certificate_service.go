@@ -27,26 +27,29 @@ var (
 )
 
 type ICertificateService interface {
-	GetCertificate(id big.Int) (model.Certificate, error)
+	GetCertificate(id int64) (model.Certificate, error)
 	GetCertificates() ([]model.Certificate, error)
-	DeleteCertificate(id big.Int) error
+	DeleteCertificate(id int64) error
 	CreateCertificate(cert dto.NewRequestDTO) (dto.CertificateDTO, error)
-	IsValid(id big.Int) (bool, error)
+	IsValid(id int64) (bool, error)
 }
 
 type DefaultCertificateService struct {
 	certificateRepo         repository.ICertificateRepository
 	certificateKeyStoreRepo repository.IKeyStoreCertificateRepository
+	userRepo                repository.IUserRepository
 }
 
-func NewDefaultCertificateService(cRepo repository.ICertificateRepository, cKSRepo repository.IKeyStoreCertificateRepository) *DefaultCertificateService {
+func NewDefaultCertificateService(cRepo repository.ICertificateRepository, cKSRepo repository.IKeyStoreCertificateRepository,
+	uRepo repository.IUserRepository) *DefaultCertificateService {
 	return &DefaultCertificateService{
 		certificateRepo:         cRepo,
 		certificateKeyStoreRepo: cKSRepo,
+		userRepo:                uRepo,
 	}
 }
 
-func (d *DefaultCertificateService) GetCertificate(id big.Int) (model.Certificate, error) {
+func (d *DefaultCertificateService) GetCertificate(id int64) (model.Certificate, error) {
 	certificate, err := d.certificateRepo.GetCertificate(id)
 	return certificate, err
 }
@@ -59,7 +62,7 @@ func (d *DefaultCertificateService) GetCertificates() ([]model.Certificate, erro
 	return certificates, nil
 }
 
-func (d *DefaultCertificateService) DeleteCertificate(id big.Int) error {
+func (d *DefaultCertificateService) DeleteCertificate(id int64) error {
 
 	return nil
 }
@@ -92,6 +95,42 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 	//	conf.RootCAs.AddCert(x509Cert)
 	//}
 
+	issuer, err := d.userRepo.CreateUser(model.User{
+		Id:        0,
+		Email:     "issuer",
+		Password:  "asd",
+		FirstName: "",
+		LastName:  "",
+		Phone:     "",
+		IsAdmin:   false,
+	})
+	utils.CheckError(err)
+
+	newSubject, err := d.userRepo.CreateUser(model.User{
+		Id:        0,
+		Email:     "subject",
+		Password:  "asd",
+		FirstName: "",
+		LastName:  "",
+		Phone:     "",
+		IsAdmin:   false,
+	})
+	utils.CheckError(err)
+
+	certificateDB := model.Certificate{
+		Id:        nil,
+		Name:      cert.Certificate.SubjectName,
+		Issuer:    issuer,
+		Subject:   newSubject,
+		ValidFrom: certificate.NotBefore,
+		ValidTo:   certificate.NotAfter,
+		Status:    model.NOT_ACTIVE,
+		Type:      dto.StringToType(cert.Certificate.Type),
+	}
+
+	certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
+	utils.CheckError(err)
+
 	switch dto.StringToType(cert.Certificate.Type) {
 	case model.ROOT:
 		certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject)
@@ -101,14 +140,12 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		break
 	case model.INTERMEDIATE:
 		{
-			parentSerial := new(big.Int)
-			parentSerial.SetString(cert.ParentCertificate.Serial, 10)
-			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
+			parent, err = d.certificateKeyStoreRepo.GetCertificate(*cert.ParentCertificate.Serial)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}
 
-			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
+			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*cert.ParentCertificate.Serial)
 			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, &parent, privateKey)
 			if err != nil {
 				return dto.CertificateDTO{}, err
@@ -116,14 +153,12 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		}
 	case model.END:
 		{
-			parentSerial := new(big.Int)
-			parentSerial.SetString(cert.ParentCertificate.Serial, 10)
-			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
+			parent, err = d.certificateKeyStoreRepo.GetCertificate(*cert.ParentCertificate.Serial)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}
 
-			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
+			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*cert.ParentCertificate.Serial)
 			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, &parent, privateKey)
 			if err != nil {
 				return dto.CertificateDTO{}, err
@@ -134,30 +169,17 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 			return dto.CertificateDTO{}, errors.New("invalid type of certificate given, try END, INTERMEDIATE or ROOT")
 		}
 	}
+	certificate.SerialNumber = big.NewInt(*certificateDB.Id)
 
-	certificateKeyStore, err := d.certificateKeyStoreRepo.CreateCertificate(*certificate.SerialNumber, certificatePEM, certificatePrivKeyPEM)
+	certificateKeyStore, err := d.certificateKeyStoreRepo.CreateCertificate(certificate.SerialNumber.Int64(), certificatePEM, certificatePrivKeyPEM)
 	if err != nil {
 		return dto.CertificateDTO{}, err
 	}
 
-	certificateDB := model.Certificate{
-		certificate.SerialNumber.String(),
-		certificate.Subject.CommonName,
-		// TODO fix nil values
-		nil,
-		nil,
-		certificate.NotBefore,
-		certificate.NotAfter,
-		model.NOT_ACTIVE,
-		dto.StringToType(cert.Certificate.Type),
-	}
-
-	certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
-
 	return *dto.X509CertificateToCertificateDTO(&certificateKeyStore), nil
 }
 
-func (d *DefaultCertificateService) IsValid(id big.Int) (bool, error) {
+func (d *DefaultCertificateService) IsValid(id int64) (bool, error) {
 	certificate, err := d.certificateKeyStoreRepo.GetCertificate(id)
 	if err != nil {
 		return false, nil
@@ -193,7 +215,7 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 	if err != nil {
 		return false
 	}
-	parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial)
+	parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial.Int64())
 	if err != nil {
 		return false
 	}

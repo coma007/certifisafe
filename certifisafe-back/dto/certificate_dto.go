@@ -2,12 +2,14 @@ package dto
 
 import (
 	"certifisafe-back/model"
+	"certifisafe-back/utils"
 	"crypto/x509"
+	"strconv"
 	"time"
 )
 
 type CertificateDTO struct {
-	Serial      string
+	Serial      *int64
 	Name        string
 	ValidFrom   time.Time
 	ValidTo     time.Time
@@ -22,15 +24,15 @@ func CertificateToDTO(cert *model.Certificate) *CertificateDTO {
 		return nil
 	}
 	certificate := CertificateDTO{
-		cert.Id,
-		cert.Name,
-		cert.ValidFrom,
-		cert.ValidTo,
+		Serial:    cert.Id,
+		Name:      cert.Name,
+		ValidFrom: cert.ValidFrom,
+		ValidTo:   cert.ValidTo,
 		// TODO make nested object user
-		cert.Issuer.FirstName + " " + cert.Issuer.LastName,
-		cert.Subject.FirstName + " " + cert.Subject.LastName,
-		TypeToString(cert.Type),
-		StatusToString(cert.Status),
+		IssuerName:  cert.Issuer.FirstName + " " + cert.Issuer.LastName,
+		SubjectName: cert.Subject.FirstName + " " + cert.Subject.LastName,
+		Status:      TypeToString(cert.Type),
+		Type:        StatusToString(cert.Status),
 	}
 	return &certificate
 }
@@ -41,8 +43,8 @@ func CertificateDTOtoModel(cert *CertificateDTO) *model.Certificate {
 	}
 	certificate := model.Certificate{
 		Id:        cert.Serial,
-		Issuer:    nil,
-		Subject:   nil,
+		Issuer:    model.User{},
+		Subject:   model.User{},
 		ValidFrom: cert.ValidFrom,
 		ValidTo:   cert.ValidTo,
 		Status:    StringToStatus(cert.Status),
@@ -55,8 +57,10 @@ func X509CertificateToCertificateDTO(cert *x509.Certificate) *CertificateDTO {
 	if cert == nil {
 		return nil
 	}
+	serial, err := strconv.ParseInt(cert.SerialNumber.String(), 10, 64)
+	utils.CheckError(err)
 	certificate := CertificateDTO{
-		Serial:    cert.SerialNumber.String(),
+		Serial:    &serial,
 		Name:      cert.Subject.CommonName,
 		ValidFrom: cert.NotBefore,
 		ValidTo:   cert.NotAfter,

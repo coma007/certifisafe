@@ -2,10 +2,8 @@ package repository
 
 import (
 	"certifisafe-back/model"
-	"certifisafe-back/utils"
-	"database/sql"
 	"errors"
-	"log"
+	"gorm.io/gorm"
 )
 
 var (
@@ -25,10 +23,10 @@ type IPasswordRecoveryRepository interface {
 
 type InMemoryPasswordRecoveryRepository struct {
 	Requests []model.PasswordRecoveryRequest
-	DB       *sql.DB
+	DB       *gorm.DB
 }
 
-func NewInMemoryPasswordRecoveryRepository(db *sql.DB) *InMemoryPasswordRecoveryRepository {
+func NewInMemoryPasswordRecoveryRepository(db *gorm.DB) *InMemoryPasswordRecoveryRepository {
 	var requests = []model.PasswordRecoveryRequest{
 		{Id: 1},
 		{Id: 2},
@@ -42,105 +40,38 @@ func NewInMemoryPasswordRecoveryRepository(db *sql.DB) *InMemoryPasswordRecovery
 }
 
 func (i *InMemoryPasswordRecoveryRepository) GetRequest(id int32) (model.PasswordRecoveryRequest, error) {
-	stmt, err := i.DB.Prepare("SELECT * FROM passwordRecovery WHERE id=$1")
-
-	utils.CheckError(err)
-
 	var r model.PasswordRecoveryRequest
-	err = stmt.QueryRow(id).Scan(r.Id, r.Email, r.Code, r.IsUsed)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// Handle the case of no rows returned.
-			panic(err)
-		}
-		return model.PasswordRecoveryRequest{}, err
-
-	}
-	return r, nil
+	result := i.DB.First(&r, id)
+	return r, result.Error
 }
 
 func (i *InMemoryPasswordRecoveryRepository) UpdateRequest(id int32, req model.PasswordRecoveryRequest) (model.PasswordRecoveryRequest, error) {
-	stmt, err := i.DB.Prepare("UPDATE passwordRecovery" +
-		" SET email=$1, code=$2, is_used=$3" +
-		" WHERE id=$4")
-
-	utils.CheckError(err)
-
-	_, err = stmt.Exec(req.Email, req.Code, req.IsUsed, id)
-
-	utils.CheckError(err)
-	return req, nil
+	result := i.DB.Save(req)
+	return req, result.Error
 }
 
 func (i *InMemoryPasswordRecoveryRepository) DeleteRequest(id int32) error {
-	stmt, err := i.DB.Prepare("DELETE FROM passwordRecovery WHERE id=$1")
-	utils.CheckError(err)
-
-	_, err = stmt.Exec(id)
-	return err
+	result := i.DB.Delete(&model.Request{}, id)
+	return result.Error
 }
 
 func (i *InMemoryPasswordRecoveryRepository) CreateRequest(id int32, user model.PasswordRecoveryRequest) (model.PasswordRecoveryRequest, error) {
-	stmt, err := i.DB.Prepare("INSERT INTO passwordRecovery(email, code, is_used)" +
-		" VALUES($1, $2, false)")
-
-	utils.CheckError(err)
-
-	_, err = stmt.Exec(user.Email, user.Code)
-
-	utils.CheckError(err)
-	return user, nil
+	result := i.DB.Create(user)
+	return user, result.Error
 }
 
 func (i *InMemoryPasswordRecoveryRepository) GetRequestByCode(code string) (model.PasswordRecoveryRequest, error) {
-	stmt, err := i.DB.Prepare("SELECT * FROM passwordRecovery WHERE code=$1")
-
-	utils.CheckError(err)
-
 	var r model.PasswordRecoveryRequest
-	err = stmt.QueryRow(code).Scan(&r.Id, &r.Email, &r.Code, &r.IsUsed)
+	result := i.DB.Where("code=?", code).First(&r)
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return model.PasswordRecoveryRequest{}, ErrNoRequestWithCode
-		}
-		return model.PasswordRecoveryRequest{}, err
-
-	}
-	return r, nil
+	return r, result.Error
 }
 
 func (i *InMemoryPasswordRecoveryRepository) GetRequestsByEmail(email string) ([]*model.PasswordRecoveryRequest, error) {
-	stmt, err := i.DB.Prepare("SELECT id, email, code, is_used FROM passwordRecovery WHERE email=$1")
-
-	utils.CheckError(err)
-
 	var requests []*model.PasswordRecoveryRequest
-	//err = stmt.QueryRow(email).Scan(&u.Id, &u.Email, &u.Code)
-	queryLength := 0
-	rows, err := stmt.Query(email)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	result := i.DB.Where("email=?", email).Find(requests)
 
-	for rows.Next() {
-		var r model.PasswordRecoveryRequest
-		err := rows.Scan(&r.Id, &r.Email, &r.Code, &r.IsUsed)
-		if err != nil {
-			log.Fatal(err)
-		}
-		requests = append(requests, &r)
-		queryLength += 1
-
-	}
-
-	if queryLength == 0 {
-		return nil, ErrNoRequestWithEmail
-	}
-
-	return requests, nil
+	return requests, result.Error
 }
 
 func (i *InMemoryPasswordRecoveryRepository) UseRequestsForEmail(email string) error {

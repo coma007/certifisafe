@@ -72,7 +72,7 @@ func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter,
 	if user.IsAdmin {
 		requests, err = controller.service.GetAllRequests()
 	} else {
-		requests, err = controller.service.GetAllRequestsByUser(user.Id)
+		requests, err = controller.service.GetAllRequestsByUser(int(user.Id))
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

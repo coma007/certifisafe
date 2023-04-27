@@ -13,9 +13,7 @@ import (
 )
 
 func GenerateRootCa(subject pkix.Name) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	subject.SerialNumber = serialNumber.String()
+	serialNumber := big.NewInt(-1)
 	// CA, root
 	ca := &x509.Certificate{
 		Version:               3,
@@ -62,8 +60,7 @@ func GenerateRootCa(subject pkix.Name) (x509.Certificate, bytes.Buffer, bytes.Bu
 }
 
 func GenerateSubordinateCa(subject pkix.Name, rootTemplate *x509.Certificate, caPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	serialNumber := big.NewInt(-1)
 	subject.SerialNumber = serialNumber.String()
 	subTemplate := &x509.Certificate{
 		Version:               3,
@@ -111,8 +108,7 @@ func GenerateSubordinateCa(subject pkix.Name, rootTemplate *x509.Certificate, ca
 }
 
 func GenerateLeafCert(subject pkix.Name, parent *x509.Certificate, parentPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	serialNumber := big.NewInt(-1)
 	subject.SerialNumber = serialNumber.String()
 	certTemplate := &x509.Certificate{
 		Version:            3,

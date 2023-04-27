@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"math/big"
 	"net/http"
 	"time"
 )
@@ -69,7 +68,7 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	certificate, err := ch.service.GetCertificate(id)
+	certificate, err := ch.service.GetCertificate(id.Int64())
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -129,7 +128,7 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	result, err := ch.service.IsValid(id)
+	result, err := ch.service.IsValid(id.Int64())
 	fmt.Print(result)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -150,7 +149,7 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	rootDTO := &dto.NewRequestDTO{
 		ParentCertificate: nil,
 		Certificate: &dto.CertificateDTO{
-			Serial:      "",
+			Serial:      nil,
 			Name:        "Root",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
@@ -166,8 +165,8 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	if err != nil {
 		panic(err)
 	}
-	rootSerial := new(big.Int)
-	rootSerial.SetString(root.Serial, 10)
+	//rootSerial := new(big.Int)
+	//rootSerial.SetString(root.Serial, 10)
 	//rootCreated, err := ch.service.GetCertificate(*rootSerial)
 	if err != nil {
 		panic(err)
@@ -176,7 +175,7 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	intermediateDTO := &dto.NewRequestDTO{
 		ParentCertificate: &root,
 		Certificate: &dto.CertificateDTO{
-			Serial:      "",
+			Serial:      nil,
 			Name:        "SUB",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
@@ -192,7 +191,7 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	leafDTO := &dto.NewRequestDTO{
 		ParentCertificate: &intermidiate,
 		Certificate: &dto.CertificateDTO{
-			Serial:      "",
+			Serial:      nil,
 			Name:        "LEAF",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
