@@ -42,7 +42,14 @@ func CertificateDTOtoModel(cert *CertificateDTO) *model.Certificate {
 	}
 	certificate := model.Certificate{
 		//ID:        cert.Serial,
-		Issuer:    model.User{},
+		Issuer: model.User{
+			Email:     "",
+			Password:  "",
+			FirstName: "",
+			LastName:  "",
+			Phone:     "",
+			IsAdmin:   false,
+		},
 		Subject:   model.User{},
 		ValidFrom: cert.ValidFrom,
 		ValidTo:   cert.ValidTo,
