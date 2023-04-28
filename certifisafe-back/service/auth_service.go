@@ -93,8 +93,8 @@ func (s *AuthService) GetUserByEmail(email string) (model.User, error) {
 	return s.userRepository.GetUserByEmail(email)
 }
 
-func (s *AuthService) Register(user model.User) (*model.User, error) {
-	_, err := s.validateRegistrationData(&user)
+func (s *AuthService) Register(user *model.User) (*model.User, error) {
+	_, err := s.validateRegistrationData(user)
 	if err != nil {
 		return &model.User{}, err
 	}
@@ -104,7 +104,7 @@ func (s *AuthService) Register(user model.User) (*model.User, error) {
 			passwordBytes, err := s.hashToken(user.Password)
 			utils.CheckError(err)
 			user.Password = string(passwordBytes)
-			createdUser, err := s.userRepository.CreateUser(user)
+			createdUser, err := s.userRepository.CreateUser(*user)
 			if err != nil {
 				return &model.User{}, err
 			}
