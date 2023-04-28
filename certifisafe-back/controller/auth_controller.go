@@ -99,6 +99,17 @@ func (ah *AuthHandler) PasswordRecovery(w http.ResponseWriter, r *http.Request, 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (ah *AuthHandler) VerifyEmail(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	code := ps.ByName("verificationCode")
+	err := ah.service.VerifyEmail(code)
+	if err != nil {
+		http.Error(w, "Email verification failed", getAuthErrorStatus(err))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Email successfully verified"))
+}
+
 func getAuthErrorStatus(err error) int {
 	if errors.Is(err, service.ErrBadCredentials) ||
 		errors.Is(err, service.ErrTakenEmail) ||
@@ -106,7 +117,9 @@ func getAuthErrorStatus(err error) int {
 		errors.Is(err, service.ErrEmptyName) ||
 		errors.Is(err, service.ErrWrongPhoneFormat) ||
 		errors.Is(err, service.ErrWrongPasswordFormat) ||
-		errors.Is(err, service.ErrCodeUsed) {
+		errors.Is(err, service.ErrCodeUsed) ||
+		errors.Is(err, service.ErrCodeNotFound) ||
+		errors.Is(err, service.ErrNotActivated) {
 		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError

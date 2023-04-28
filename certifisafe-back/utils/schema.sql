@@ -5,6 +5,7 @@ DROP TABLE IF EXISTS requests;
 DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS passwordRecovery;
+DROP TABLE IF EXISTS verifications;
 
 
 CREATE TABLE passwordRecovery (

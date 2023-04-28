@@ -10,4 +10,5 @@ type User struct {
 	LastName  string
 	Phone     string
 	IsAdmin   bool
+	IsActive  bool
 }
