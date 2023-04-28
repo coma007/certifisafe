@@ -27,11 +27,11 @@ var (
 )
 
 type ICertificateService interface {
-	GetCertificate(id int64) (model.Certificate, error)
+	GetCertificate(id uint64) (model.Certificate, error)
 	GetCertificates() ([]model.Certificate, error)
-	DeleteCertificate(id int64) error
+	DeleteCertificate(id uint64) error
 	CreateCertificate(cert dto.NewRequestDTO) (dto.CertificateDTO, error)
-	IsValid(id int64) (bool, error)
+	IsValid(id uint64) (bool, error)
 }
 
 type DefaultCertificateService struct {
@@ -49,7 +49,7 @@ func NewDefaultCertificateService(cRepo repository.ICertificateRepository, cKSRe
 	}
 }
 
-func (d *DefaultCertificateService) GetCertificate(id int64) (model.Certificate, error) {
+func (d *DefaultCertificateService) GetCertificate(id uint64) (model.Certificate, error) {
 	certificate, err := d.certificateRepo.GetCertificate(id)
 	return certificate, err
 }
@@ -62,7 +62,7 @@ func (d *DefaultCertificateService) GetCertificates() ([]model.Certificate, erro
 	return certificates, nil
 }
 
-func (d *DefaultCertificateService) DeleteCertificate(id int64) error {
+func (d *DefaultCertificateService) DeleteCertificate(id uint64) error {
 
 	return nil
 }
@@ -96,29 +96,26 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 	//}
 
 	issuer, err := d.userRepo.CreateUser(model.User{
-		Id:        0,
 		Email:     "issuer",
 		Password:  "asd",
-		FirstName: "",
-		LastName:  "",
-		Phone:     "",
+		FirstName: "qwe",
+		LastName:  "qwe",
+		Phone:     "ertert",
 		IsAdmin:   false,
 	})
 	utils.CheckError(err)
 
 	newSubject, err := d.userRepo.CreateUser(model.User{
-		Id:        0,
 		Email:     "subject",
 		Password:  "asd",
-		FirstName: "",
-		LastName:  "",
-		Phone:     "",
+		FirstName: "asd",
+		LastName:  "ads",
+		Phone:     "adw",
 		IsAdmin:   false,
 	})
 	utils.CheckError(err)
 
 	certificateDB := model.Certificate{
-		Id:        nil,
 		Name:      cert.Certificate.SubjectName,
 		Issuer:    issuer,
 		Subject:   newSubject,
@@ -126,6 +123,9 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 		ValidTo:   certificate.NotAfter,
 		Status:    model.NOT_ACTIVE,
 		Type:      dto.StringToType(cert.Certificate.Type),
+
+		//IssuerID:  &issuer.Id,
+		//SubjectID: &newSubject.Id,
 	}
 
 	certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
@@ -133,7 +133,7 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 
 	switch dto.StringToType(cert.Certificate.Type) {
 	case model.ROOT:
-		certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject)
+		certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject, uint64(certificateDB.ID))
 		if err != nil {
 			return dto.CertificateDTO{}, err
 		}
@@ -146,7 +146,7 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 			}
 
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*cert.ParentCertificate.Serial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, &parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}
@@ -159,7 +159,7 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 			}
 
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*cert.ParentCertificate.Serial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, &parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return dto.CertificateDTO{}, err
 			}
@@ -169,9 +169,9 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 			return dto.CertificateDTO{}, errors.New("invalid type of certificate given, try END, INTERMEDIATE or ROOT")
 		}
 	}
-	certificate.SerialNumber = big.NewInt(*certificateDB.Id)
+	certificate.SerialNumber = new(big.Int).SetUint64(uint64(certificateDB.ID))
 
-	certificateKeyStore, err := d.certificateKeyStoreRepo.CreateCertificate(certificate.SerialNumber.Int64(), certificatePEM, certificatePrivKeyPEM)
+	certificateKeyStore, err := d.certificateKeyStoreRepo.CreateCertificate(certificate.SerialNumber.Uint64(), certificatePEM, certificatePrivKeyPEM)
 	if err != nil {
 		return dto.CertificateDTO{}, err
 	}
@@ -179,7 +179,7 @@ func (d *DefaultCertificateService) CreateCertificate(cert dto.NewRequestDTO) (d
 	return *dto.X509CertificateToCertificateDTO(&certificateKeyStore), nil
 }
 
-func (d *DefaultCertificateService) IsValid(id int64) (bool, error) {
+func (d *DefaultCertificateService) IsValid(id uint64) (bool, error) {
 	certificate, err := d.certificateKeyStoreRepo.GetCertificate(id)
 	if err != nil {
 		return false, nil
@@ -215,7 +215,7 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 	if err != nil {
 		return false
 	}
-	parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial.Int64())
+	parent, err := d.certificateKeyStoreRepo.GetCertificate(parentSerial.Uint64())
 	if err != nil {
 		return false
 	}

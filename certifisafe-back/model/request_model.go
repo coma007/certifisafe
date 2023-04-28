@@ -12,8 +12,8 @@ type Request struct {
 	Datetime time.Time
 	Status   RequestStatus
 
-	ParentCertificateID *int64
-	CertificateID       *int64
+	ParentCertificateID *uint64
+	CertificateID       *uint64
 
 	ParentCertificate Certificate `gorm:"foreignKey:ParentCertificateID;"`
 	Certificate       Certificate `gorm:"foreignKey:CertificateID;"`

@@ -2,14 +2,12 @@ package dto
 
 import (
 	"certifisafe-back/model"
-	"certifisafe-back/utils"
 	"crypto/x509"
-	"strconv"
 	"time"
 )
 
 type CertificateDTO struct {
-	Serial      *int64
+	Serial      *uint64
 	Name        string
 	ValidFrom   time.Time
 	ValidTo     time.Time
@@ -23,8 +21,9 @@ func CertificateToDTO(cert *model.Certificate) *CertificateDTO {
 	if cert == nil {
 		return nil
 	}
+	serial := uint64(cert.ID)
 	certificate := CertificateDTO{
-		Serial:    cert.Id,
+		Serial:    &serial,
 		Name:      cert.Name,
 		ValidFrom: cert.ValidFrom,
 		ValidTo:   cert.ValidTo,
@@ -42,7 +41,7 @@ func CertificateDTOtoModel(cert *CertificateDTO) *model.Certificate {
 		return nil
 	}
 	certificate := model.Certificate{
-		Id:        cert.Serial,
+		//ID:        cert.Serial,
 		Issuer:    model.User{},
 		Subject:   model.User{},
 		ValidFrom: cert.ValidFrom,
@@ -57,8 +56,7 @@ func X509CertificateToCertificateDTO(cert *x509.Certificate) *CertificateDTO {
 	if cert == nil {
 		return nil
 	}
-	serial, err := strconv.ParseInt(cert.SerialNumber.String(), 10, 64)
-	utils.CheckError(err)
+	serial := cert.SerialNumber.Uint64()
 	certificate := CertificateDTO{
 		Serial:    &serial,
 		Name:      cert.Subject.CommonName,

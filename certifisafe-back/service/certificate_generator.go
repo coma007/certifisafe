@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-func GenerateRootCa(subject pkix.Name) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumber := big.NewInt(-1)
+func GenerateRootCa(subject pkix.Name, serial uint64) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+	serialNumber := new(big.Int).SetUint64(serial)
 	// CA, root
 	ca := &x509.Certificate{
 		Version:               3,
@@ -59,8 +59,8 @@ func GenerateRootCa(subject pkix.Name) (x509.Certificate, bytes.Buffer, bytes.Bu
 	return *ca, *caPEM, *caPrivKeyPEM, nil
 }
 
-func GenerateSubordinateCa(subject pkix.Name, rootTemplate *x509.Certificate, caPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumber := big.NewInt(-1)
+func GenerateSubordinateCa(subject pkix.Name, serial uint64, rootTemplate *x509.Certificate, caPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+	serialNumber := new(big.Int).SetUint64(serial)
 	subject.SerialNumber = serialNumber.String()
 	subTemplate := &x509.Certificate{
 		Version:               3,
@@ -107,8 +107,8 @@ func GenerateSubordinateCa(subject pkix.Name, rootTemplate *x509.Certificate, ca
 	return *subTemplate, *certPEM, *certPrivKeyPEM, nil
 }
 
-func GenerateLeafCert(subject pkix.Name, parent *x509.Certificate, parentPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumber := big.NewInt(-1)
+func GenerateLeafCert(subject pkix.Name, serial uint64, parent *x509.Certificate, parentPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+	serialNumber := new(big.Int).SetUint64(serial)
 	subject.SerialNumber = serialNumber.String()
 	certTemplate := &x509.Certificate{
 		Version:            3,

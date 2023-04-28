@@ -24,11 +24,7 @@ type InMemoryUserRepository struct {
 }
 
 func NewInMemoryUserRepository(db *gorm.DB) *InMemoryUserRepository {
-	var users = []model.User{
-		{Id: 1},
-		{Id: 2},
-		{Id: 3},
-	}
+	var users = []model.User{}
 
 	return &InMemoryUserRepository{
 		Users: users,
@@ -54,7 +50,7 @@ func (i *InMemoryUserRepository) DeleteUser(id int32) error {
 }
 
 func (i *InMemoryUserRepository) CreateUser(user model.User) (model.User, error) {
-	result := i.DB.Create(user)
+	result := i.DB.Create(&user)
 	return user, result.Error
 }
 

@@ -13,8 +13,8 @@ var (
 )
 
 type ICertificateRepository interface {
-	GetCertificate(id int64) (model.Certificate, error)
-	DeleteCertificate(id int64) error
+	GetCertificate(id uint64) (model.Certificate, error)
+	DeleteCertificate(id uint64) error
 	CreateCertificate(certificate model.Certificate) (model.Certificate, error)
 	GetCertificates() ([]model.Certificate, error)
 }
@@ -29,7 +29,7 @@ func NewInMemoryCertificateRepository(db *gorm.DB) *InmemoryCertificateRepositor
 	}
 }
 
-func (i *InmemoryCertificateRepository) GetCertificate(id int64) (model.Certificate, error) {
+func (i *InmemoryCertificateRepository) GetCertificate(id uint64) (model.Certificate, error) {
 	//TODO add subject and issuer
 	var certificate model.Certificate
 	result := i.DB.First(&certificate, id)
@@ -44,7 +44,7 @@ func (i *InmemoryCertificateRepository) GetCertificates() ([]model.Certificate, 
 	return certificates, result.Error
 }
 
-func (i *InmemoryCertificateRepository) DeleteCertificate(id int64) error {
+func (i *InmemoryCertificateRepository) DeleteCertificate(id uint64) error {
 	result := i.DB.Delete(&model.Certificate{}, id)
 	return result.Error
 }

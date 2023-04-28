@@ -18,10 +18,10 @@ type InmemoryKeyStoreCertificateRepository struct {
 }
 
 type IKeyStoreCertificateRepository interface {
-	GetCertificate(id int64) (x509.Certificate, error)
-	DeleteCertificate(id int64) error
-	CreateCertificate(serialNumber int64, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
-	GetPrivateKey(serial int64) (*rsa.PrivateKey, error)
+	GetCertificate(id uint64) (x509.Certificate, error)
+	DeleteCertificate(id uint64) error
+	CreateCertificate(serialNumber uint64, certPEM bytes.Buffer, certPrivKeyPEM bytes.Buffer) (x509.Certificate, error)
+	GetPrivateKey(serial uint64) (*rsa.PrivateKey, error)
 }
 
 func NewInMemoryCertificateKeyStoreRepository() *InmemoryKeyStoreCertificateRepository {
@@ -32,7 +32,7 @@ func NewInMemoryCertificateKeyStoreRepository() *InmemoryKeyStoreCertificateRepo
 	}
 }
 
-func (i *InmemoryKeyStoreCertificateRepository) GetCertificate(serialNumber int64) (x509.Certificate, error) {
+func (i *InmemoryKeyStoreCertificateRepository) GetCertificate(serialNumber uint64) (x509.Certificate, error) {
 	catls, err := tls.LoadX509KeyPair(getPublicName(serialNumber), getPrivateName(serialNumber))
 	if err != nil {
 		panic(err)
@@ -45,7 +45,7 @@ func (i *InmemoryKeyStoreCertificateRepository) GetCertificate(serialNumber int6
 	return *certificate, nil
 }
 
-func (i *InmemoryKeyStoreCertificateRepository) DeleteCertificate(id int64) error {
+func (i *InmemoryKeyStoreCertificateRepository) DeleteCertificate(id uint64) error {
 	for k := 0; k < len(i.Certificates); k++ {
 		//if i.Certificates[k].Id == id {
 		//	// i.Certificates[k].Title = movie.Title
@@ -57,7 +57,7 @@ func (i *InmemoryKeyStoreCertificateRepository) DeleteCertificate(id int64) erro
 	//return ErrMovieNotFound
 }
 
-func (i *InmemoryKeyStoreCertificateRepository) GetPrivateKey(serial int64) (*rsa.PrivateKey, error) {
+func (i *InmemoryKeyStoreCertificateRepository) GetPrivateKey(serial uint64) (*rsa.PrivateKey, error) {
 	keyIn, err := os.ReadFile(getPrivateName(serial))
 
 	block, _ := pem.Decode(keyIn)
@@ -69,7 +69,7 @@ func (i *InmemoryKeyStoreCertificateRepository) GetPrivateKey(serial int64) (*rs
 	return privateKey, nil
 }
 
-func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber int64, certPEM bytes.Buffer,
+func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber uint64, certPEM bytes.Buffer,
 	certPrivKeyPEM bytes.Buffer) (x509.Certificate, error) {
 
 	privateKey := certPrivKeyPEM.Bytes()
@@ -102,10 +102,10 @@ func (i *InmemoryKeyStoreCertificateRepository) CreateCertificate(serialNumber i
 
 }
 
-func getPrivateName(serial int64) string {
-	return "private" + string(os.PathSeparator) + strconv.FormatInt(serial, 10) + ".key"
+func getPrivateName(serial uint64) string {
+	return "private" + string(os.PathSeparator) + strconv.FormatUint(serial, 10) + ".key"
 }
 
-func getPublicName(serial int64) string {
-	return "public" + string(os.PathSeparator) + strconv.FormatInt(serial, 10) + ".crt"
+func getPublicName(serial uint64) string {
+	return "public" + string(os.PathSeparator) + strconv.FormatUint(serial, 10) + ".crt"
 }

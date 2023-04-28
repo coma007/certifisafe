@@ -68,7 +68,7 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	certificate, err := ch.service.GetCertificate(id.Int64())
+	certificate, err := ch.service.GetCertificate(id.Uint64())
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -128,7 +128,7 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	result, err := ch.service.IsValid(id.Int64())
+	result, err := ch.service.IsValid(id.Uint64())
 	fmt.Print(result)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))

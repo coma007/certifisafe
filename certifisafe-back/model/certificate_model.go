@@ -7,7 +7,6 @@ import (
 
 type Certificate struct {
 	gorm.Model
-	Id        *int64 `gorm:"autoIncrement;PRIMARY_KEY"`
 	Name      string
 	Issuer    User `gorm:"foreignKey:IssuerID;references:ID"`
 	Subject   User `gorm:"foreignKey:SubjectID;references:ID"`
