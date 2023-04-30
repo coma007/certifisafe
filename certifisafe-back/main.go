@@ -11,11 +11,12 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"database/sql"
 	"encoding/pem"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 	"math/big"
 	"net"
@@ -31,15 +32,31 @@ func main() {
 	password := config["password"]
 	user := config["user"]
 
-	db, err := sql.Open("postgres", fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", user, password))
+	dbPostgree := postgres.Open(fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", user, password))
+	db, err := gorm.Open(dbPostgree, &gorm.Config{PrepareStmt: true, TranslateError: true})
+	//DeleteCreatedEntities(db)
+	//runScript(db, "utils/schema.sql")
+	automigrate(db)
 	utils.CheckError(err)
 
-	defer func(db *sql.DB) {
-		err := db.Close()
+	defer func(db *gorm.DB) {
+		sqlDb, err := db.DB()
+		if err != nil {
+			panic(err)
+		}
+		err = sqlDb.Close()
 		if err != nil {
 			panic(err)
 		}
 	}(db)
+	//utils.CheckError(err)
+	//
+	//defer func(db *sql.DB) {
+	//	err := db.Close()
+	//	if err != nil {
+	//		panic(err)
+	//	}
+	//}(db)
 
 	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
 	passwordRecoveryInMemoryRepository := repository.NewInMemoryPasswordRecoveryRepository(db)
@@ -48,8 +65,8 @@ func main() {
 	authController := controller.NewAuthHandler(auth)
 
 	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
-	certificateKeyStoreInMemoryRepository := repository.NewInMemoryCertificateKeyStoreRepository(db)
-	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository, certificateKeyStoreInMemoryRepository)
+	certificateKeyStoreInMemoryRepository := repository.NewInMemoryCertificateKeyStoreRepository()
+	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository, certificateKeyStoreInMemoryRepository, userInMemoryRepository)
 	certificateController := controller.NewCertificateHandler(certificateService)
 
 	requestRepository := repository.NewRequestRepository(db, certificateInMemoryRepository)
@@ -78,14 +95,21 @@ func main() {
 	router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
 	router.POST("/api/password-recovery", authController.PasswordRecovery)
 
-	runScript(db, "utils/schema.sql")
-	createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)
+	//
+	//createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)
 
-	runScript(db, "utils/data.sql")
+	//runScript(db, "utils/data.sql")
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
 	log.Fatal(err)
+}
+
+func automigrate(db *gorm.DB) {
+	err := db.AutoMigrate(&model.User{}, &model.Certificate{})
+	utils.CheckError(err)
+	err = db.AutoMigrate(&model.Request{})
+	utils.CheckError(err)
 }
 
 func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db repository.ICertificateRepository) error {
@@ -139,19 +163,20 @@ func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db re
 		Bytes: x509.MarshalPKCS1PrivateKey(caPrivKey),
 	})
 
+	serial := new(int64)
+	*serial = root.SerialNumber.Int64()
 	rootModel := &model.Certificate{
-		Id:        root.SerialNumber.Int64(),
+		//Id:        serial,
 		Name:      root.Subject.CommonName,
-		Issuer:    nil,
-		Subject:   nil,
+		Issuer:    model.User{},
+		Subject:   model.User{},
 		ValidFrom: time.Time{},
 		ValidTo:   time.Time{},
 		Status:    model.CertificateStatus(model.ACTIVE),
 		Type:      model.CertificateType(model.ROOT),
-		PublicKey: 0,
 	}
 
-	_, err = keyStore.CreateCertificate(*root.SerialNumber, *rootPEM, *rootPrivateKeyPEM)
+	//_, err = keyStore.CreateCertificate(root.SerialNumber.Int64(), *rootPEM, *rootPrivateKeyPEM)
 	_, err = db.CreateCertificate(*rootModel)
 	if err != nil {
 		panic(err)
@@ -159,14 +184,14 @@ func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db re
 	return nil
 }
 
-func runScript(db *sql.DB, script string) {
+func runScript(db *gorm.DB, script string) {
 	c, ioErr := os.ReadFile(script)
 	utils.CheckError(ioErr)
 	commands := string(c)
-	_, err := db.Exec(commands)
-	if err != nil {
+	result := db.Raw(commands)
+	if result.Error != nil {
 		//panic("Couldn't load sql script")
-		panic(err)
+		panic(result.Error)
 	}
 }
 
@@ -186,4 +211,29 @@ func middleware(n httprouter.Handle) httprouter.Handle {
 
 		n(w, r, ps)
 	}
+}
+
+func DeleteCreatedEntities(db *gorm.DB) func() {
+	type entity struct {
+		table   string
+		keyname string
+		key     interface{}
+	}
+	var entries []entity
+	hookName := "cleanupHook"
+
+	// Remove the hook once we're done
+	defer db.Callback().Create().Remove(hookName)
+	// Find out if the current db object is already a transaction
+	tx := db
+	tx = db.Begin()
+	// Loop from the end. It is important that we delete the entries in the
+	// reverse order of their insertion
+	for i := len(entries) - 1; i >= 0; i-- {
+		entry := entries[i]
+		fmt.Printf("Deleting entities from '%s' table with key %v\n", entry.table, entry.key)
+		tx.Table(entry.table).Where(entry.keyname+" = ?", entry.key).Delete("")
+	}
+	tx.Commit()
+	return nil
 }

@@ -2,10 +2,8 @@ package repository
 
 import (
 	"certifisafe-back/model"
-	"certifisafe-back/utils"
-	"database/sql"
 	"errors"
-	"math/big"
+	"gorm.io/gorm"
 )
 
 const store = "keystore.jsk"
@@ -15,82 +13,62 @@ var (
 )
 
 type ICertificateRepository interface {
-	GetCertificate(id big.Int) (model.Certificate, error)
-	DeleteCertificate(id big.Int) error
+	GetCertificate(id uint64) (model.Certificate, error)
+	DeleteCertificate(id uint64) error
 	CreateCertificate(certificate model.Certificate) (model.Certificate, error)
 	GetCertificates() ([]model.Certificate, error)
 }
 
 type InmemoryCertificateRepository struct {
-	DB *sql.DB
+	DB *gorm.DB
 }
 
-func NewInMemoryCertificateRepository(db *sql.DB) *InmemoryCertificateRepository {
+func NewInMemoryCertificateRepository(db *gorm.DB) *InmemoryCertificateRepository {
 	return &InmemoryCertificateRepository{
 		DB: db,
 	}
 }
 
-func (i *InmemoryCertificateRepository) GetCertificate(id big.Int) (model.Certificate, error) {
-	stmt, err := i.DB.Prepare("SELECT id FROM certificates WHERE id=$1")
-	utils.CheckError(err)
-
+func (i *InmemoryCertificateRepository) GetCertificate(id uint64) (model.Certificate, error) {
+	//TODO add subject and issuer
 	var certificate model.Certificate
-	err = stmt.QueryRow(id).Scan(&certificate.Id)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// Handle the case of no rows returned.
-		}
-		return model.Certificate{}, err
-
-	}
-	return certificate, nil
+	result := i.DB.First(&certificate, id)
+	return certificate, result.Error
 }
 
 func (i *InmemoryCertificateRepository) GetCertificates() ([]model.Certificate, error) {
-	var result []model.Certificate
-	rows, err := i.DB.Query("SELECT name, valid_from, valid_to  FROM certificates")
-	defer rows.Close()
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		var certificate model.Certificate
-		rows.Scan(&certificate.Subject, &certificate.ValidFrom, &certificate.ValidTo)
-		result = append(result, certificate)
-	}
-	utils.CheckError(err)
+	var certificates []model.Certificate
+	//TODO add subject and issuer
+	result := i.DB.Find(&certificates)
 
-	return result, nil
+	return certificates, result.Error
 }
 
-func (i *InmemoryCertificateRepository) DeleteCertificate(id big.Int) error {
-	return nil
-	//return ErrMovieNotFound
+func (i *InmemoryCertificateRepository) DeleteCertificate(id uint64) error {
+	result := i.DB.Delete(&model.Certificate{}, id)
+	return result.Error
 }
 
 func (i *InmemoryCertificateRepository) CreateCertificate(certificate model.Certificate) (model.Certificate, error) {
-	subject := 1
-	if certificate.Subject != nil {
-		subject = certificate.Subject.Id
-	}
-	issuer := 1
+	//subject := 1
+	//if certificate.Subject != nil {
+	//	subject = certificate.Subject.Id
+	//}
+	//issuer := 1
+	//
+	//if certificate.Issuer != nil {
+	//	issuer = certificate.Issuer.Id
+	//}
 
-	if certificate.Issuer != nil {
-		issuer = certificate.Issuer.Id
-	}
 	t := model.INTERMEDIATE
-	if certificate.Issuer == nil {
+	empty := model.User{}
+	if certificate.Issuer == empty {
 		t = model.ROOT
 	}
+	//certificate.Subject = subject
+	//certificate.Issuer = issuer
+	certificate.Type = t
 
-	err := i.DB.QueryRow(
-		"INSERT INTO certificates(id, name, valid_from, valid_to, subject_id, issuer_id, type, status) VALUES($1, $2, $3, $4, $5, $6, $7, $8)", certificate.Id, certificate.Name, certificate.ValidFrom, certificate.ValidTo, subject, issuer, t, model.NOT_ACTIVE)
-	if err != nil {
-		return model.Certificate{}, err.Err()
-	}
-
-	return certificate, nil
-
+	result := i.DB.Create(&certificate)
+	return certificate, result.Error
 }

@@ -114,7 +114,7 @@ func (s *AuthService) Register(user *model.User) (*model.User, error) {
 			passwordBytes, err := s.hashToken(user.Password)
 			utils.CheckError(err)
 			user.Password = string(passwordBytes)
-			createdUser, err := s.userRepository.CreateUser(0, *user)
+			createdUser, err := s.userRepository.CreateUser(*user)
 			if err != nil {
 				return &model.User{}, err
 			}
@@ -236,7 +236,7 @@ func (s *AuthService) PasswordRecovery(request *model.PasswordRecovery) error {
 		return err
 	}
 	user.Password = string(hashedPassword)
-	s.userRepository.UpdateUser(int32(user.Id), user)
+	s.userRepository.UpdateUser(int32(user.ID), user)
 	s.passwordRecoveryRepository.UseRequestsForEmail(user.Email)
 	return nil
 }

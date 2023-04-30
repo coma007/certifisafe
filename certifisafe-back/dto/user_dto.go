@@ -27,7 +27,6 @@ type Credentials struct {
 
 func UserRegisterDTOtoModel(u *UserRegisterDTO) *model.User {
 	return &model.User{
-		Id:        0,
 		Email:     strings.TrimSpace(u.Email),
 		Password:  strings.TrimSpace(u.Password),
 		FirstName: strings.TrimSpace(u.FirstName),

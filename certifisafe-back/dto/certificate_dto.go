@@ -7,7 +7,7 @@ import (
 )
 
 type CertificateDTO struct {
-	Serial      int64
+	Serial      *uint64
 	Name        string
 	ValidFrom   time.Time
 	ValidTo     time.Time
@@ -21,16 +21,17 @@ func CertificateToDTO(cert *model.Certificate) *CertificateDTO {
 	if cert == nil {
 		return nil
 	}
+	serial := uint64(cert.ID)
 	certificate := CertificateDTO{
-		cert.Id,
-		cert.Name,
-		cert.ValidFrom,
-		cert.ValidTo,
+		Serial:    &serial,
+		Name:      cert.Name,
+		ValidFrom: cert.ValidFrom,
+		ValidTo:   cert.ValidTo,
 		// TODO make nested object user
-		cert.Issuer.FirstName + " " + cert.Issuer.LastName,
-		cert.Subject.FirstName + " " + cert.Subject.LastName,
-		TypeToString(cert.Type),
-		StatusToString(cert.Status),
+		IssuerName:  cert.Issuer.FirstName + " " + cert.Issuer.LastName,
+		SubjectName: cert.Subject.FirstName + " " + cert.Subject.LastName,
+		Status:      TypeToString(cert.Type),
+		Type:        StatusToString(cert.Status),
 	}
 	return &certificate
 }
@@ -40,14 +41,20 @@ func CertificateDTOtoModel(cert *CertificateDTO) *model.Certificate {
 		return nil
 	}
 	certificate := model.Certificate{
-		Id:        cert.Serial,
-		Issuer:    nil,
-		Subject:   nil,
+		//ID:        cert.Serial,
+		Issuer: model.User{
+			Email:     "",
+			Password:  "",
+			FirstName: "",
+			LastName:  "",
+			Phone:     "",
+			IsAdmin:   false,
+		},
+		Subject:   model.User{},
 		ValidFrom: cert.ValidFrom,
 		ValidTo:   cert.ValidTo,
 		Status:    StringToStatus(cert.Status),
 		Type:      StringToType(cert.Type),
-		PublicKey: 123123,
 	}
 	return &certificate
 }
@@ -56,8 +63,9 @@ func X509CertificateToCertificateDTO(cert *x509.Certificate) *CertificateDTO {
 	if cert == nil {
 		return nil
 	}
+	serial := cert.SerialNumber.Uint64()
 	certificate := CertificateDTO{
-		Serial:    cert.SerialNumber.Int64(),
+		Serial:    &serial,
 		Name:      cert.Subject.CommonName,
 		ValidFrom: cert.NotBefore,
 		ValidTo:   cert.NotAfter,

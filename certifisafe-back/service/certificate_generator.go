@@ -12,10 +12,8 @@ import (
 	"time"
 )
 
-func GenerateRootCa(subject pkix.Name) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	subject.SerialNumber = serialNumber.String()
+func GenerateRootCa(subject pkix.Name, serial uint64) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+	serialNumber := new(big.Int).SetUint64(serial)
 	// CA, root
 	ca := &x509.Certificate{
 		Version:               3,
@@ -61,9 +59,8 @@ func GenerateRootCa(subject pkix.Name) (x509.Certificate, bytes.Buffer, bytes.Bu
 	return *ca, *caPEM, *caPrivKeyPEM, nil
 }
 
-func GenerateSubordinateCa(subject pkix.Name, rootTemplate *x509.Certificate, caPrivKey rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+func GenerateSubordinateCa(subject pkix.Name, serial uint64, rootTemplate *x509.Certificate, caPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+	serialNumber := new(big.Int).SetUint64(serial)
 	subject.SerialNumber = serialNumber.String()
 	subTemplate := &x509.Certificate{
 		Version:               3,
@@ -76,7 +73,7 @@ func GenerateSubordinateCa(subject pkix.Name, rootTemplate *x509.Certificate, ca
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		SubjectKeyId:          []byte{1, 2, 3, 4, 6},
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageCodeSigning},
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageCodeSigning, x509.ExtKeyUsageAny},
 		BasicConstraintsValid: true,
 		IsCA:                  true,
 	}
@@ -110,9 +107,8 @@ func GenerateSubordinateCa(subject pkix.Name, rootTemplate *x509.Certificate, ca
 	return *subTemplate, *certPEM, *certPrivKeyPEM, nil
 }
 
-func GenerateLeafCert(subject pkix.Name, parent *x509.Certificate, parentPrivKey rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+func GenerateLeafCert(subject pkix.Name, serial uint64, parent *x509.Certificate, parentPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+	serialNumber := new(big.Int).SetUint64(serial)
 	subject.SerialNumber = serialNumber.String()
 	certTemplate := &x509.Certificate{
 		Version:            3,

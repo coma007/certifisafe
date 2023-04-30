@@ -20,8 +20,8 @@ type NewRequestDTO struct {
 
 func RequestToDTO(req *model.Request) *RequestDTO {
 	request := RequestDTO{
-		CertificateToDTO(req.ParentCertificate),
-		CertificateToDTO(req.Certificate),
+		CertificateToDTO(&req.ParentCertificate),
+		CertificateToDTO(&req.Certificate),
 		req.Datetime,
 		RequestStatusToString(req.Status),
 	}
@@ -30,19 +30,24 @@ func RequestToDTO(req *model.Request) *RequestDTO {
 
 func RequestDTOtoModel(request *RequestDTO) *model.Request {
 	return &model.Request{
-		0,
-		CertificateDTOtoModel(request.ParentCertificate),
-		CertificateDTOtoModel(request.Certificate),
-		request.Datetime,
-		StringToRequestStatus(request.Status)}
+		Id:                  0,
+		ParentCertificate:   *CertificateDTOtoModel(request.ParentCertificate),
+		Certificate:         *CertificateDTOtoModel(request.Certificate),
+		Datetime:            request.Datetime,
+		Status:              StringToRequestStatus(request.Status),
+		ParentCertificateID: request.ParentCertificate.Serial,
+		CertificateID:       request.Certificate.Serial,
+	}
 }
 
 func NewRequestDTOtoModel(request *NewRequestDTO) *model.Request {
-	return &model.Request{0,
-		CertificateDTOtoModel(request.ParentCertificate),
-		CertificateDTOtoModel(request.ParentCertificate),
-		request.Datetime,
-		model.RequestStatus(model.PENDING)}
+	return &model.Request{
+		Id:                0,
+		ParentCertificate: *CertificateDTOtoModel(request.ParentCertificate),
+		Certificate:       *CertificateDTOtoModel(request.Certificate),
+		Datetime:          request.Datetime,
+		Status:            model.RequestStatus(model.PENDING),
+	}
 }
 
 func RequestStatusToString(reqStatus model.RequestStatus) string {

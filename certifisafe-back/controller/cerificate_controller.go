@@ -68,7 +68,7 @@ func (ch *CertificateHandler) CreateCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	certificate, err := ch.service.GetCertificate(id)
+	certificate, err := ch.service.GetCertificate(id.Uint64())
 
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -120,6 +120,7 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 		return
 	}
 
+	// TODO: response has content, fix header
 	w.WriteHeader(http.StatusNoContent)
 	w.Write([]byte("Successfully deleted"))
 }
@@ -127,13 +128,14 @@ func (ch *CertificateHandler) DeleteCertificate(w http.ResponseWriter, r *http.R
 func (ch *CertificateHandler) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, _ := utils.StringToBigInt(ps.ByName("id"))
 
-	result, err := ch.service.IsValid(id)
+	result, err := ch.service.IsValid(id.Uint64())
 	fmt.Print(result)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
 	}
 
+	// TODO: response has content, fix header
 	w.WriteHeader(http.StatusNoContent)
 	if result {
 		w.Write([]byte("true"))
@@ -147,23 +149,34 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 	rootDTO := &dto.NewRequestDTO{
 		ParentCertificate: nil,
 		Certificate: &dto.CertificateDTO{
-			Serial:      123123,
-			Name:        "",
+			Serial:      nil,
+			Name:        "Root",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
 			IssuerName:  "",
 			SubjectName: "",
 			Status:      "",
-			Type:        "INTERMEDIATE",
+			Type:        "ROOT",
 		},
 		Datetime: time.Time{},
+	}
+
+	root, err := ch.service.CreateCertificate(*rootDTO)
+	if err != nil {
+		panic(err)
+	}
+	//rootSerial := new(big.Int)
+	//rootSerial.SetString(root.Serial, 10)
+	//rootCreated, err := ch.service.GetCertificate(*rootSerial)
+	if err != nil {
+		panic(err)
 	}
 
 	intermediateDTO := &dto.NewRequestDTO{
-		ParentCertificate: nil,
+		ParentCertificate: &root,
 		Certificate: &dto.CertificateDTO{
-			Serial:      6546456,
-			Name:        "",
+			Serial:      nil,
+			Name:        "SUB",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
 			IssuerName:  "",
@@ -173,23 +186,23 @@ func (ch *CertificateHandler) Generate(w http.ResponseWriter, r *http.Request, p
 		},
 		Datetime: time.Time{},
 	}
+	intermidiate, err := ch.service.CreateCertificate(*intermediateDTO)
 
 	leafDTO := &dto.NewRequestDTO{
-		ParentCertificate: nil,
+		ParentCertificate: &intermidiate,
 		Certificate: &dto.CertificateDTO{
-			Serial:      87846345,
-			Name:        "",
+			Serial:      nil,
+			Name:        "LEAF",
 			ValidFrom:   time.Now(),
 			ValidTo:     time.Now(),
 			IssuerName:  "",
 			SubjectName: "",
 			Status:      "",
-			Type:        "LEAF",
+			Type:        "END",
 		},
 		Datetime: time.Time{},
 	}
-	root, err := ch.service.CreateCertificate(*rootDTO)
-	intermidiate, err := ch.service.CreateCertificate(*intermediateDTO)
+
 	leaf, err := ch.service.CreateCertificate(*leafDTO)
 
 	if err != nil {

@@ -1,19 +1,21 @@
 package model
 
 import (
+	"gorm.io/gorm"
 	"time"
 )
 
 type Certificate struct {
-	Id        int64
+	gorm.Model
 	Name      string
-	Issuer    *User
-	Subject   *User
+	Issuer    User `gorm:"foreignKey:IssuerID;references:ID"`
+	Subject   User `gorm:"foreignKey:SubjectID;references:ID"`
 	ValidFrom time.Time
 	ValidTo   time.Time
 	Status    CertificateStatus
 	Type      CertificateType
-	PublicKey int64
+	IssuerID  *int64
+	SubjectID *int64
 }
 
 type CertificateType int64
