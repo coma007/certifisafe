@@ -251,7 +251,7 @@ func (s *AuthService) VerifyEmail(verificationCode string) error {
 		return err
 	}
 	user.IsActive = true
-	_, err = s.userRepository.UpdateUser(int32(user.Id), user)
+	_, err = s.userRepository.UpdateUser(int32(user.ID), user)
 	if err != nil {
 		return err
 	}

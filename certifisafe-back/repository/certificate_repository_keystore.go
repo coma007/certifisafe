@@ -2,7 +2,6 @@ package repository
 
 import (
 	"bytes"
-	"certifisafe-back/model"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
@@ -13,8 +12,7 @@ import (
 )
 
 type InmemoryKeyStoreCertificateRepository struct {
-	Certificates []model.Certificate
-	DB           *gorm.DB
+	DB *gorm.DB
 }
 
 type IKeyStoreCertificateRepository interface {
@@ -25,11 +23,7 @@ type IKeyStoreCertificateRepository interface {
 }
 
 func NewInMemoryCertificateKeyStoreRepository() *InmemoryKeyStoreCertificateRepository {
-	var certificates = []model.Certificate{}
-
-	return &InmemoryKeyStoreCertificateRepository{
-		Certificates: certificates,
-	}
+	return &InmemoryKeyStoreCertificateRepository{}
 }
 
 func (i *InmemoryKeyStoreCertificateRepository) GetCertificate(serialNumber uint64) (x509.Certificate, error) {
@@ -46,12 +40,10 @@ func (i *InmemoryKeyStoreCertificateRepository) GetCertificate(serialNumber uint
 }
 
 func (i *InmemoryKeyStoreCertificateRepository) DeleteCertificate(id uint64) error {
-	for k := 0; k < len(i.Certificates); k++ {
-		//if i.Certificates[k].Id == id {
-		//	// i.Certificates[k].Title = movie.Title
-		//	return nil
-		//}
-	}
+	//if i.Certificates[k].Id == id {
+	//	// i.Certificates[k].Title = movie.Title
+	//	return nil
+	//}
 
 	return nil
 	//return ErrMovieNotFound
