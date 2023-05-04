@@ -1,6 +1,4 @@
-package dto
-
-import "certifisafe-back/model"
+package password_recovery
 
 type PasswordRecoveryRequestDTO struct {
 	Email string
@@ -11,8 +9,8 @@ type PasswordResetDTO struct {
 	NewPassword      string
 }
 
-func PasswordResetDTOtoModel(dto *PasswordResetDTO) *model.PasswordRecovery {
-	return &model.PasswordRecovery{
+func PasswordResetDTOtoModel(dto *PasswordResetDTO) *PasswordRecovery {
+	return &PasswordRecovery{
 		Code:        dto.VerificationCode,
 		NewPassword: dto.NewPassword,
 	}

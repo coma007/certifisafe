@@ -1,15 +1,19 @@
-package model
+package certificate
 
 import (
+	"certifisafe-back/features/user"
 	"gorm.io/gorm"
 	"time"
 )
 
+// TODO add organization, postal code, ... to Certificate
+
 type Certificate struct {
 	gorm.Model
 	Name      string
-	Issuer    User `gorm:"foreignKey:IssuerID;references:ID"`
-	Subject   User `gorm:"foreignKey:SubjectID;references:ID"`
+	Deleted   gorm.DeletedAt
+	Issuer    user.User `gorm:"foreignKey:IssuerID;references:ID"`
+	Subject   user.User `gorm:"foreignKey:SubjectID;references:ID"`
 	ValidFrom time.Time
 	ValidTo   time.Time
 	Status    CertificateStatus

@@ -1,9 +1,9 @@
-package service
+package auth
 
 import (
 	"bytes"
-	"certifisafe-back/model"
-	"certifisafe-back/repository"
+	password_recovery2 "certifisafe-back/features/password_recovery"
+	user2 "certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"crypto/rand"
 	"errors"
@@ -21,6 +21,7 @@ import (
 )
 
 var (
+	ErrNoUserWithEmail     = errors.New("no user for given email")
 	ErrBadCredentials      = errors.New("bad username or password")
 	ErrNotActivated        = errors.New("account is not activated")
 	ErrTakenEmail          = errors.New("email already taken")
@@ -32,27 +33,29 @@ var (
 	ErrCodeNotFound        = errors.New("verification code cannot be found")
 )
 
-type IAuthService interface {
+type AuthService interface {
 	Login(email string, password string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
-	Register(user *model.User) (*model.User, error)
+	Register(user *user2.User) (*user2.User, error)
 	VerifyEmail(verificationCode string) error
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
-	GetUserByEmail(email string) (model.User, error)
+	GetUserByEmail(email string) (user2.User, error)
 	RequestPasswordRecoveryToken(email string) error
-	PasswordRecovery(request *model.PasswordRecovery) error
+	PasswordRecovery(request *password_recovery2.PasswordRecovery) error
 }
 
-type AuthService struct {
-	userRepository              repository.IUserRepository
-	passwordRecoveryRepository  repository.IPasswordRecoveryRepository
-	verificationRepository      repository.IVerificationRepository
+// TODO check if everything works - Duti (Bobi made changes)
+// TODO separate mails to email_service.go
+type DefaultAuthService struct {
+	userRepository              user2.UserRepository
+	passwordRecoveryRepository  password_recovery2.PasswordRecoveryRepository
+	verificationRepository      VerificationRepository
 	verificationTokenCharacters string
 }
 
-func NewAuthService(userRepository repository.IUserRepository, passwordRecoveryRepository repository.IPasswordRecoveryRepository,
-	verificationRepository repository.IVerificationRepository) *AuthService {
-	return &AuthService{userRepository: userRepository,
+func NewDefaultAuthService(userRepository user2.UserRepository, passwordRecoveryRepository password_recovery2.PasswordRecoveryRepository,
+	verificationRepository VerificationRepository) *DefaultAuthService {
+	return &DefaultAuthService{userRepository: userRepository,
 		passwordRecoveryRepository:  passwordRecoveryRepository,
 		verificationRepository:      verificationRepository,
 		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
@@ -65,10 +68,10 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func (s *AuthService) Login(email string, password string) (string, error) {
+func (s *DefaultAuthService) Login(email string, password string) (string, error) {
 	user, err := s.GetUserByEmail(email)
 	if err != nil {
-		if err == repository.ErrNoUserWithEmail {
+		if err == ErrNoUserWithEmail {
 			return "", ErrBadCredentials
 		} else {
 			return "", err
@@ -98,40 +101,40 @@ func (s *AuthService) Login(email string, password string) (string, error) {
 	return "", ErrBadCredentials
 }
 
-func (s *AuthService) GetUserByEmail(email string) (model.User, error) {
+func (s *DefaultAuthService) GetUserByEmail(email string) (user2.User, error) {
 	return s.userRepository.GetUserByEmail(email)
 }
 
-func (s *AuthService) Register(user *model.User) (*model.User, error) {
-	user.IsActive = false
-	_, err := s.validateRegistrationData(user)
+func (s *DefaultAuthService) Register(u *user2.User) (*user2.User, error) {
+	u.IsActive = false
+	_, err := s.validateRegistrationData(u)
 	if err != nil {
-		return &model.User{}, err
+		return &user2.User{}, err
 	}
-	_, err = s.userRepository.GetUserByEmail(user.Email)
+	_, err = s.userRepository.GetUserByEmail(u.Email)
 	if err != nil {
-		if err == repository.ErrNoUserWithEmail {
-			passwordBytes, err := s.hashToken(user.Password)
+		if err == ErrNoUserWithEmail {
+			passwordBytes, err := s.hashToken(u.Password)
 			utils.CheckError(err)
-			user.Password = string(passwordBytes)
-			createdUser, err := s.userRepository.CreateUser(*user)
+			u.Password = string(passwordBytes)
+			createdUser, err := s.userRepository.CreateUser(*u)
 			if err != nil {
-				return &model.User{}, err
+				return &user2.User{}, err
 			}
 
 			//add phone option
-			s.sendVerification(user)
+			s.sendVerification(u)
 
 			return &createdUser, nil
 		} else {
-			return &model.User{}, ErrTakenEmail
+			return &user2.User{}, ErrTakenEmail
 		}
 	}
 
-	return &model.User{}, ErrTakenEmail
+	return &user2.User{}, ErrTakenEmail
 }
 
-func (s *AuthService) ValidateToken(tokenString string) (bool, error) {
+func (s *DefaultAuthService) ValidateToken(tokenString string) (bool, error) {
 
 	token, _, b, err2 := s.GetClaims(tokenString)
 	if err2 != nil {
@@ -145,7 +148,7 @@ func (s *AuthService) ValidateToken(tokenString string) (bool, error) {
 	return false, nil
 }
 
-func (s *AuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {
+func (s *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {
 	tokens := strings.Split(tokenString, " ")
 	tokenString, schema := tokens[0], tokens[1]
 	//tokenString = tokenString[1 : len(tokenString)-1]
@@ -166,7 +169,7 @@ func (s *AuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, 
 	return token, claims, false, nil
 }
 
-func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
+func (s *DefaultAuthService) RequestPasswordRecoveryToken(email string) error {
 	user, err := s.userRepository.GetUserByEmail(email)
 	if err != nil {
 		return err
@@ -199,7 +202,7 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 		Code: verificationToken,
 	})
 
-	_, err = s.passwordRecoveryRepository.CreateRequest(1, model.PasswordRecoveryRequest{Id: 1, Email: user.Email, Code: string(verificationToken)})
+	_, err = s.passwordRecoveryRepository.CreateRequest(1, password_recovery2.PasswordRecoveryRequest{Email: user.Email, Code: string(verificationToken)})
 	if err != nil {
 		return err
 	}
@@ -211,7 +214,7 @@ func (s *AuthService) RequestPasswordRecoveryToken(email string) error {
 	return nil
 }
 
-func (s *AuthService) PasswordRecovery(request *model.PasswordRecovery) error {
+func (s *DefaultAuthService) PasswordRecovery(request *password_recovery2.PasswordRecovery) error {
 	//token, err := s.hashToken(request.Code)
 	//if err != nil {
 	//	return err
@@ -241,7 +244,7 @@ func (s *AuthService) PasswordRecovery(request *model.PasswordRecovery) error {
 	return nil
 }
 
-func (s *AuthService) VerifyEmail(verificationCode string) error {
+func (s *DefaultAuthService) VerifyEmail(verificationCode string) error {
 	verification, err := s.verificationRepository.GetVerificationByCode(verificationCode)
 	if err != nil {
 		return ErrCodeNotFound
@@ -258,7 +261,7 @@ func (s *AuthService) VerifyEmail(verificationCode string) error {
 	return nil
 }
 
-func (s *AuthService) sendMail(to []string, body bytes.Buffer) error {
+func (s *DefaultAuthService) sendMail(to []string, body bytes.Buffer) error {
 	from := "ftn.project.usertest@gmail.com"
 	password := "zmiwmhfweojejlqy"
 
@@ -271,7 +274,7 @@ func (s *AuthService) sendMail(to []string, body bytes.Buffer) error {
 	return nil
 }
 
-func (s *AuthService) sendVerification(user *model.User) error {
+func (s *DefaultAuthService) sendVerification(user *user2.User) error {
 	to := []string{user.Email}
 
 	templateFile, _ := filepath.Abs("utils/emailVerification.html")
@@ -290,8 +293,7 @@ func (s *AuthService) sendVerification(user *model.User) error {
 		return err
 	}
 
-	_, err = s.verificationRepository.CreateVerification(0, model.Verification{
-		Id:    0,
+	_, err = s.verificationRepository.CreateVerification(0, Verification{
 		Email: user.Email,
 		Code:  verificationToken,
 	})
@@ -312,7 +314,7 @@ func (s *AuthService) sendVerification(user *model.User) error {
 	return nil
 }
 
-func (s *AuthService) getVerificationToken(length int, verification bool) (string, error) {
+func (s *DefaultAuthService) getVerificationToken(length int, verification bool) (string, error) {
 
 	verificationString := ""
 	for true {
@@ -338,12 +340,12 @@ func (s *AuthService) getVerificationToken(length int, verification bool) (strin
 	return verificationString, nil
 }
 
-func (s *AuthService) hashToken(password string) ([]byte, error) {
+func (s *DefaultAuthService) hashToken(password string) ([]byte, error) {
 	passwordBytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	return passwordBytes, err
 }
 
-func (s *AuthService) validateRegistrationData(u *model.User) (bool, error) {
+func (s *DefaultAuthService) validateRegistrationData(u *user2.User) (bool, error) {
 	match, err := regexp.Match("^[\\w-\\+\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", []byte(u.Email))
 	if err != nil || !match || u.Email == "" {
 		return false, ErrWrongEmailFormat
@@ -361,7 +363,7 @@ func (s *AuthService) validateRegistrationData(u *model.User) (bool, error) {
 	return true, nil
 }
 
-func (s *AuthService) verifyPassword(password string) bool {
+func (s *DefaultAuthService) verifyPassword(password string) bool {
 	number, upper, lower := false, false, false
 
 	for _, c := range password {

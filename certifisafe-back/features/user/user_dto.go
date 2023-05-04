@@ -1,7 +1,6 @@
-package dto
+package user
 
 import (
-	"certifisafe-back/model"
 	"strings"
 )
 
@@ -25,8 +24,8 @@ type Credentials struct {
 	Password string
 }
 
-func UserRegisterDTOtoModel(u *UserRegisterDTO) *model.User {
-	return &model.User{
+func UserRegisterDTOtoModel(u *UserRegisterDTO) *User {
+	return &User{
 		Email:     strings.TrimSpace(u.Email),
 		Password:  strings.TrimSpace(u.Password),
 		FirstName: strings.TrimSpace(u.FirstName),
@@ -36,7 +35,7 @@ func UserRegisterDTOtoModel(u *UserRegisterDTO) *model.User {
 	}
 }
 
-func ModelToUserBaseDTO(u *model.User) *UserBaseDTO {
+func ModelToUserBaseDTO(u *User) *UserBaseDTO {
 	return &UserBaseDTO{
 		Email:     u.Email,
 		FirstName: u.FirstName,

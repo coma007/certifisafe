@@ -2,10 +2,11 @@ package main
 
 import (
 	"bytes"
-	"certifisafe-back/controller"
-	"certifisafe-back/model"
-	"certifisafe-back/repository"
-	"certifisafe-back/service"
+	"certifisafe-back/features/auth"
+	certificate2 "certifisafe-back/features/certificate"
+	"certifisafe-back/features/password_recovery"
+	request2 "certifisafe-back/features/request"
+	user2 "certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"crypto/rand"
 	"crypto/rsa"
@@ -25,17 +26,15 @@ import (
 	"time"
 )
 
-var auth service.IAuthService
+var authService auth.AuthService
 
 func main() {
 	config := utils.Config()
 	password := config["password"]
-	user := config["user"]
+	dbuser := config["user"]
 
-	dbPostgree := postgres.Open(fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", user, password))
+	dbPostgree := postgres.Open(fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", dbuser, password))
 	db, err := gorm.Open(dbPostgree, &gorm.Config{PrepareStmt: true, TranslateError: true})
-	//DeleteCreatedEntities(db)
-	//runScript(db, "utils/schema.sql")
 	automigrate(db)
 	utils.CheckError(err)
 
@@ -49,37 +48,28 @@ func main() {
 			panic(err)
 		}
 	}(db)
-	//utils.CheckError(err)
-	//
-	//defer func(db *sql.DB) {
-	//	err := db.Close()
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//}(db)
 
-	userInMemoryRepository := repository.NewInMemoryUserRepository(db)
-	passwordRecoveryInMemoryRepository := repository.NewInMemoryPasswordRecoveryRepository(db)
-	verificationInMemoryRepository := repository.NewInMemoryVerificationRepository(db)
-	auth = service.NewAuthService(userInMemoryRepository, passwordRecoveryInMemoryRepository, verificationInMemoryRepository)
-	authController := controller.NewAuthHandler(auth)
+	userRepository := user2.NewDefaultUserRepository(db)
+	passwordRecoveryRepository := password_recovery.NewDefaultPasswordRecoveryRepository(db)
+	verificationRepository := auth.NewInMemoryVerificationRepository(db)
 
-	certificateInMemoryRepository := repository.NewInMemoryCertificateRepository(db)
-	certificateKeyStoreInMemoryRepository := repository.NewInMemoryCertificateKeyStoreRepository()
-	certificateService := service.NewDefaultCertificateService(certificateInMemoryRepository, certificateKeyStoreInMemoryRepository, userInMemoryRepository)
-	certificateController := controller.NewCertificateHandler(certificateService)
+	authService = auth.NewDefaultAuthService(userRepository, passwordRecoveryRepository, verificationRepository)
+	authController := auth.NewAuthHandler(authService)
 
-	requestRepository := repository.NewRequestRepository(db, certificateInMemoryRepository)
-	requestService := service.NewRequestServiceImpl(requestRepository, certificateService)
-	requestController := controller.NewRequestController(requestService, auth)
+	certificateRepository := certificate2.NewDefaultCertificateRepository(db)
+	certificateFileStoreRepository := certificate2.NewDefaultFileStoreCertificateRepository()
+	certificateService := certificate2.NewDefaultCertificateService(certificateRepository, certificateFileStoreRepository, userRepository)
+	certificateController := certificate2.NewCertificateController(certificateService)
+
+	requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository)
+	requestService := request2.NewDefaultRequestService(requestRepository, certificateService)
+	requestController := request2.NewRequestController(requestService, certificateService, authService)
 
 	router := httprouter.New()
 
 	router.GET("/api/certificate/:id", certificateController.GetCertificate)
 	router.GET("/api/certificate", certificateController.GetCertificates)
 	router.DELETE("/api/certificate/:id", certificateController.DeleteCertificate)
-	router.POST("/api/certificate", certificateController.CreateCertificate)
-	router.POST("/api/certificate/generate", certificateController.Generate)
 	router.GET("/api/certificate/:id/valid", certificateController.IsValid)
 
 	router.GET("/api/request", requestController.GetAllRequests)
@@ -88,6 +78,7 @@ func main() {
 	router.PATCH("/api/request/accept/:id", requestController.AcceptRequest)
 	router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
 	router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
+	router.POST("/api/certificate/generate", requestController.GenerateCertificates)
 
 	router.POST("/api/login", authController.Login)
 	router.POST("/api/register", authController.Register)
@@ -95,9 +86,7 @@ func main() {
 	router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
 	router.POST("/api/password-recovery", authController.PasswordRecovery)
 
-	//
-	//createRoot(*certificateKeyStoreInMemoryRepository, certificateInMemoryRepository)
-
+	//createRoot(*certificateFileStoreRepository, certificateRepository)
 	//runScript(db, "utils/data.sql")
 
 	fmt.Println("http server runs on :8080")
@@ -106,13 +95,13 @@ func main() {
 }
 
 func automigrate(db *gorm.DB) {
-	err := db.AutoMigrate(&model.User{}, &model.Certificate{})
+	err := db.AutoMigrate(&user2.User{}, &certificate2.Certificate{})
 	utils.CheckError(err)
-	err = db.AutoMigrate(&model.Request{})
+	err = db.AutoMigrate(&request2.Request{})
 	utils.CheckError(err)
 }
 
-func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db repository.ICertificateRepository) error {
+func createRoot(keyStore certificate2.DefaultFileStoreCertificateRepository, db certificate2.CertificateRepository) error {
 	config := utils.Config()
 	// CA, root
 	root := &x509.Certificate{
@@ -165,15 +154,15 @@ func createRoot(keyStore repository.InmemoryKeyStoreCertificateRepository, db re
 
 	serial := new(int64)
 	*serial = root.SerialNumber.Int64()
-	rootModel := &model.Certificate{
+	rootModel := &certificate2.Certificate{
 		//Id:        serial,
 		Name:      root.Subject.CommonName,
-		Issuer:    model.User{},
-		Subject:   model.User{},
+		Issuer:    user2.User{},
+		Subject:   user2.User{},
 		ValidFrom: time.Time{},
 		ValidTo:   time.Time{},
-		Status:    model.CertificateStatus(model.ACTIVE),
-		Type:      model.CertificateType(model.ROOT),
+		Status:    certificate2.CertificateStatus(certificate2.ACTIVE),
+		Type:      certificate2.CertificateType(certificate2.ROOT),
 	}
 
 	//_, err = keyStore.CreateCertificate(root.SerialNumber.Int64(), *rootPEM, *rootPrivateKeyPEM)
@@ -196,6 +185,7 @@ func runScript(db *gorm.DB, script string) {
 }
 
 func middleware(n httprouter.Handle) httprouter.Handle {
+	// TODO what is usage of this ?
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		token := r.Header.Get("Authorization")
 		if token == "" {
@@ -203,7 +193,7 @@ func middleware(n httprouter.Handle) httprouter.Handle {
 			return
 		}
 
-		tokenValid, err := auth.ValidateToken(token)
+		tokenValid, err := authService.ValidateToken(token)
 		if err != nil || !tokenValid {
 			http.Error(w, "Invalid token", http.StatusForbidden)
 			return
@@ -211,29 +201,4 @@ func middleware(n httprouter.Handle) httprouter.Handle {
 
 		n(w, r, ps)
 	}
-}
-
-func DeleteCreatedEntities(db *gorm.DB) func() {
-	type entity struct {
-		table   string
-		keyname string
-		key     interface{}
-	}
-	var entries []entity
-	hookName := "cleanupHook"
-
-	// Remove the hook once we're done
-	defer db.Callback().Create().Remove(hookName)
-	// Find out if the current db object is already a transaction
-	tx := db
-	tx = db.Begin()
-	// Loop from the end. It is important that we delete the entries in the
-	// reverse order of their insertion
-	for i := len(entries) - 1; i >= 0; i-- {
-		entry := entries[i]
-		fmt.Printf("Deleting entities from '%s' table with key %v\n", entry.table, entry.key)
-		tx.Table(entry.table).Where(entry.keyname+" = ?", entry.key).Delete("")
-	}
-	tx.Commit()
-	return nil
 }
