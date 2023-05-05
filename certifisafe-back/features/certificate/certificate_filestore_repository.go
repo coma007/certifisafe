@@ -27,16 +27,9 @@ func NewDefaultFileStoreCertificateRepository() *DefaultFileStoreCertificateRepo
 
 func (i *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber uint64, certPEM bytes.Buffer,
 	certPrivKeyPEM bytes.Buffer) (x509.Certificate, error) {
-	// TODO implement depending on chain
 
 	privateKey := certPrivKeyPEM.Bytes()
 	publicKey := certPEM.Bytes()
-	//certificateChain := []keystore.Certificate{
-	//	{
-	//		Type:    "X509",
-	//		Content: certPEM.Bytes(),
-	//	},
-	//}
 	certOut, err := os.Create(getPublicName(serialNumber))
 	_, err = certOut.Write(publicKey)
 	if err != nil {

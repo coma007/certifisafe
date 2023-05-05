@@ -9,7 +9,6 @@ import (
 
 type Request struct {
 	gorm.Model
-	//Id                  *int `gorm:"autoIncrement;PRIMARY_KEY"`
 	Deleted             gorm.DeletedAt
 	Datetime            time.Time
 	Status              RequestStatus
@@ -19,6 +18,8 @@ type Request struct {
 	Subject             user.User `gorm:"foreignKey:SubjectID;"`
 	ParentCertificateID *uint64
 	ParentCertificate   certificate.Certificate `gorm:"foreignKey:ParentCertificateID;"`
+
+	RejectedReason *string
 }
 
 type RequestStatus int64

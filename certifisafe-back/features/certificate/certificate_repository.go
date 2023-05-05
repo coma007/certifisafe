@@ -1,7 +1,6 @@
 package certificate
 
 import (
-	"certifisafe-back/features/user"
 	"gorm.io/gorm"
 )
 
@@ -23,29 +22,11 @@ func NewDefaultCertificateRepository(db *gorm.DB) *DefaultCertificateRepository 
 }
 
 func (i *DefaultCertificateRepository) CreateCertificate(certificate Certificate) (Certificate, error) {
-	// TODO implement this
-
-	//subject := 1
-	//if certificate.Subject != nil {
-	//	subject = certificate.Subject.Id
-	//}
-	//issuer := 1
-	//
-	//if certificate.Issuer != nil {
-	//	issuer = certificate.Issuer.Id
-	//}
-
-	t := INTERMEDIATE
-	empty := user.User{}
-	if certificate.Issuer == empty {
-		t = ROOT
-	}
-	//certificate.Subject = subject
-	//certificate.Issuer = issuer
-	certificate.Type = t
-
 	result := i.DB.Create(&certificate)
-	return certificate, result.Error
+	if result.Error != nil {
+		return Certificate{}, result.Error
+	}
+	return i.GetCertificate(uint64(certificate.ID))
 }
 
 func (i *DefaultCertificateRepository) GetCertificate(id uint64) (Certificate, error) {

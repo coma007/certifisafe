@@ -48,82 +48,57 @@ func NewDefaultCertificateService(cRepo CertificateRepository, cKSRepo FileStore
 }
 
 func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certificateName string, certificateType string, subjectId uint) (CertificateDTO, error) {
-	// creating of leaf node
-
 	var certificate x509.Certificate
 	var certificatePEM bytes.Buffer
 	var certificatePrivKeyPEM bytes.Buffer
 	var err error
 
-	// TODO change in dto
-	subject := pkix.Name{
-		CommonName: certificateName,
-		//Organization:  []string{cert.Certificate.Name},
-		//Country:       []string{cert.Certificate.Name},
-		//StreetAddress: []string{cert.Certificate.Name},
-		//PostalCode:    []string{cert.Certificate.Name},
+	var issuer user2.User
+	var parentCertificate *Certificate
+
+	if parentSerial != nil {
+		temp, err := d.certificateRepo.GetCertificate(uint64(*parentSerial))
+		parentCertificate = &temp
+		utils.CheckError(err)
+		issuer = parentCertificate.Subject
 	}
-	var parent x509.Certificate
 
-	// TODO add chain ?
-	//conf := tls.Config { }
-	//conf.RootCAs = x509.NewCertPool()
-	//for _, cert := range certChain.Certificate {
-	//	x509Cert, err := x509.ParseCertificate(cert)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	conf.RootCAs.AddCert(x509Cert)
-	//}
-
-	// TODO get from parent
-	issuer, err := d.userRepo.CreateUser(user2.User{
-		Email:     "issuer",
-		Password:  "asd",
-		FirstName: "qwe",
-		LastName:  "qwe",
-		Phone:     "ertert",
-		IsAdmin:   false,
-	})
-	utils.CheckError(err)
-
-	// TODO grab user from request, but wait until that TODO is resolved
-	newSubject, err := d.userRepo.CreateUser(user2.User{
-		Email:     "subject",
-		Password:  "asd",
-		FirstName: "asd",
-		LastName:  "ads",
-		Phone:     "adw",
-		IsAdmin:   false,
-	})
+	newSubject, err := d.userRepo.GetUser(subjectId)
 	utils.CheckError(err)
 
 	certificateDB := Certificate{
-		Name:      certificateName,
-		Issuer:    issuer,
-		Subject:   newSubject,
-		ValidFrom: certificate.NotBefore,
-		ValidTo:   certificate.NotAfter,
-		Status:    NOT_ACTIVE,
-		Type:      StringToType(certificateType),
-
-		//IssuerID:  &issuer.Id,
-		//SubjectID: &newSubject.Id,
+		Name:              certificateName,
+		Issuer:            issuer,
+		Subject:           newSubject,
+		Status:            NOT_ACTIVE,
+		Type:              StringToType(certificateType),
+		ParentCertificate: parentCertificate,
 	}
 
-	certificateDB, err = d.certificateRepo.CreateCertificate(certificateDB)
-	utils.CheckError(err)
+	subject := pkix.Name{
+		CommonName: certificateName,
+	}
+	var parent x509.Certificate
 
-	// TODO fix if chain added
 	switch StringToType(certificateType) {
 	case ROOT:
-		certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject, uint64(certificateDB.ID))
-		if err != nil {
-			return CertificateDTO{}, err
+		{
+			certificateDB, err = d.setDatesAndSave(&certificateDB, 5)
+			if err != nil {
+				return CertificateDTO{}, err
+			}
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject, uint64(certificateDB.ID))
+			if err != nil {
+				return CertificateDTO{}, err
+			}
+			break
 		}
-		break
 	case INTERMEDIATE:
 		{
+			certificateDB, err = d.setDatesAndSave(&certificateDB, 1)
+			if err != nil {
+				return CertificateDTO{}, err
+			}
 			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
@@ -137,6 +112,10 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 		}
 	case END:
 		{
+			certificateDB, err = d.setDatesAndSave(&certificateDB, 1)
+			if err != nil {
+				return CertificateDTO{}, err
+			}
 			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
@@ -161,6 +140,15 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 	}
 
 	return *ModelToCertificateDTO(&certificateDB), nil
+}
+
+func (d *DefaultCertificateService) setDatesAndSave(certificateDB *Certificate, years int) (Certificate, error) {
+	validFrom := time.Now()
+	validTo := time.Now().AddDate(years, 0, 0)
+	certificateDB.ValidTo = validTo
+	certificateDB.ValidFrom = validFrom
+
+	return d.certificateRepo.CreateCertificate(*certificateDB)
 }
 
 func (d *DefaultCertificateService) GetCertificate(id uint64) (Certificate, error) {

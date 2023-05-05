@@ -247,7 +247,7 @@ func (s *DefaultAuthService) PasswordRecovery(request *password_recovery2.Passwo
 		return err
 	}
 	user.Password = string(hashedPassword)
-	s.userRepository.UpdateUser(int32(user.ID), user)
+	s.userRepository.UpdateUser(user.ID, user)
 	s.passwordRecoveryRepository.UseRequestsForEmail(user.Email)
 	return nil
 }
@@ -262,7 +262,7 @@ func (s *DefaultAuthService) VerifyEmail(verificationCode string) error {
 		return err
 	}
 	user.IsActive = true
-	_, err = s.userRepository.UpdateUser(int32(user.ID), user)
+	_, err = s.userRepository.UpdateUser(user.ID, user)
 	if err != nil {
 		return err
 	}
