@@ -12,8 +12,10 @@
 *.so
 *.dylib
 
-private/
-public/
+public/*
+!public/.gitkeep
+private/*
+!private/.gitkeep
 
 # Test binary, built with `go test -c`
 *.test
