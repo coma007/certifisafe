@@ -4,10 +4,8 @@ import (
 	"certifisafe-back/features/auth"
 	certificate2 "certifisafe-back/features/certificate"
 	"certifisafe-back/utils"
-	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
-	"strconv"
 )
 
 type RequestController struct {
@@ -22,9 +20,8 @@ func NewRequestController(service RequestService, certificateService certificate
 
 func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var req NewRequestDTO
-	err := json.NewDecoder(r.Body).Decode(&req)
+	err := utils.ReadRequestBody(w, r, req)
 	if err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -38,9 +35,8 @@ func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request
 }
 
 func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := strconv.Atoi(ps.ByName("id"))
+	id, err := utils.ReadIDfromUrl(w, ps)
 	if err != nil {
-		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return
 	}
 
@@ -88,9 +84,8 @@ func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter,
 }
 
 func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := strconv.Atoi(ps.ByName("id"))
+	id, err := utils.ReadIDfromUrl(w, ps)
 	if err != nil {
-		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return
 	}
 
@@ -104,9 +99,8 @@ func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request
 }
 
 func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := strconv.Atoi(ps.ByName("id"))
+	id, err := utils.ReadIDfromUrl(w, ps)
 	if err != nil {
-		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return
 	}
 
@@ -120,9 +114,8 @@ func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *htt
 }
 
 func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := strconv.Atoi(ps.ByName("id"))
+	id, err := utils.ReadIDfromUrl(w, ps)
 	if err != nil {
-		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return
 	}
 

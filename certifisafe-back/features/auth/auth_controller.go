@@ -4,7 +4,6 @@ import (
 	"certifisafe-back/features/password_recovery"
 	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
-	"encoding/json"
 	"errors"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -21,9 +20,8 @@ func NewAuthHandler(cs AuthService) *AuthController {
 func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var credentials user.Credentials
-	err := json.NewDecoder(r.Body).Decode(&credentials)
+	err := utils.ReadRequestBody(w, r, credentials)
 	if err != nil {
-		http.Error(w, "error when decoding json", http.StatusInternalServerError)
 		return
 	}
 
@@ -39,9 +37,8 @@ func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request, ps httpr
 func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var u user.UserRegisterDTO
-	err := json.NewDecoder(r.Body).Decode(&u)
+	err := utils.ReadRequestBody(w, r, u)
 	if err != nil {
-		http.Error(w, "error when decoding json", http.StatusInternalServerError)
 		return
 	}
 
@@ -56,9 +53,8 @@ func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request, ps ht
 
 func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var request password_recovery.PasswordRecoveryRequestDTO
-	err := json.NewDecoder(r.Body).Decode(&request)
+	err := utils.ReadRequestBody(w, r, request)
 	if err != nil {
-		http.Error(w, "error when decoding json", http.StatusInternalServerError)
 		return
 	}
 
@@ -73,9 +69,8 @@ func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http
 
 func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var request password_recovery.PasswordResetDTO
-	err := json.NewDecoder(r.Body).Decode(&request)
+	err := utils.ReadRequestBody(w, r, request)
 	if err != nil {
-		http.Error(w, "error when decoding json", http.StatusInternalServerError)
 		return
 	}
 

@@ -2,7 +2,6 @@ package certificate
 
 import (
 	"certifisafe-back/utils"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
@@ -36,7 +35,10 @@ func getErrorStatus(err error) int {
 }
 
 func (ch *CertificateController) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, _ := utils.StringToBigInt(ps.ByName("id"))
+	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+	if err != nil {
+		return
+	}
 
 	certificate, err := ch.service.GetCertificate(id.Uint64())
 	if err != nil {
@@ -60,12 +62,14 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 func (ch *CertificateController) DeleteCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO implement this
 	// TODO use gorm's LOGIC delete
-	//id, _ := utils.StringToBigInt(ps.ByName("id"))
+	// id, err := utils.ReadCertificateIDFromUrl(w, ps)
+	//	if err != nil {
+	//		return
+	//	}
 
 	var certificate Certificate
-	err := json.NewDecoder(r.Body).Decode(&certificate)
+	err := utils.ReadRequestBody(w, r, certificate)
 	if err != nil {
-		http.Error(w, "error when decoding json", http.StatusInternalServerError)
 		return
 	}
 
@@ -81,7 +85,10 @@ func (ch *CertificateController) DeleteCertificate(w http.ResponseWriter, r *htt
 
 func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO finish - Bobi
-	id, _ := utils.StringToBigInt(ps.ByName("id"))
+	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+	if err != nil {
+		return
+	}
 
 	result, err := ch.service.IsValid(id.Uint64())
 	fmt.Print(result)
