@@ -38,19 +38,19 @@ func (repository *DefaultRequestRepository) CreateRequest(request *Request) (*Re
 
 func (repository *DefaultRequestRepository) GetRequest(id int) (*Request, error) {
 	request := &Request{}
-	result := repository.DB.Find(&request, id)
+	result := repository.DB.Preload("ParentCertificate").Preload("Subject").Find(&request, id)
 	return request, result.Error
 }
 
 func (repository *DefaultRequestRepository) GetAllRequests() ([]*Request, error) {
 	requests := []*Request{}
-	result := repository.DB.Find(&requests)
+	result := repository.DB.Preload("ParentCertificate").Preload("Subject").Find(&requests)
 	return requests, result.Error
 }
 
 func (repository *DefaultRequestRepository) GetAllRequestsByUser(userId int) ([]*Request, error) {
 	requests := []*Request{}
-	result := repository.DB.Where("subject_id=?", userId).Find(&requests)
+	result := repository.DB.Preload("ParentCertificate").Preload("Subject").Where("subject_id=?", userId).Find(&requests)
 	return requests, result.Error
 }
 

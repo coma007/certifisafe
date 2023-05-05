@@ -50,13 +50,13 @@ func (i *DefaultCertificateRepository) CreateCertificate(certificate Certificate
 
 func (i *DefaultCertificateRepository) GetCertificate(id uint64) (Certificate, error) {
 	var certificate Certificate
-	result := i.DB.First(&certificate, id)
+	result := i.DB.Preload("Issuer").Preload("Subject").First(&certificate, id)
 	return certificate, result.Error
 }
 
 func (i *DefaultCertificateRepository) GetCertificates() ([]Certificate, error) {
 	var certificates []Certificate
-	result := i.DB.Find(&certificates)
+	result := i.DB.Preload("Issuer").Preload("Subject").Find(&certificates)
 	return certificates, result.Error
 }
 

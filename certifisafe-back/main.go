@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"certifisafe-back/features/auth"
 	certificate2 "certifisafe-back/features/certificate"
@@ -87,7 +88,7 @@ func main() {
 	router.POST("/api/password-recovery", authController.PasswordRecovery)
 
 	//createRoot(*certificateFileStoreRepository, certificateRepository)
-	//runScript(db, "utils/data.sql")
+	//runScript(db, "resources/database/data.sql")
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)
@@ -174,13 +175,19 @@ func createRoot(keyStore certificate2.DefaultFileStoreCertificateRepository, db 
 }
 
 func runScript(db *gorm.DB, script string) {
-	c, ioErr := os.ReadFile(script)
-	utils.CheckError(ioErr)
-	commands := string(c)
-	result := db.Raw(commands)
-	if result.Error != nil {
-		//panic("Couldn't load sql script")
-		panic(result.Error)
+	file, err := os.Open(script)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		db.Exec(scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
 	}
 }
 

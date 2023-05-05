@@ -20,7 +20,7 @@ func NewAuthHandler(cs AuthService) *AuthController {
 func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var credentials user.Credentials
-	err := utils.ReadRequestBody(w, r, credentials)
+	err := utils.ReadRequestBody(w, r, &credentials)
 	if err != nil {
 		return
 	}
@@ -37,7 +37,7 @@ func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request, ps httpr
 func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	var u user.UserRegisterDTO
-	err := utils.ReadRequestBody(w, r, u)
+	err := utils.ReadRequestBody(w, r, &u)
 	if err != nil {
 		return
 	}
@@ -53,7 +53,7 @@ func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request, ps ht
 
 func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var request password_recovery.PasswordRecoveryRequestDTO
-	err := utils.ReadRequestBody(w, r, request)
+	err := utils.ReadRequestBody(w, r, &request)
 	if err != nil {
 		return
 	}
@@ -69,7 +69,7 @@ func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http
 
 func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var request password_recovery.PasswordResetDTO
-	err := utils.ReadRequestBody(w, r, request)
+	err := utils.ReadRequestBody(w, r, &request)
 	if err != nil {
 		return
 	}

@@ -20,7 +20,7 @@ func NewRequestController(service RequestService, certificateService certificate
 
 func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var req NewRequestDTO
-	err := utils.ReadRequestBody(w, r, req)
+	err := utils.ReadRequestBody(w, r, &req)
 	if err != nil {
 		return
 	}

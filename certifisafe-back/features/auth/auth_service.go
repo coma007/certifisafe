@@ -158,7 +158,7 @@ func (s *DefaultAuthService) GetUserFromToken(tokenString string) user2.User {
 
 func (s *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {
 	tokens := strings.Split(tokenString, " ")
-	tokenString, schema := tokens[0], tokens[1]
+	schema, tokenString := tokens[0], tokens[1]
 	//tokenString = tokenString[1 : len(tokenString)-1]
 
 	if schema != "Bearer" {

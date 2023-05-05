@@ -68,7 +68,7 @@ func (ch *CertificateController) DeleteCertificate(w http.ResponseWriter, r *htt
 	//	}
 
 	var certificate Certificate
-	err := utils.ReadRequestBody(w, r, certificate)
+	err := utils.ReadRequestBody(w, r, &certificate)
 	if err != nil {
 		return
 	}
