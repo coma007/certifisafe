@@ -1,8 +1,9 @@
 package request
 
 import (
-	certificate2 "certifisafe-back/features/certificate"
+	"certifisafe-back/features/certificate"
 	"certifisafe-back/features/user"
+	"errors"
 	"time"
 )
 
@@ -10,7 +11,7 @@ type RequestService interface {
 	CreateRequest(req *NewRequestDTO) (*RequestDTO, error)
 	GetRequest(id int) (*RequestDTO, error)
 	GetAllRequests() ([]*RequestDTO, error)
-	GetAllRequestsByUser(userId int) ([]*RequestDTO, error)
+	GetAllRequestsByUser(user user.User) ([]*RequestDTO, error)
 	UpdateRequest(req *Request) error
 	DeleteRequest(id int) error
 	AcceptRequest(id int) error
@@ -19,26 +20,33 @@ type RequestService interface {
 
 type DefaultRequestService struct {
 	repository         *DefaultRequestRepository
-	certificateService *certificate2.DefaultCertificateService
+	certificateService *certificate.DefaultCertificateService
+	userRepository     *user.DefaultUserRepository
 }
 
-func NewDefaultRequestService(repo *DefaultRequestRepository, certificateService *certificate2.DefaultCertificateService) *DefaultRequestService {
-	return &DefaultRequestService{repo, certificateService}
+func NewDefaultRequestService(repo *DefaultRequestRepository, certificateService *certificate.DefaultCertificateService, userRepository *user.DefaultUserRepository) *DefaultRequestService {
+	return &DefaultRequestService{repo, certificateService, userRepository}
 }
 
 func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO) (*RequestDTO, error) {
+	subject, err := service.userRepository.GetUser(int32(req.SubjectId))
+	if !subject.IsAdmin && req.CertificateType == certificate.TypeToString(certificate.ROOT) {
+		return &RequestDTO{}, errors.New("cannot request for root certificate")
+	}
 	parentSerial := uint64(*req.ParentSerial)
+
 	newRequest := Request{
 		Datetime:            time.Time{},
 		Status:              RequestStatus(PENDING),
 		CertificateName:     req.CertificateName,
 		CertificateType:     req.CertificateType,
 		ParentCertificateID: &parentSerial,
-		ParentCertificate:   certificate2.Certificate{},
+		ParentCertificate:   certificate.Certificate{},
 		SubjectID:           req.SubjectId,
 		Subject:             user.User{},
 	}
 	request, err := service.repository.CreateRequest(&newRequest)
+	service.acceptCertificateIfNeeded(request)
 	return RequestToDTO(request), err
 }
 
@@ -56,8 +64,11 @@ func (service *DefaultRequestService) GetAllRequests() ([]*RequestDTO, error) {
 	return requestsDTO, err
 }
 
-func (service *DefaultRequestService) GetAllRequestsByUser(userId int) ([]*RequestDTO, error) {
-	requests, err := service.repository.GetAllRequestsByUser(userId)
+func (service *DefaultRequestService) GetAllRequestsByUser(user user.User) ([]*RequestDTO, error) {
+	if user.IsAdmin {
+		return service.GetAllRequests()
+	}
+	requests, err := service.repository.GetAllRequestsByUser(int(user.ID))
 	var requestsDTO []*RequestDTO
 	for i := 0; i < len(requests); i++ {
 		requestsDTO = append(requestsDTO, RequestToDTO(requests[i]))
@@ -71,6 +82,13 @@ func (service *DefaultRequestService) UpdateRequest(req *Request) error {
 
 func (service *DefaultRequestService) DeleteRequest(id int) error {
 	return service.repository.DeleteRequest(id)
+}
+
+func (service *DefaultRequestService) acceptCertificateIfNeeded(request *Request) {
+	parentCertificate, _ := service.certificateService.GetCertificate(*request.ParentCertificateID)
+	if parentCertificate.Subject == request.Subject || request.Subject.IsAdmin {
+		service.AcceptRequest(int(request.ID))
+	}
 }
 
 func (service *DefaultRequestService) AcceptRequest(id int) error {

@@ -38,6 +38,7 @@ type AuthService interface {
 	ValidateToken(tokenString string) (bool, error)
 	Register(user *user2.User) (*user2.User, error)
 	VerifyEmail(verificationCode string) error
+	GetUserFromToken(tokenString string) user2.User
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
 	GetUserByEmail(email string) (user2.User, error)
 	RequestPasswordRecoveryToken(email string) error
@@ -146,6 +147,13 @@ func (s *DefaultAuthService) ValidateToken(tokenString string) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (s *DefaultAuthService) GetUserFromToken(tokenString string) user2.User {
+	_, claims, _, _ := s.GetClaims(tokenString)
+	email := claims.Email
+	user, _ := s.GetUserByEmail(email)
+	return user
 }
 
 func (s *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {

@@ -53,28 +53,10 @@ func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request, p
 	utils.ReturnResponse(w, err, request, http.StatusOK)
 }
 
-func (controller *RequestController) GetAllRequests(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	requests, err := controller.service.GetAllRequests()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	utils.ReturnResponse(w, err, requests, http.StatusOK)
-}
-
 func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	_, claims, _, _ := controller.authService.GetClaims(r.Header.Get("Authorization"))
-	email := claims.Email
-	user, _ := controller.authService.GetUserByEmail(email)
+	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
-	var requests []*RequestDTO
-	var err error
-	if user.IsAdmin {
-		requests, err = controller.service.GetAllRequests()
-	} else {
-		requests, err = controller.service.GetAllRequestsByUser(int(user.ID))
-	}
+	requests, err := controller.service.GetAllRequestsByUser(user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

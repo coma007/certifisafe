@@ -62,7 +62,7 @@ func main() {
 	certificateController := certificate2.NewCertificateController(certificateService)
 
 	requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository)
-	requestService := request2.NewDefaultRequestService(requestRepository, certificateService)
+	requestService := request2.NewDefaultRequestService(requestRepository, certificateService, userRepository)
 	requestController := request2.NewRequestController(requestService, certificateService, authService)
 
 	router := httprouter.New()
@@ -72,9 +72,9 @@ func main() {
 	router.DELETE("/api/certificate/:id", certificateController.DeleteCertificate)
 	router.GET("/api/certificate/:id/valid", certificateController.IsValid)
 
-	router.GET("/api/request", requestController.GetAllRequests)
-	router.GET("/api/request/:id", requestController.GetRequest)
 	router.POST("/api/request", requestController.CreateRequest)
+	router.GET("/api/request/:id", requestController.GetRequest)
+	router.GET("/api/request", requestController.GetAllRequestsByUser)
 	router.PATCH("/api/request/accept/:id", requestController.AcceptRequest)
 	router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
 	router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
