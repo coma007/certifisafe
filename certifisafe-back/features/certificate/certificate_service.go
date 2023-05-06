@@ -28,7 +28,7 @@ type CertificateService interface {
 	CreateCertificate(parentSerial *uint, certificateName string, certificateType CertificateType, subjectId uint) (CertificateDTO, error)
 	GetCertificate(id uint64) (Certificate, error)
 	GetCertificates() ([]Certificate, error)
-	WithdrawCertificate(id uint64) (CertificateDTO, error)
+	WithdrawCertificate(certificateID uint64, user user2.User) (CertificateDTO, error)
 	IsValid(id uint64) (bool, error)
 }
 
@@ -164,11 +164,15 @@ func (d *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
 	return certificates, nil
 }
 
-func (d *DefaultCertificateService) WithdrawCertificate(id uint64) (CertificateDTO, error) {
+func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user2.User) (CertificateDTO, error) {
 
 	certificate, err := d.GetCertificate(id)
 	if err != nil {
 		return CertificateDTO{}, err
+	}
+	if !user.IsAdmin && *certificate.SubjectID != int64(user.ID) {
+		// TODO also check if certificate has been withdrawn before
+		return CertificateDTO{}, errors.New("no permissions")
 	}
 
 	transaction := d.certificateRepo.BeginTransaction()
