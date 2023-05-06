@@ -30,7 +30,8 @@ type CertificateService interface {
 	GetCertificates() ([]Certificate, error)
 	DeleteCertificate(id uint64) error
 	CreateCertificate(parentSerial *uint, certificateName string, certificateType string, subjectId uint) (CertificateDTO, error)
-	IsValid(id uint64) (bool, error)
+	IsValid(cert x509.Certificate) (bool, error)
+	IsValidById(id uint64) (bool, error)
 }
 
 type DefaultCertificateService struct {
@@ -175,17 +176,24 @@ func (d *DefaultCertificateService) DeleteCertificate(id uint64) error {
 	return d.certificateRepo.DeleteCertificate(id)
 }
 
-func (d *DefaultCertificateService) IsValid(id uint64) (bool, error) {
+func (d *DefaultCertificateService) IsValidById(id uint64) (bool, error) {
 	certificate, err := d.certificateKeyStoreRepo.GetCertificate(uint(id))
 	if err != nil {
 		return false, nil
 	}
+	return d.IsValid(certificate)
+}
+
+func (d *DefaultCertificateService) IsValid(certificate x509.Certificate) (bool, error) {
 
 	if !isTimeValid(certificate) {
 		return false, nil
 	}
 
-	isRevoked, err := d.certificateRepo.isRevoked(id)
+	isRevoked, err := d.certificateRepo.isRevoked(certificate.SerialNumber.Uint64())
+	if err != nil {
+		return false, err
+	}
 	if isRevoked {
 		return false, nil
 	}
