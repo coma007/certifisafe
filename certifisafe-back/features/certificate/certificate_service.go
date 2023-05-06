@@ -127,6 +127,7 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 				return CertificateDTO{}, err
 			}
 
+			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
 			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, parent.Subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {

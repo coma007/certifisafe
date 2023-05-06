@@ -77,6 +77,7 @@ func GenerateSubordinateCa(subject pkix.Name, issuer pkix.Name, serial uint64, r
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
+		Issuer:                issuer,
 	}
 
 	//generate private key
