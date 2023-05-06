@@ -8,7 +8,7 @@ type CertificateRepository interface {
 	CreateCertificate(certificate Certificate) (Certificate, error)
 	GetCertificate(id uint64) (Certificate, error)
 	GetCertificates() ([]Certificate, error)
-	GetAllEndCertificates() ([]Certificate, error)
+	GetLeafCertificates() ([]Certificate, error)
 	UpdateCertificate(certificate *Certificate) error
 	DeleteCertificate(id uint64) error
 	BeginTransaction() *gorm.DB
@@ -34,7 +34,7 @@ func (i *DefaultCertificateRepository) CreateCertificate(certificate Certificate
 
 func (i *DefaultCertificateRepository) GetCertificate(id uint64) (Certificate, error) {
 	var certificate Certificate
-	result := i.DB.Preload("Issuer").Preload("Subject").First(&certificate, id)
+	result := i.DB.Preload("Issuer").Preload("Subject").Preload("ParentCertificate").First(&certificate, id)
 	return certificate, result.Error
 }
 
@@ -44,12 +44,19 @@ func (i *DefaultCertificateRepository) GetCertificates() ([]Certificate, error) 
 	return certificates, result.Error
 }
 
-func (i *DefaultCertificateRepository) GetAllEndCertificates() ([]Certificate, error) {
+func (i *DefaultCertificateRepository) GetLeafCertificates() ([]Certificate, error) {
 	var certificates []Certificate
-	result := i.DB.Preload("ParentCertificate",
-		func(db *gorm.DB) *gorm.DB {
-			return db.Preload("ParentCertificate")
-		}).Where("status=?", END).Find(&certificates)
+	result := i.DB.Where(
+		"id NOT IN (?)",
+		i.DB.Table("certificates").
+			Select("parent_certificate_id").
+			Where("parent_certificate_id IS NOT NULL")).
+		Preload("ParentCertificate",
+			func(db *gorm.DB) *gorm.DB {
+				return db.Preload("ParentCertificate")
+			}).
+		Find(&certificates)
+
 	return certificates, result.Error
 }
 

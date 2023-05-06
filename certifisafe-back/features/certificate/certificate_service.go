@@ -25,10 +25,10 @@ var (
 )
 
 type CertificateService interface {
-	CreateCertificate(parentSerial *uint, certificateName string, certificateType string, subjectId uint) (CertificateDTO, error)
+	CreateCertificate(parentSerial *uint, certificateName string, certificateType CertificateType, subjectId uint) (CertificateDTO, error)
 	GetCertificate(id uint64) (Certificate, error)
 	GetCertificates() ([]Certificate, error)
-	WithdrarwCertificate(id uint64) error
+	WithdrawCertificate(id uint64) (CertificateDTO, error)
 	IsValid(id uint64) (bool, error)
 }
 
@@ -47,7 +47,7 @@ func NewDefaultCertificateService(cRepo CertificateRepository, cKSRepo FileStore
 	}
 }
 
-func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certificateName string, certificateType string, subjectId uint) (CertificateDTO, error) {
+func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certificateName string, certificateType CertificateType, subjectId uint) (CertificateDTO, error) {
 	var certificate x509.Certificate
 	var certificatePEM bytes.Buffer
 	var certificatePrivKeyPEM bytes.Buffer
@@ -70,8 +70,8 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 		Name:              certificateName,
 		Issuer:            issuer,
 		Subject:           newSubject,
-		Status:            NOT_ACTIVE,
-		Type:              StringToType(certificateType),
+		Status:            ACTIVE,
+		Type:              certificateType,
 		ParentCertificate: parentCertificate,
 	}
 
@@ -80,7 +80,7 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 	}
 	var parent x509.Certificate
 
-	switch StringToType(certificateType) {
+	switch certificateType {
 	case ROOT:
 		{
 			certificateDB, err = d.setDatesAndSave(&certificateDB, 5)
@@ -139,7 +139,7 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 		return CertificateDTO{}, err
 	}
 
-	return *ModelToCertificateDTO(&certificateDB), nil
+	return *CertificateToDTO(&certificateDB), nil
 }
 
 func (d *DefaultCertificateService) setDatesAndSave(certificateDB *Certificate, years int) (Certificate, error) {
@@ -164,26 +164,28 @@ func (d *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
 	return certificates, nil
 }
 
-func (d *DefaultCertificateService) WithdrawCertificate(id uint64) error {
+func (d *DefaultCertificateService) WithdrawCertificate(id uint64) (CertificateDTO, error) {
 
 	certificate, err := d.GetCertificate(id)
 	if err != nil {
-		return err
+		return CertificateDTO{}, err
 	}
 
 	transaction := d.certificateRepo.BeginTransaction()
-	certificate, err = d.invalidateCertificate(&certificate)
-	if err != nil {
-		transaction.Rollback()
-		return err
+	{
+		certificate, err = d.invalidateCertificate(&certificate)
+		if err != nil {
+			transaction.Rollback()
+			return CertificateDTO{}, err
+		}
+		err = d.invalidateCertificatesSignedBy(&certificate)
+		if err != nil {
+			transaction.Rollback()
+			return CertificateDTO{}, err
+		}
 	}
-	err = d.invalidateCertificatesSignedBy(&certificate)
-	if err != nil {
-		transaction.Rollback()
-		return err
-	}
-
-	return nil
+	transaction.Commit()
+	return *CertificateToDTO(&certificate), nil
 }
 
 func (d *DefaultCertificateService) IsValid(id uint64) (bool, error) {
@@ -243,12 +245,12 @@ func (d *DefaultCertificateService) invalidateCertificate(certificate *Certifica
 }
 
 func (d *DefaultCertificateService) invalidateCertificatesSignedBy(invalidCertificate *Certificate) error {
-	endCertificates, err := d.certificateRepo.GetAllEndCertificates()
+	leafCertificates, err := d.certificateRepo.GetLeafCertificates()
 	if err != nil {
 		return err
 	}
-	for _, endCertificate := range endCertificates {
-		err = d.invalidateChain(&endCertificate, invalidCertificate)
+	for _, leafCertificate := range leafCertificates {
+		err = d.invalidateChain(&leafCertificate, invalidCertificate)
 		if err != nil {
 			return err
 		}
@@ -256,21 +258,24 @@ func (d *DefaultCertificateService) invalidateCertificatesSignedBy(invalidCertif
 	return nil
 }
 
-func (d *DefaultCertificateService) getAllChainsOfInvalidCertificate(chain []*Certificate, certificate *Certificate, invalidCertificate *Certificate) []*Certificate {
+func (d *DefaultCertificateService) getChainPartToInvalidCertificate(chain []*Certificate, certificate *Certificate, invalidCertificate *Certificate) []*Certificate {
 	if certificate.ID == invalidCertificate.ID {
 		return chain
 	}
 	chain = append(chain, certificate)
 	if certificate.Type != ROOT {
-		chain = d.getAllChainsOfInvalidCertificate(chain, certificate.ParentCertificate, invalidCertificate)
+		return d.getChainPartToInvalidCertificate(chain, certificate.ParentCertificate, invalidCertificate)
 	}
 	return nil
 }
 
-func (d *DefaultCertificateService) invalidateChain(endCertificate *Certificate, invalidCertificate *Certificate) error {
+func (d *DefaultCertificateService) invalidateChain(leafCertificate *Certificate, invalidCertificate *Certificate) error {
 	var chain []*Certificate
-	chain = d.getAllChainsOfInvalidCertificate(chain, endCertificate, invalidCertificate)
+	chain = d.getChainPartToInvalidCertificate(chain, leafCertificate, invalidCertificate)
 	var err error
+	if chain == nil {
+		return nil
+	}
 	for _, certificate := range chain {
 		_, err = d.invalidateCertificate(certificate)
 		if err != nil {

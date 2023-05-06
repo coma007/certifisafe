@@ -56,7 +56,7 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 		return
 	}
 
-	utils.ReturnResponse(w, err, certificates, http.StatusOK)
+	utils.ReturnResponse(w, err, CertificatesToDTOs(certificates), http.StatusOK)
 }
 
 func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -64,8 +64,14 @@ func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *h
 	if err != nil {
 		return
 	}
+	var certificate CertificateDTO
+	certificate, err = ch.service.WithdrawCertificate(id.Uint64())
+	if err != nil {
+		http.Error(w, err.Error(), getErrorStatus(err))
+		return
+	}
 
-	utils.ReturnResponse(w, err, id, http.StatusOK)
+	utils.ReturnResponse(w, err, certificate, http.StatusOK)
 }
 
 func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
