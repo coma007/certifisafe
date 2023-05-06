@@ -33,12 +33,16 @@ func NewDefaultRequestRepository(db *gorm.DB, certificateRepo certificate.Certif
 
 func (repository *DefaultRequestRepository) CreateRequest(request *Request) (*Request, error) {
 	result := repository.DB.Create(&request)
-	return request, result.Error
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return repository.GetRequest(int(request.ID))
 }
 
 func (repository *DefaultRequestRepository) GetRequest(id int) (*Request, error) {
 	request := &Request{}
-	result := repository.DB.Preload("ParentCertificate").Preload("Subject").Find(&request, id)
+	result := repository.DB.Preload("ParentCertificate").Preload("ParentCertificate.Issuer").
+		Preload("ParentCertificate.Subject").Preload("Subject").Find(&request, id)
 	return request, result.Error
 }
 
@@ -60,7 +64,6 @@ func (repository *DefaultRequestRepository) UpdateRequest(request *Request) erro
 }
 
 func (repository *DefaultRequestRepository) DeleteRequest(id int) error {
-	// TODO add logical deleting
 	result := repository.DB.Delete(&Request{}, id)
 	return result.Error
 }

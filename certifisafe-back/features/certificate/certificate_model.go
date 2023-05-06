@@ -10,16 +10,18 @@ import (
 
 type Certificate struct {
 	gorm.Model
-	Name      string
-	Deleted   gorm.DeletedAt
-	Issuer    user.User `gorm:"foreignKey:IssuerID;references:ID"`
-	Subject   user.User `gorm:"foreignKey:SubjectID;references:ID"`
-	ValidFrom time.Time
-	ValidTo   time.Time
-	Status    CertificateStatus
-	Type      CertificateType
-	IssuerID  *int64
-	SubjectID *int64
+	Name                string
+	Deleted             gorm.DeletedAt
+	Issuer              user.User    `gorm:"foreignKey:IssuerID;references:ID"`
+	Subject             user.User    `gorm:"foreignKey:SubjectID;references:ID"`
+	ParentCertificate   *Certificate `gorm:"foreignKey:ParentCertificateID;references:ID"`
+	ValidFrom           time.Time
+	ValidTo             time.Time
+	Status              CertificateStatus
+	Type                CertificateType
+	IssuerID            *int64
+	SubjectID           *int64
+	ParentCertificateID *uint
 }
 
 type CertificateType int64

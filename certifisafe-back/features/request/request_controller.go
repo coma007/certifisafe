@@ -116,7 +116,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		ParentSerial:    nil,
 		CertificateName: "root",
 		CertificateType: "ROOT",
-		SubjectId:       1,
+		SubjectId:       5,
 	}
 
 	root, err := controller.certificateService.CreateCertificate(rootDTO.ParentSerial, rootDTO.CertificateName, rootDTO.CertificateType, rootDTO.SubjectId)
@@ -135,7 +135,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		ParentSerial:    &parentSerial,
 		CertificateName: "intermediate",
 		CertificateType: "INTERMEDIATE",
-		SubjectId:       1,
+		SubjectId:       5,
 	}
 	intermidiate, err := controller.certificateService.CreateCertificate(intermediateDTO.ParentSerial, intermediateDTO.CertificateName, intermediateDTO.CertificateType, intermediateDTO.SubjectId)
 
@@ -144,7 +144,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		ParentSerial:    &intermediateSerial,
 		CertificateName: "end",
 		CertificateType: "END",
-		SubjectId:       1,
+		SubjectId:       5,
 	}
 
 	leaf, err := controller.certificateService.CreateCertificate(leafDTO.ParentSerial, leafDTO.CertificateName, leafDTO.CertificateType, leafDTO.SubjectId)

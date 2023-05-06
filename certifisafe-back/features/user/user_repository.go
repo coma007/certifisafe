@@ -5,9 +5,9 @@ import (
 )
 
 type UserRepository interface {
-	UpdateUser(id int32, user User) (User, error)
-	GetUser(id int32) (User, error)
-	DeleteUser(id int32) error
+	UpdateUser(id uint, user User) (User, error)
+	GetUser(id uint) (User, error)
+	DeleteUser(id uint) error
 	CreateUser(user User) (User, error)
 	GetUserByEmail(email string) (User, error)
 }
@@ -27,7 +27,7 @@ func (i *DefaultUserRepository) CreateUser(user User) (User, error) {
 	return user, result.Error
 }
 
-func (i *DefaultUserRepository) GetUser(id int32) (User, error) {
+func (i *DefaultUserRepository) GetUser(id uint) (User, error) {
 	var u User
 	result := i.DB.First(&u, id)
 	return u, result.Error
@@ -39,12 +39,12 @@ func (i *DefaultUserRepository) GetUserByEmail(email string) (User, error) {
 	return u, result.Error
 }
 
-func (i *DefaultUserRepository) UpdateUser(id int32, user User) (User, error) {
+func (i *DefaultUserRepository) UpdateUser(id uint, user User) (User, error) {
 	result := i.DB.Save(&user)
 	return user, result.Error
 }
 
-func (i *DefaultUserRepository) DeleteUser(id int32) error {
+func (i *DefaultUserRepository) DeleteUser(id uint) error {
 	result := i.DB.Delete(&User{}, id)
 	return result.Error
 }

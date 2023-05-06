@@ -29,7 +29,10 @@ func NewDefaultRequestService(repo *DefaultRequestRepository, certificateService
 }
 
 func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO) (*RequestDTO, error) {
-	subject, err := service.userRepository.GetUser(int32(req.SubjectId))
+	subject, err := service.userRepository.GetUser(req.SubjectId)
+	if req.ParentSerial == nil {
+		req.CertificateType = "ROOT"
+	}
 	if !subject.IsAdmin && req.CertificateType == certificate.TypeToString(certificate.ROOT) {
 		return &RequestDTO{}, errors.New("cannot request for root certificate")
 	}
@@ -97,7 +100,11 @@ func (service *DefaultRequestService) AcceptRequest(id int) error {
 		return err
 	}
 	request.Status = ACCEPTED
-	// TODO create certificate here
+	parentSerial := uint(*request.ParentCertificateID)
+	_, err = service.certificateService.CreateCertificate(&parentSerial, request.CertificateName, request.CertificateType, request.SubjectID)
+	if err != nil {
+		return err
+	}
 	return service.repository.UpdateRequest(request)
 }
 
