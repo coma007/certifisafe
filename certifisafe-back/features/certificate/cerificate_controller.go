@@ -59,6 +59,15 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 	utils.ReturnResponse(w, err, certificates, http.StatusOK)
 }
 
+func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+	if err != nil {
+		return
+	}
+
+	utils.ReturnResponse(w, err, id, http.StatusOK)
+}
+
 func (ch *CertificateController) DeleteCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	// TODO implement this
 	// TODO use gorm's LOGIC delete
