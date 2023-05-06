@@ -8,6 +8,7 @@ type CertificateRepository interface {
 	CreateCertificate(certificate Certificate) (Certificate, error)
 	GetCertificate(id uint64) (Certificate, error)
 	GetCertificates() ([]Certificate, error)
+	GetAllEndCertificates() ([]Certificate, error)
 	UpdateCertificate(certificate *Certificate) error
 	DeleteCertificate(id uint64) error
 	BeginTransaction() *gorm.DB
@@ -45,8 +46,10 @@ func (i *DefaultCertificateRepository) GetCertificates() ([]Certificate, error) 
 
 func (i *DefaultCertificateRepository) GetAllEndCertificates() ([]Certificate, error) {
 	var certificates []Certificate
-	// TODO implement
-	result := i.DB.Preload("Issuer").Preload("Subject").Find(&certificates)
+	result := i.DB.Preload("ParentCertificate",
+		func(db *gorm.DB) *gorm.DB {
+			return db.Preload("ParentCertificate")
+		}).Where("status=?", END).Find(&certificates)
 	return certificates, result.Error
 }
 

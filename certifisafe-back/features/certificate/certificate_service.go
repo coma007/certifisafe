@@ -177,7 +177,7 @@ func (d *DefaultCertificateService) WithdrawCertificate(id uint64) error {
 		transaction.Rollback()
 		return err
 	}
-	err = d.invalidateCertificatesSignedBy(certificate.ID)
+	err = d.invalidateCertificatesSignedBy(&certificate)
 	if err != nil {
 		transaction.Rollback()
 		return err
@@ -237,12 +237,45 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 
 func (d *DefaultCertificateService) invalidateCertificate(certificate *Certificate) (Certificate, error) {
 	certificate.ValidTo = time.Now()
-	certificate.Status = CertificateStatus(WITHDRAWN)
+	certificate.Status = WITHDRAWN
 	err := d.certificateRepo.UpdateCertificate(certificate)
 	return *certificate, err
 }
 
-func (d *DefaultCertificateService) invalidateCertificatesSignedBy(serial uint) error {
+func (d *DefaultCertificateService) invalidateCertificatesSignedBy(invalidCertificate *Certificate) error {
+	endCertificates, err := d.certificateRepo.GetAllEndCertificates()
+	if err != nil {
+		return err
+	}
+	for _, endCertificate := range endCertificates {
+		err = d.invalidateChain(&endCertificate, invalidCertificate)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
+func (d *DefaultCertificateService) getAllChainsOfInvalidCertificate(chain []*Certificate, certificate *Certificate, invalidCertificate *Certificate) []*Certificate {
+	if certificate.ID == invalidCertificate.ID {
+		return chain
+	}
+	chain = append(chain, certificate)
+	if certificate.Type != ROOT {
+		chain = d.getAllChainsOfInvalidCertificate(chain, certificate.ParentCertificate, invalidCertificate)
+	}
+	return nil
+}
+
+func (d *DefaultCertificateService) invalidateChain(endCertificate *Certificate, invalidCertificate *Certificate) error {
+	var chain []*Certificate
+	chain = d.getAllChainsOfInvalidCertificate(chain, endCertificate, invalidCertificate)
+	var err error
+	for _, certificate := range chain {
+		_, err = d.invalidateCertificate(certificate)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
