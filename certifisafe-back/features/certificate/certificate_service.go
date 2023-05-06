@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"errors"
 	"math/big"
+	"strconv"
 	"time"
 )
 
@@ -87,7 +88,9 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 			if err != nil {
 				return CertificateDTO{}, err
 			}
+			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
 			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject, uint64(certificateDB.ID))
+
 			if err != nil {
 				return CertificateDTO{}, err
 			}
@@ -99,13 +102,15 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 			if err != nil {
 				return CertificateDTO{}, err
 			}
+
 			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
+			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, uint64(certificateDB.ID), &parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, parent.Subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
@@ -116,13 +121,14 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 			if err != nil {
 				return CertificateDTO{}, err
 			}
+
 			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, uint64(certificateDB.ID), &parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, parent.Subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
@@ -165,14 +171,21 @@ func (d *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
 }
 
 func (d *DefaultCertificateService) DeleteCertificate(id uint64) error {
-	// TODO implement
-	return nil
+	return d.certificateRepo.DeleteCertificate(id)
 }
 
 func (d *DefaultCertificateService) IsValid(id uint64) (bool, error) {
-	// TODO implement
 	certificate, err := d.certificateKeyStoreRepo.GetCertificate(uint(id))
 	if err != nil {
+		return false, nil
+	}
+
+	if !isTimeValid(certificate) {
+		return false, nil
+	}
+
+	isRevoked, err := d.certificateRepo.isRevoked(id)
+	if isRevoked {
 		return false, nil
 	}
 
@@ -180,20 +193,16 @@ func (d *DefaultCertificateService) IsValid(id uint64) (bool, error) {
 		return false, nil
 	}
 
-	if certificate.NotAfter.Before(time.Now()) || certificate.NotAfter.Before(certificate.NotBefore) {
-		return false, nil
-	}
-
 	return true, nil
 }
 
+func isTimeValid(c x509.Certificate) bool {
+	return !(c.NotAfter.Before(time.Now()) || c.NotAfter.Before(c.NotBefore))
+}
+
 func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) bool {
-	serial, err := utils.StringToBigInt(certificate.Issuer.SerialNumber)
-	if err != nil {
-		return false
-	}
-	// if it is root check if it is self-signed
-	if certificate.IsCA && serial.Cmp(certificate.SerialNumber) != 0 {
+	// if it is root check if it is self-signed(subject is same as issuer)
+	if certificate.IsCA && certificate.Issuer.SerialNumber == certificate.SerialNumber.String() {
 		err := certificate.CheckSignatureFrom(&certificate)
 		if err != nil {
 			return false
@@ -203,11 +212,21 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 	}
 
 	parentSerial, err := utils.StringToBigInt(certificate.Issuer.SerialNumber)
+	//parentSerial, err := utils.StringToBigInt("4")
 	if err != nil {
 		return false
 	}
 	parent, err := d.certificateKeyStoreRepo.GetCertificate(uint(parentSerial.Uint64()))
 	if err != nil {
+		return false
+	}
+
+	if !isTimeValid(parent) {
+		return false
+	}
+
+	isRevoked, err := d.certificateRepo.isRevoked(parentSerial.Uint64())
+	if isRevoked {
 		return false
 	}
 

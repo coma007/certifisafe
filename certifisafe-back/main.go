@@ -88,7 +88,7 @@ func main() {
 	router.POST("/api/password-recovery", authController.PasswordRecovery)
 
 	//createRoot(*certificateFileStoreRepository, certificateRepository)
-	//runScript(db, "resources/database/data.sql")
+	runScript(db, "resources/database/data.sql")
 
 	fmt.Println("http server runs on :8080")
 	err = http.ListenAndServe(":8080", router)

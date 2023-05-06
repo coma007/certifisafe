@@ -60,31 +60,21 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 }
 
 func (ch *CertificateController) DeleteCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// TODO implement this
-	// TODO use gorm's LOGIC delete
-	// id, err := utils.ReadCertificateIDFromUrl(w, ps)
-	//	if err != nil {
-	//		return
-	//	}
-
-	var certificate Certificate
-	err := utils.ReadRequestBody(w, r, &certificate)
+	id, err := utils.ReadCertificateIDFromUrl(w, ps)
 	if err != nil {
 		return
 	}
 
-	//err = ch.service.DeleteCertificate(int64(id))
+	err = ch.service.DeleteCertificate(id.Uint64())
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
 	}
 
-	// TODO change data from nil to removed certificate
-	utils.ReturnResponse(w, err, nil, http.StatusNoContent)
+	utils.ReturnResponse(w, err, nil, http.StatusOK)
 }
 
 func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// TODO finish - Bobi
 	id, err := utils.ReadCertificateIDFromUrl(w, ps)
 	if err != nil {
 		return
@@ -97,11 +87,5 @@ func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	// TODO: response has content, fix header
-	w.WriteHeader(http.StatusNoContent)
-	if result {
-		w.Write([]byte("true"))
-	} else {
-		w.Write([]byte("false"))
-	}
+	utils.ReturnResponse(w, err, &result, http.StatusOK)
 }

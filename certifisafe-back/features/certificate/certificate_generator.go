@@ -29,6 +29,7 @@ func GenerateRootCa(subject pkix.Name, serial uint64) (x509.Certificate, bytes.B
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
+		Issuer:                subject,
 	}
 
 	// generate private key for CA (private key contains public)
@@ -59,7 +60,7 @@ func GenerateRootCa(subject pkix.Name, serial uint64) (x509.Certificate, bytes.B
 	return *ca, *caPEM, *caPrivKeyPEM, nil
 }
 
-func GenerateSubordinateCa(subject pkix.Name, serial uint64, rootTemplate *x509.Certificate, caPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+func GenerateSubordinateCa(subject pkix.Name, issuer pkix.Name, serial uint64, rootTemplate *x509.Certificate, caPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
 	serialNumber := new(big.Int).SetUint64(serial)
 	subject.SerialNumber = serialNumber.String()
 	subTemplate := &x509.Certificate{
@@ -72,8 +73,8 @@ func GenerateSubordinateCa(subject pkix.Name, serial uint64, rootTemplate *x509.
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		SubjectKeyId:          []byte{1, 2, 3, 4, 6},
-		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageCodeSigning, x509.ExtKeyUsageAny},
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 		IsCA:                  true,
 	}
@@ -107,7 +108,7 @@ func GenerateSubordinateCa(subject pkix.Name, serial uint64, rootTemplate *x509.
 	return *subTemplate, *certPEM, *certPrivKeyPEM, nil
 }
 
-func GenerateLeafCert(subject pkix.Name, serial uint64, parent *x509.Certificate, parentPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
+func GenerateLeafCert(subject pkix.Name, issuer pkix.Name, serial uint64, parent *x509.Certificate, parentPrivKey *rsa.PrivateKey) (x509.Certificate, bytes.Buffer, bytes.Buffer, error) {
 	serialNumber := new(big.Int).SetUint64(serial)
 	subject.SerialNumber = serialNumber.String()
 	certTemplate := &x509.Certificate{
@@ -120,10 +121,10 @@ func GenerateLeafCert(subject pkix.Name, serial uint64, parent *x509.Certificate
 		NotBefore:          time.Now(),
 		NotAfter:           time.Now().AddDate(10, 0, 0),
 		SubjectKeyId:       []byte{1, 2, 3, 4, 6},
-
-		KeyUsage:    x509.KeyUsageDigitalSignature,
-		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageCodeSigning},
-		IsCA:        false,
+		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageCodeSigning},
+		KeyUsage:           x509.KeyUsageDigitalSignature,
+		IsCA:               false,
+		Issuer:             issuer,
 	}
 
 	//generate private key
