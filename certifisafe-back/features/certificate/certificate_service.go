@@ -25,10 +25,10 @@ var (
 )
 
 type CertificateService interface {
+	CreateCertificate(parentSerial *uint, certificateName string, certificateType string, subjectId uint) (CertificateDTO, error)
 	GetCertificate(id uint64) (Certificate, error)
 	GetCertificates() ([]Certificate, error)
-	DeleteCertificate(id uint64) error
-	CreateCertificate(parentSerial *uint, certificateName string, certificateType string, subjectId uint) (CertificateDTO, error)
+	WithdrarwCertificate(id uint64) error
 	IsValid(id uint64) (bool, error)
 }
 
@@ -176,8 +176,25 @@ func (d *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
 	return certificates, nil
 }
 
-func (d *DefaultCertificateService) DeleteCertificate(id uint64) error {
-	// TODO implement
+func (d *DefaultCertificateService) WithdrawCertificate(id uint64) error {
+
+	certificate, err := d.GetCertificate(id)
+	if err != nil {
+		return err
+	}
+
+	transaction := d.certificateRepo.BeginTransaction()
+	certificate, err = d.invalidateCertificate(&certificate)
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+	err = d.invalidateCertificatesSignedBy(certificate.ID)
+	if err != nil {
+		transaction.Rollback()
+		return err
+	}
+
 	return nil
 }
 
@@ -228,4 +245,16 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 		return false
 	}
 	return d.checkChain(parent)
+}
+
+func (d *DefaultCertificateService) invalidateCertificate(certificate *Certificate) (Certificate, error) {
+	certificate.ValidTo = time.Now()
+	certificate.Status = CertificateStatus(WITHDRAWN)
+	err := d.certificateRepo.UpdateCertificate(certificate)
+	return *certificate, err
+}
+
+func (d *DefaultCertificateService) invalidateCertificatesSignedBy(serial uint) error {
+
+	return nil
 }
