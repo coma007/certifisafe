@@ -30,14 +30,14 @@ func (i *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber u
 
 	privateKey := certPrivKeyPEM.Bytes()
 	publicKey := certPEM.Bytes()
-	certOut, err := os.Create(getPublicName(serialNumber))
+	certOut, err := os.Create(GetPublicName(serialNumber))
 	_, err = certOut.Write(publicKey)
 	if err != nil {
 		return x509.Certificate{}, err
 	}
 	defer certOut.Close()
 
-	keyOut, err := os.OpenFile(getPrivateName(serialNumber), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	keyOut, err := os.OpenFile(GetPrivateName(serialNumber), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	_, err = keyOut.Write(privateKey)
 	if err != nil {
 		return x509.Certificate{}, err
@@ -52,7 +52,7 @@ func (i *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber u
 }
 
 func (i *DefaultFileStoreCertificateRepository) GetCertificate(serialNumber uint) (x509.Certificate, error) {
-	catls, err := tls.LoadX509KeyPair(getPublicName(uint64(serialNumber)), getPrivateName(uint64(serialNumber)))
+	catls, err := tls.LoadX509KeyPair(GetPublicName(uint64(serialNumber)), GetPrivateName(uint64(serialNumber)))
 	if err != nil {
 		return x509.Certificate{}, err
 	}
@@ -65,7 +65,7 @@ func (i *DefaultFileStoreCertificateRepository) GetCertificate(serialNumber uint
 }
 
 func (i *DefaultFileStoreCertificateRepository) GetPrivateKey(serial uint) (*rsa.PrivateKey, error) {
-	keyIn, err := os.ReadFile(getPrivateName(uint64(serial)))
+	keyIn, err := os.ReadFile(GetPrivateName(uint64(serial)))
 
 	block, _ := pem.Decode(keyIn)
 	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
@@ -76,10 +76,10 @@ func (i *DefaultFileStoreCertificateRepository) GetPrivateKey(serial uint) (*rsa
 	return privateKey, nil
 }
 
-func getPrivateName(serial uint64) string {
+func GetPrivateName(serial uint64) string {
 	return "private" + string(os.PathSeparator) + strconv.FormatUint(serial, 10) + ".key"
 }
 
-func getPublicName(serial uint64) string {
+func GetPublicName(serial uint64) string {
 	return "public" + string(os.PathSeparator) + strconv.FormatUint(serial, 10) + ".crt"
 }

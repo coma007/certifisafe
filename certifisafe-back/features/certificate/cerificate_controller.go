@@ -71,7 +71,7 @@ func (ch *CertificateController) DownloadCertificate(w http.ResponseWriter, r *h
 	}
 	user := ch.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
-	public, private, err := ch.service.GetCertificateFiles(id, user)
+	public, private, err := ch.service.GetCertificateFiles(id.Uint64(), user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

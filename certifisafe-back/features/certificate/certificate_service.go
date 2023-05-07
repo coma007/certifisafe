@@ -2,7 +2,7 @@ package certificate
 
 import (
 	"bytes"
-	user2 "certifisafe-back/features/user"
+	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -31,18 +31,18 @@ type CertificateService interface {
 	GetCertificates() ([]Certificate, error)
 	IsValid(cert x509.Certificate) (bool, error)
 	IsValidById(id uint64) (bool, error)
-	WithdrawCertificate(certificateID uint64, user user2.User) (CertificateDTO, error)
-	GetCertificateFiles() (string, string, error)
+	GetCertificateFiles(certificateID uint64, user user.User) (string, string, error)
+	WithdrawCertificate(certificateID uint64, user user.User) (CertificateDTO, error)
 }
 
 type DefaultCertificateService struct {
 	certificateRepo         CertificateRepository
 	certificateKeyStoreRepo FileStoreCertificateRepository
-	userRepo                user2.UserRepository
+	userRepo                user.UserRepository
 }
 
 func NewDefaultCertificateService(cRepo CertificateRepository, cKSRepo FileStoreCertificateRepository,
-	uRepo user2.UserRepository) *DefaultCertificateService {
+	uRepo user.UserRepository) *DefaultCertificateService {
 	return &DefaultCertificateService{
 		certificateRepo:         cRepo,
 		certificateKeyStoreRepo: cKSRepo,
@@ -56,7 +56,7 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 	var certificatePrivKeyPEM bytes.Buffer
 	var err error
 
-	var issuer user2.User
+	var issuer user.User
 	var parentCertificate *Certificate
 
 	if parentSerial != nil {
@@ -173,7 +173,17 @@ func (d *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
 	return certificates, nil
 }
 
-func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user2.User) (CertificateDTO, error) {
+func (d *DefaultCertificateService) GetCertificateFiles(certificateID uint64, user user.User) (string, string, error) {
+	certificate, err := d.GetCertificate(certificateID)
+	var public, private string
+	public = GetPublicName(certificateID)
+	if user.IsAdmin || *certificate.SubjectID == int64(user.ID) {
+		private = GetPrivateName(certificateID)
+	}
+	return public, private, err
+}
+
+func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user.User) (CertificateDTO, error) {
 
 	certificate, err := d.GetCertificate(id)
 	if err != nil {
