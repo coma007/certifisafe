@@ -60,7 +60,7 @@ func main() {
 	certificateRepository := certificate2.NewDefaultCertificateRepository(db)
 	certificateFileStoreRepository := certificate2.NewDefaultFileStoreCertificateRepository()
 	certificateService := certificate2.NewDefaultCertificateService(certificateRepository, certificateFileStoreRepository, userRepository)
-	certificateController := certificate2.NewCertificateController(certificateService)
+	certificateController := certificate2.NewCertificateController(certificateService, authService)
 
 	requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository)
 	requestService := request2.NewDefaultRequestService(requestRepository, certificateService, userRepository)
@@ -70,6 +70,7 @@ func main() {
 
 	router.GET("/api/certificate/:id", certificateController.GetCertificate)
 	router.GET("/api/certificate", certificateController.GetCertificates)
+	router.GET("/api/certificate/:id/download", certificateController.DownloadCertificate)
 	router.PATCH("/api/certificate/:id/withdraw", certificateController.WithdrawCertificate)
 	router.GET("/api/certificate/:id/valid", certificateController.IsValid)
 	router.POST("/api/certificate/valid", certificateController.IsValidFile)

@@ -175,6 +175,9 @@ func (d *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
 
 func (d *DefaultCertificateService) GetCertificateFiles(certificateID uint64, user user.User) (string, string, error) {
 	certificate, err := d.GetCertificate(certificateID)
+	if err != nil {
+		return "", "", err
+	}
 	var public, private string
 	public = GetPublicName(certificateID)
 	if user.IsAdmin || *certificate.SubjectID == int64(user.ID) {
@@ -189,10 +192,10 @@ func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user.Use
 	if err != nil {
 		return CertificateDTO{}, err
 	}
-	if !user.IsAdmin && *certificate.SubjectID != int64(user.ID) {
-		// TODO also check if certificate has been withdrawn before
-		return CertificateDTO{}, errors.New("no permissions")
-	}
+	//if !user.IsAdmin && *certificate.SubjectID != int64(user.ID) {
+	//	// TODO also check if certificate has been withdrawn before
+	//	return CertificateDTO{}, errors.New("no permissions")
+	//}
 
 	transaction := d.certificateRepo.BeginTransaction()
 	{

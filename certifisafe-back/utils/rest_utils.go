@@ -3,8 +3,10 @@ package utils
 import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
+	"io"
 	"math/big"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -48,4 +50,15 @@ func ReturnResponse(w http.ResponseWriter, err error, data interface{}, httpStat
 		http.Error(w, "error when encoding json", http.StatusInternalServerError)
 		return
 	}
+}
+
+func AddFileToResponse(w http.ResponseWriter, publicPath string) bool {
+	f, err := os.Open(publicPath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return false
+	}
+	defer f.Close()
+	io.Copy(w, f)
+	return true
 }
