@@ -32,6 +32,7 @@ type CertificateService interface {
 	IsValid(cert x509.Certificate) (bool, error)
 	IsValidById(id uint64) (bool, error)
 	WithdrawCertificate(certificateID uint64, user user2.User) (CertificateDTO, error)
+	GetCertificateFiles() (string, string, error)
 }
 
 type DefaultCertificateService struct {
