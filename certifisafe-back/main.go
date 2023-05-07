@@ -60,7 +60,7 @@ func main() {
 	certificateRepository := certificate2.NewDefaultCertificateRepository(db)
 	certificateFileStoreRepository := certificate2.NewDefaultFileStoreCertificateRepository()
 	certificateService := certificate2.NewDefaultCertificateService(certificateRepository, certificateFileStoreRepository, userRepository)
-	certificateController := certificate2.NewCertificateController(certificateService)
+	certificateController := certificate2.NewCertificateController(certificateService, authService)
 
 	requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository)
 	requestService := request2.NewDefaultRequestService(requestRepository, certificateService, userRepository)
@@ -100,6 +100,8 @@ func automigrate(db *gorm.DB) {
 	err := db.AutoMigrate(&user2.User{}, &certificate2.Certificate{})
 	utils.CheckError(err)
 	err = db.AutoMigrate(&request2.Request{})
+	utils.CheckError(err)
+	err = db.AutoMigrate(&password_recovery.PasswordRecovery{})
 	utils.CheckError(err)
 }
 

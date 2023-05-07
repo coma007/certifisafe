@@ -10,7 +10,6 @@ type CertificateRepository interface {
 	GetCertificates() ([]Certificate, error)
 	GetLeafCertificates() ([]Certificate, error)
 	UpdateCertificate(certificate *Certificate) error
-	DeleteCertificate(id uint64) error
 	isRevoked(id uint64) (bool, error)
 	BeginTransaction() *gorm.DB
 }
@@ -66,18 +65,13 @@ func (i *DefaultCertificateRepository) UpdateCertificate(certificate *Certificat
 	return result.Error
 }
 
-func (i *DefaultCertificateRepository) DeleteCertificate(id uint64) error {
-	result := i.DB.Delete(&Certificate{}, id)
-	return result.Error
-}
-
 func (i *DefaultCertificateRepository) isRevoked(id uint64) (bool, error) {
 	var count int64 = 1
 
 	err := i.DB.
 		Unscoped().
 		Model(&Certificate{}).
-		Where("deleted_at IS NOT NULL and id=?", id).
+		Where("status=?  and id=?", WITHDRAWN, id).
 		Count(&count).
 		Error
 	return count != 0, err
