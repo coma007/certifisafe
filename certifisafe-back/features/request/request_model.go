@@ -13,7 +13,7 @@ type Request struct {
 	Datetime            time.Time
 	Status              RequestStatus
 	CertificateName     string
-	CertificateType     string
+	CertificateType     certificate.CertificateType
 	SubjectID           uint
 	Subject             user.User `gorm:"foreignKey:SubjectID;"`
 	ParentCertificateID *uint64

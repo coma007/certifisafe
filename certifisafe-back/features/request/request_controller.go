@@ -86,7 +86,7 @@ func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	err = controller.service.AcceptRequest(id)
+	_, err = controller.service.AcceptRequest(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -119,7 +119,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		SubjectId:       1,
 	}
 
-	root, err := controller.certificateService.CreateCertificate(rootDTO.ParentSerial, rootDTO.CertificateName, rootDTO.CertificateType, rootDTO.SubjectId)
+	root, err := controller.certificateService.CreateCertificate(rootDTO.ParentSerial, rootDTO.CertificateName, certificate2.StringToType(rootDTO.CertificateType), rootDTO.SubjectId)
 	if err != nil {
 		panic(err)
 	}
@@ -137,7 +137,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		CertificateType: "INTERMEDIATE",
 		SubjectId:       1,
 	}
-	intermidiate, err := controller.certificateService.CreateCertificate(intermediateDTO.ParentSerial, intermediateDTO.CertificateName, intermediateDTO.CertificateType, intermediateDTO.SubjectId)
+	intermidiate, err := controller.certificateService.CreateCertificate(intermediateDTO.ParentSerial, intermediateDTO.CertificateName, certificate2.StringToType(intermediateDTO.CertificateType), intermediateDTO.SubjectId)
 
 	intermediateSerial := uint(*intermidiate.Serial)
 	leafDTO := &NewRequestDTO{
@@ -147,7 +147,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		SubjectId:       1,
 	}
 
-	leaf, err := controller.certificateService.CreateCertificate(leafDTO.ParentSerial, leafDTO.CertificateName, leafDTO.CertificateType, leafDTO.SubjectId)
+	leaf, err := controller.certificateService.CreateCertificate(leafDTO.ParentSerial, leafDTO.CertificateName, certificate2.StringToType(leafDTO.CertificateType), leafDTO.SubjectId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

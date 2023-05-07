@@ -70,7 +70,7 @@ func main() {
 
 	router.GET("/api/certificate/:id", certificateController.GetCertificate)
 	router.GET("/api/certificate", certificateController.GetCertificates)
-	router.DELETE("/api/certificate/:id", certificateController.DeleteCertificate)
+	router.PATCH("/api/certificate/:id/withdraw", certificateController.WithdrawCertificate)
 	router.GET("/api/certificate/:id/valid", certificateController.IsValid)
 	router.POST("/api/certificate/valid", certificateController.IsValidFile)
 

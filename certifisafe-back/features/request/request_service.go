@@ -14,7 +14,7 @@ type RequestService interface {
 	GetAllRequestsByUser(user user.User) ([]*RequestDTO, error)
 	UpdateRequest(req *Request) error
 	DeleteRequest(id int) error
-	AcceptRequest(id int) error
+	AcceptRequest(id int) (*Request, error)
 	DeclineRequest(id int) error
 }
 
@@ -39,17 +39,17 @@ func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO) (*Reques
 	parentSerial := uint64(*req.ParentSerial)
 
 	newRequest := Request{
-		Datetime:            time.Time{},
+		Datetime:            time.Now(),
 		Status:              RequestStatus(PENDING),
 		CertificateName:     req.CertificateName,
-		CertificateType:     req.CertificateType,
+		CertificateType:     certificate.StringToType(req.CertificateType),
 		ParentCertificateID: &parentSerial,
 		ParentCertificate:   certificate.Certificate{},
 		SubjectID:           req.SubjectId,
 		Subject:             user.User{},
 	}
 	request, err := service.repository.CreateRequest(&newRequest)
-	service.acceptCertificateIfNeeded(request)
+	request, err = service.acceptCertificateIfNeeded(request)
 	return RequestToDTO(request), err
 }
 
@@ -87,25 +87,27 @@ func (service *DefaultRequestService) DeleteRequest(id int) error {
 	return service.repository.DeleteRequest(id)
 }
 
-func (service *DefaultRequestService) acceptCertificateIfNeeded(request *Request) {
+func (service *DefaultRequestService) acceptCertificateIfNeeded(request *Request) (*Request, error) {
 	parentCertificate, _ := service.certificateService.GetCertificate(*request.ParentCertificateID)
-	if parentCertificate.Subject == request.Subject || request.Subject.IsAdmin {
-		service.AcceptRequest(int(request.ID))
+	var err error = nil
+	if parentCertificate.Subject.ID == request.Subject.ID || request.Subject.IsAdmin {
+		request, err = service.AcceptRequest(int(request.ID))
 	}
+	return request, err
 }
 
-func (service *DefaultRequestService) AcceptRequest(id int) error {
+func (service *DefaultRequestService) AcceptRequest(id int) (*Request, error) {
 	request, err := service.repository.GetRequest(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	request.Status = ACCEPTED
 	parentSerial := uint(*request.ParentCertificateID)
 	_, err = service.certificateService.CreateCertificate(&parentSerial, request.CertificateName, request.CertificateType, request.SubjectID)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return service.repository.UpdateRequest(request)
+	return request, service.repository.UpdateRequest(request)
 }
 
 func (service *DefaultRequestService) DeclineRequest(id int) error {
