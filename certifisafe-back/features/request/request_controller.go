@@ -135,7 +135,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		ParentSerial:    &parentSerial,
 		CertificateName: "intermediate",
 		CertificateType: "INTERMEDIATE",
-		SubjectId:       5,
+		SubjectId:       1,
 	}
 	intermidiate, err := controller.certificateService.CreateCertificate(intermediateDTO.ParentSerial, intermediateDTO.CertificateName, certificate2.StringToType(intermediateDTO.CertificateType), intermediateDTO.SubjectId)
 

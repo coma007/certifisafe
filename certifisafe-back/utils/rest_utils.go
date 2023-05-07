@@ -35,6 +35,11 @@ func ReadRequestBody(w http.ResponseWriter, r *http.Request, req interface{}) er
 }
 
 func ReturnResponse(w http.ResponseWriter, err error, data interface{}, httpStatus int) {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(httpStatus)
 

@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"errors"
 	"math/big"
+	"strconv"
 	"time"
 )
 
@@ -28,8 +29,9 @@ type CertificateService interface {
 	CreateCertificate(parentSerial *uint, certificateName string, certificateType CertificateType, subjectId uint) (CertificateDTO, error)
 	GetCertificate(id uint64) (Certificate, error)
 	GetCertificates() ([]Certificate, error)
+	IsValid(cert x509.Certificate) (bool, error)
+	IsValidById(id uint64) (bool, error)
 	WithdrawCertificate(certificateID uint64, user user2.User) (CertificateDTO, error)
-	IsValid(id uint64) (bool, error)
 }
 
 type DefaultCertificateService struct {
@@ -87,7 +89,9 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 			if err != nil {
 				return CertificateDTO{}, err
 			}
+			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
 			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateRootCa(subject, uint64(certificateDB.ID))
+
 			if err != nil {
 				return CertificateDTO{}, err
 			}
@@ -99,13 +103,15 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 			if err != nil {
 				return CertificateDTO{}, err
 			}
+
 			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
+			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, uint64(certificateDB.ID), &parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, parent.Subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
@@ -116,13 +122,15 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 			if err != nil {
 				return CertificateDTO{}, err
 			}
+
 			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
+			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
 			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
-			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, uint64(certificateDB.ID), &parent, privateKey)
+			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, parent.Subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
@@ -192,10 +200,25 @@ func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user2.Us
 	return *CertificateToDTO(&certificate), nil
 }
 
-func (d *DefaultCertificateService) IsValid(id uint64) (bool, error) {
-	// TODO implement
+func (d *DefaultCertificateService) IsValidById(id uint64) (bool, error) {
 	certificate, err := d.certificateKeyStoreRepo.GetCertificate(uint(id))
 	if err != nil {
+		return false, nil
+	}
+	return d.IsValid(certificate)
+}
+
+func (d *DefaultCertificateService) IsValid(certificate x509.Certificate) (bool, error) {
+
+	if !isTimeValid(certificate) {
+		return false, nil
+	}
+
+	isRevoked, err := d.certificateRepo.isRevoked(certificate.SerialNumber.Uint64())
+	if err != nil {
+		return false, err
+	}
+	if isRevoked {
 		return false, nil
 	}
 
@@ -203,20 +226,16 @@ func (d *DefaultCertificateService) IsValid(id uint64) (bool, error) {
 		return false, nil
 	}
 
-	if certificate.NotAfter.Before(time.Now()) || certificate.NotAfter.Before(certificate.NotBefore) {
-		return false, nil
-	}
-
 	return true, nil
 }
 
+func isTimeValid(c x509.Certificate) bool {
+	return !(c.NotAfter.Before(time.Now()) || c.NotAfter.Before(c.NotBefore))
+}
+
 func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) bool {
-	serial, err := utils.StringToBigInt(certificate.Issuer.SerialNumber)
-	if err != nil {
-		return false
-	}
-	// if it is root check if it is self-signed
-	if certificate.IsCA && serial.Cmp(certificate.SerialNumber) != 0 {
+	// if it is root check if it is self-signed(subject is same as issuer)
+	if certificate.IsCA && certificate.Issuer.SerialNumber == certificate.SerialNumber.String() {
 		err := certificate.CheckSignatureFrom(&certificate)
 		if err != nil {
 			return false
@@ -226,11 +245,21 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 	}
 
 	parentSerial, err := utils.StringToBigInt(certificate.Issuer.SerialNumber)
+	//parentSerial, err := utils.StringToBigInt("4")
 	if err != nil {
 		return false
 	}
 	parent, err := d.certificateKeyStoreRepo.GetCertificate(uint(parentSerial.Uint64()))
 	if err != nil {
+		return false
+	}
+
+	if !isTimeValid(parent) {
+		return false
+	}
+
+	isRevoked, err := d.certificateRepo.isRevoked(parentSerial.Uint64())
+	if isRevoked {
 		return false
 	}
 

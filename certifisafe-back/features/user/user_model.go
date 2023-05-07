@@ -5,7 +5,7 @@ import "gorm.io/gorm"
 type User struct {
 	gorm.Model
 	Deleted   gorm.DeletedAt
-	Email     string
+	Email     string `gorm:"uniqueIndex"`
 	Password  string
 	FirstName string
 	LastName  string

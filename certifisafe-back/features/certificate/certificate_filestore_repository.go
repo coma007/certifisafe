@@ -54,11 +54,11 @@ func (i *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber u
 func (i *DefaultFileStoreCertificateRepository) GetCertificate(serialNumber uint) (x509.Certificate, error) {
 	catls, err := tls.LoadX509KeyPair(getPublicName(uint64(serialNumber)), getPrivateName(uint64(serialNumber)))
 	if err != nil {
-		panic(err)
+		return x509.Certificate{}, err
 	}
 	certificate, err := x509.ParseCertificate(catls.Certificate[0])
 	if err != nil {
-		panic(err)
+		return x509.Certificate{}, err
 	}
 
 	return *certificate, nil

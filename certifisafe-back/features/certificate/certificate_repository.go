@@ -11,6 +11,7 @@ type CertificateRepository interface {
 	GetLeafCertificates() ([]Certificate, error)
 	UpdateCertificate(certificate *Certificate) error
 	DeleteCertificate(id uint64) error
+	isRevoked(id uint64) (bool, error)
 	BeginTransaction() *gorm.DB
 }
 
@@ -70,6 +71,17 @@ func (i *DefaultCertificateRepository) DeleteCertificate(id uint64) error {
 	return result.Error
 }
 
+func (i *DefaultCertificateRepository) isRevoked(id uint64) (bool, error) {
+	var count int64 = 1
+
+	err := i.DB.
+		Unscoped().
+		Model(&Certificate{}).
+		Where("deleted_at IS NOT NULL and id=?", id).
+		Count(&count).
+		Error
+	return count != 0, err
+}
 func (i *DefaultCertificateRepository) BeginTransaction() *gorm.DB {
 	return i.DB.Begin()
 }

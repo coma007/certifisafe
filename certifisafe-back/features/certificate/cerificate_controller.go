@@ -1,8 +1,11 @@
 package certificate
 
 import (
+	"bufio"
 	"certifisafe-back/features/auth"
 	"certifisafe-back/utils"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
@@ -60,7 +63,6 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 
 	utils.ReturnResponse(w, err, CertificatesToDTOs(certificates), http.StatusOK)
 }
-
 func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, err := utils.ReadCertificateIDFromUrl(w, ps)
 	if err != nil {
@@ -79,24 +81,59 @@ func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *h
 }
 
 func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// TODO finish - Bobi
 	id, err := utils.ReadCertificateIDFromUrl(w, ps)
 	if err != nil {
 		return
 	}
 
-	result, err := ch.service.IsValid(id.Uint64())
+	result, err := ch.service.IsValidById(id.Uint64())
 	fmt.Print(result)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
 	}
 
-	// TODO: response has content, fix header
-	w.WriteHeader(http.StatusNoContent)
-	if result {
-		w.Write([]byte("true"))
-	} else {
-		w.Write([]byte("false"))
+	utils.ReturnResponse(w, err, &result, http.StatusOK)
+}
+
+func (ch *CertificateController) IsValidFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
+		return
 	}
+
+	// KEY OF THE MULTIPART FOR FILE MUST BE "file"
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	fileBytes := make([]byte, handler.Size)
+	_, err = bufio.NewReader(file).Read(fileBytes)
+	if err != nil {
+		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
+		return
+	}
+	block, _ := pem.Decode(fileBytes)
+	if block == nil {
+		err = errors.New("File uploaded is not a certificate")
+		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
+		return
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
+		return
+	}
+	result, err := ch.service.IsValid(*cert)
+	if err != nil {
+		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
+		return
+	}
+
+	utils.ReturnResponse(w, err, &result, http.StatusOK)
 }
