@@ -1,6 +1,7 @@
 package certificate
 
 import (
+	"certifisafe-back/features/auth"
 	"certifisafe-back/utils"
 	"errors"
 	"fmt"
@@ -9,11 +10,12 @@ import (
 )
 
 type CertificateController struct {
-	service CertificateService
+	service     CertificateService
+	authService auth.AuthService
 }
 
-func NewCertificateController(cs CertificateService) *CertificateController {
-	return &CertificateController{service: cs}
+func NewCertificateController(cs CertificateService, as auth.AuthService) *CertificateController {
+	return &CertificateController{service: cs, authService: as}
 }
 
 func getErrorStatus(err error) int {
@@ -56,31 +58,24 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 		return
 	}
 
-	utils.ReturnResponse(w, err, certificates, http.StatusOK)
+	utils.ReturnResponse(w, err, CertificatesToDTOs(certificates), http.StatusOK)
 }
 
-func (ch *CertificateController) DeleteCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// TODO implement this
-	// TODO use gorm's LOGIC delete
-	// id, err := utils.ReadCertificateIDFromUrl(w, ps)
-	//	if err != nil {
-	//		return
-	//	}
-
-	var certificate Certificate
-	err := utils.ReadRequestBody(w, r, &certificate)
+func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := utils.ReadCertificateIDFromUrl(w, ps)
 	if err != nil {
 		return
 	}
+	user := ch.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
-	//err = ch.service.DeleteCertificate(int64(id))
+	var certificate CertificateDTO
+	certificate, err = ch.service.WithdrawCertificate(id.Uint64(), user)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
 	}
 
-	// TODO change data from nil to removed certificate
-	utils.ReturnResponse(w, err, nil, http.StatusNoContent)
+	utils.ReturnResponse(w, err, certificate, http.StatusOK)
 }
 
 func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

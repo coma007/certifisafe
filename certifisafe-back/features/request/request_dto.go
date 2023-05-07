@@ -23,10 +23,13 @@ type NewRequestDTO struct {
 }
 
 func RequestToDTO(req *Request) *RequestDTO {
+	if req == nil {
+		return &RequestDTO{}
+	}
 	request := RequestDTO{
 		ParentCertificate: certificate.CertificateToDTO(&req.ParentCertificate),
 		CertificateName:   req.CertificateName,
-		CertificateType:   req.CertificateType,
+		CertificateType:   certificate.TypeToString(req.CertificateType),
 		Subject:           user.ModelToUserBaseDTO(&req.Subject),
 		Datetime:          req.Datetime,
 		Status:            RequestStatusToString(req.Status),

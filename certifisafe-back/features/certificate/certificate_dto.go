@@ -30,26 +30,18 @@ func CertificateToDTO(cert *Certificate) *CertificateDTO {
 		ValidTo:   cert.ValidTo,
 		Issuer:    *user.ModelToUserBaseDTO(&cert.Issuer),
 		Subject:   *user.ModelToUserBaseDTO(&cert.Issuer),
-		Status:    TypeToString(cert.Type),
-		Type:      StatusToString(cert.Status),
+		Status:    StatusToString(cert.Status),
+		Type:      TypeToString(cert.Type),
 	}
 	return &certificate
 }
 
-func ModelToCertificateDTO(cert *Certificate) *CertificateDTO {
-	if cert == nil {
-		return nil
+func CertificatesToDTOs(certs []Certificate) []*CertificateDTO {
+	dtos := make([]*CertificateDTO, len(certs))
+	for i, cert := range certs {
+		dtos[i] = CertificateToDTO(&cert)
 	}
-	serial := uint64(cert.ID)
-	certificate := CertificateDTO{
-		Serial:    &serial,
-		Name:      cert.Name,
-		ValidFrom: cert.ValidFrom,
-		ValidTo:   cert.ValidTo,
-		Issuer:    *user.ModelToUserBaseDTO(&cert.Issuer),
-		Subject:   *user.ModelToUserBaseDTO(&cert.Subject),
-	}
-	return &certificate
+	return dtos
 }
 
 func TypeToString(certType CertificateType) string {

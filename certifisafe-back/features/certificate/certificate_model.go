@@ -36,5 +36,4 @@ const (
 	ACTIVE CertificateStatus = iota
 	EXPIRED
 	WITHDRAWN
-	NOT_ACTIVE
 )
