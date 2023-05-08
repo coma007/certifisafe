@@ -15,7 +15,7 @@ type RequestService interface {
 	UpdateRequest(req *Request) error
 	DeleteRequest(id int) error
 	AcceptRequest(id int) (*Request, error)
-	DeclineRequest(id int) error
+	DeclineRequest(id int, reason string) error
 }
 
 type DefaultRequestService struct {
@@ -110,11 +110,12 @@ func (service *DefaultRequestService) AcceptRequest(id int) (*Request, error) {
 	return request, service.repository.UpdateRequest(request)
 }
 
-func (service *DefaultRequestService) DeclineRequest(id int) error {
+func (service *DefaultRequestService) DeclineRequest(id int, reason string) error {
 	request, err := service.repository.GetRequest(id)
 	if err != nil {
 		return err
 	}
 	request.Status = REJECTED
+	request.RejectedReason = &reason
 	return service.repository.UpdateRequest(request)
 }
