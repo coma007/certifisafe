@@ -30,7 +30,7 @@ func NewInMemoryVerificationRepository(db *gorm.DB) *DefaultVerificationReposito
 }
 
 func (i *DefaultVerificationRepository) CreateVerification(id int32, user Verification) (Verification, error) {
-	result := i.DB.Create(user)
+	result := i.DB.Create(&user)
 	return user, result.Error
 }
 
@@ -53,7 +53,7 @@ func (i *DefaultVerificationRepository) GetVerificationByEmail(email string) (*V
 }
 
 func (i *DefaultVerificationRepository) UpdateVerification(id int32, req Verification) (Verification, error) {
-	result := i.DB.Save(req)
+	result := i.DB.Save(&req)
 	return req, result.Error
 }
 

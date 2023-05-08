@@ -102,7 +102,7 @@ func automigrate(db *gorm.DB) {
 	utils.CheckError(err)
 	err = db.AutoMigrate(&request2.Request{})
 	utils.CheckError(err)
-	err = db.AutoMigrate(&password_recovery.PasswordRecovery{})
+	err = db.AutoMigrate(&password_recovery.PasswordRecoveryRequest{})
 	utils.CheckError(err)
 }
 

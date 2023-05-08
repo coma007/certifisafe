@@ -185,7 +185,7 @@ func (s *DefaultAuthService) RequestPasswordRecoveryToken(email string) error {
 
 	to := []string{user.Email}
 
-	templateFile, _ := filepath.Abs("utils/passwordRecovery.html")
+	templateFile, _ := filepath.Abs("resources/templates/passwordRecovery.html")
 	t, err := template.ParseFiles(templateFile)
 
 	if err != nil {
