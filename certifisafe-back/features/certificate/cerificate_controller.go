@@ -63,6 +63,30 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 
 	utils.ReturnResponse(w, err, CertificatesToDTOs(certificates), http.StatusOK)
 }
+
+func (ch *CertificateController) DownloadCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+	if err != nil {
+		return
+	}
+	user := ch.authService.GetUserFromToken(r.Header.Get("Authorization"))
+	publicPath, privatePath, err := ch.service.GetCertificateFiles(id.Uint64(), user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	if !utils.AddFileToResponse(w, publicPath) {
+		return
+	}
+	if privatePath != "" && !utils.AddFileToResponse(w, privatePath) {
+		return
+	}
+
+	w.Header().Set("  Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment; filename=certificate.zip")
+}
+
 func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id, err := utils.ReadCertificateIDFromUrl(w, ps)
 	if err != nil {
