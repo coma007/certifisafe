@@ -9,4 +9,5 @@ export const CERTIFICATES_IS_VALID_FILE = (id: number) => API_URL + "certificate
 
 export const REQUESTS_URL = API_URL + "request";
 
-export const LOGIN_URL = () => "http://localhost:8080/api/login";
+export const LOGIN_URL = () => API_URL + "login";
+export const REGISTER_URL = () => API_URL + "register";

@@ -18,7 +18,7 @@ const LoginPage = () => {
                 <LoginForm />
                 <div className="authBottomMessage">
                     Do not have an account ?
-                    <br /> <a href='#'>Sign up here.</a>
+                    <br /> <a href='register'>Sign up here.</a>
                 </div>
             </div >
         </div>

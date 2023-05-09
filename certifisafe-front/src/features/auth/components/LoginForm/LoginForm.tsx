@@ -28,8 +28,8 @@ const LoginForm = () => {
         console.log(jwt)
         navigate("/")
 
-      } catch (error) {
-        console.log(error);
+      } catch (error : any) {
+        alert(error.response.data);
       }
     })()
   }
