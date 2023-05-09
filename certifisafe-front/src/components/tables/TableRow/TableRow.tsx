@@ -1,4 +1,3 @@
-import { Resizable } from "react-resizable";
 import TableRowCSS from "./TableRow.module.scss"
 
 export interface TableRowData {

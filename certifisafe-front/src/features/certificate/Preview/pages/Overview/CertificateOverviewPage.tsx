@@ -1,14 +1,27 @@
 import Menu from "components/navigation/Menu/Menu"
 import PageTitle from "components/view/PageTitle/PageTitle"
-import Table from "components/view/Table/Table"
-import { TableRowData } from "components/view/TableRow/TableRow"
+import Table from "components/tables/Table/Table"
+import { TableRowData } from "components/tables/TableRow/TableRow"
 import { formatDate } from "utils/DateUtils"
 import CertificateOreviewPageCSS from "./CertificateOverviewPage.module.scss"
 import Download from "assets/actions/download.png"
 import Withdraw from "assets/actions/withdraw.png"
 import ImageButton from "components/tables/ImageButton/ImageButton"
+import { useState } from "react"
+import Modal from "react-modal";
+import ModalWindow from "components/view/Modal/ModalWindow"
 
 const CertificateOreviewPage = () => {
+
+    const [withdrawIsOpen, setWithdrawModalIsOpen] = useState(false);
+
+    const openWithdrawModal = () => {
+        setWithdrawModalIsOpen(true);
+    };
+
+    const closeWithdrawModal = () => {
+        setWithdrawModalIsOpen(false);
+    };
 
     const header: TableRowData = {
         content: "aaa",
@@ -31,8 +44,8 @@ const CertificateOreviewPage = () => {
     { content: "Google Inc.", widthPercentage: 0 },
     { content: "root", widthPercentage: 0 },
     { content: <i>ACTIVE</i>, widthPercentage: 0 },
-    { content: <ImageButton path={Download} tooltipText="Download" />, widthPercentage: 0 },
-    { content: <ImageButton path={Withdraw} tooltipText="Withdraw" />, widthPercentage: 0 }]
+    { content: <ImageButton path={Download} tooltipText="Download" onClick={null} />, widthPercentage: 0 },
+    { content: <ImageButton path={Withdraw} tooltipText="Withdraw" onClick={openWithdrawModal} />, widthPercentage: 0 }]
 
     const rows: TableRowData[][] = [row, row, row, row, row];
 
@@ -44,6 +57,12 @@ const CertificateOreviewPage = () => {
                 <div className={CertificateOreviewPageCSS.table} >
                     <Table headers={headers} rows={rows} />
                 </div>
+                <ModalWindow isOpen={withdrawIsOpen}
+                    closeWithdrawalModal={closeWithdrawModal}
+                    title="Withdraw Certificate"
+                    description="To withdraw the certificate, you need to provide us some more info on why you want to withdraw it. "
+                    warning="Please note that if the certificate is revoked, all in the chain below it is automatically retracted. This means that all certificates signed by this certificate, as well as certificates signed by those certificates will be automatically revoked."
+                    buttonText="WITHDRAW" />
             </div>
         </div>
     )

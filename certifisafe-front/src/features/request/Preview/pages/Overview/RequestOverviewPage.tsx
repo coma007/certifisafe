@@ -1,7 +1,7 @@
 import Menu from "components/navigation/Menu/Menu"
 import PageTitle from "components/view/PageTitle/PageTitle"
-import Table from "components/view/Table/Table"
-import { TableRowData } from "components/view/TableRow/TableRow"
+import Table from "components/tables/Table/Table"
+import { TableRowData } from "components/tables/TableRow/TableRow"
 import { formatDate } from "utils/DateUtils"
 import RequestOreviewPageCSS from "./RequestOverviewPage.module.scss"
 import Accept from "assets/actions/accept.png"
@@ -35,8 +35,8 @@ const RequestOreviewPage = () => {
     { content: formatDate(new Date(Date.now())), widthPercentage: 0 },
     { content: "UNS", widthPercentage: 0 },
     { content: "intermediate", widthPercentage: 0 },
-    { content: <ImageButton path={Accept} tooltipText="Accept" />, widthPercentage: 0 },
-    { content: <ImageButton path={Decline} tooltipText="Decline" />, widthPercentage: 0 }]
+    { content: <ImageButton path={Accept} tooltipText="Accept" onClick={null} />, widthPercentage: 0 },
+    { content: <ImageButton path={Decline} tooltipText="Decline" onClick={null} />, widthPercentage: 0 }]
 
     const rowsMe: TableRowData[][] = [rowMe, rowMe, rowMe, rowMe, rowMe];
 
@@ -54,7 +54,7 @@ const RequestOreviewPage = () => {
         { content: "UNS", widthPercentage: 0 },
         { content: "intermediate", widthPercentage: 0 },
         { content: <i>PENDING</i>, widthPercentage: 0 },
-        { content: <ImageButton path={Remove} tooltipText="Remove" />, widthPercentage: 0 }]
+        { content: <ImageButton path={Remove} tooltipText="Remove" onClick={null} />, widthPercentage: 0 }]
 
     const rowsMy: TableRowData[][] = [rowMy, rowMy, rowMy, rowMy, rowMy];
 

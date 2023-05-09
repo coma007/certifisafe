@@ -11,7 +11,7 @@ const RegisterForm = () => {
       <InputField className={RegisterFormCSS.input} usage="Password" />
       <div className={RegisterFormCSS.button}>
         <span className="alignRight">
-          <Button text="Get started" />
+          <Button onClick={null} text="Get started" />
         </span>
       </div>
     </div >
