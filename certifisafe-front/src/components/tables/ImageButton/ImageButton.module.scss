@@ -1,0 +1,14 @@
+.button img {
+    padding: 9px;
+    height: 100%;
+    width: auto;
+}
+
+.button:hover {
+    box-shadow: none;
+}
+
+.button:hover img {
+    cursor: pointer;
+    transform: scale(1.1);
+}
