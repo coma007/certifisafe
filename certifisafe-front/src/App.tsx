@@ -6,7 +6,7 @@ import LoginPage from 'features/auth/pages/LoginPage/LoginPage';
 function App() {
   return (
     <div className={AppCSS.main}>
-      <LoginPage></LoginPage>
+      <CertificateOreviewPage></CertificateOreviewPage>
     </div >
   )
 }

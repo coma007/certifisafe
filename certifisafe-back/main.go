@@ -74,7 +74,7 @@ func main() {
 	//methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	router.HandleFunc("/api/certificate/:id", middleware(certificateController.GetCertificate)).Methods("GET")
-	router.HandleFunc("/api/certificate", certificateController.GetCertificates).Methods("GET")
+	router.HandleFunc("/api/certificate", middleware(certificateController.GetCertificates)).Methods("GET")
 	//router.GET("/api/certificate/:id/download", certificateController.DownloadCertificate)
 	//router.PATCH("/api/certificate/:id/withdraw", certificateController.WithdrawCertificate)
 	//router.GET("/api/certificate/:id/valid", certificateController.IsValid)
@@ -104,7 +104,11 @@ func main() {
 
 	fmt.Println("http server runs on :8080")
 	//log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(router)))
-	handler := cors.Default().Handler(router)
+	handler := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedHeaders: []string{"*"},
+		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "OPTIONS"},
+	}).Handler(router)
 	http.ListenAndServe(":8080", handler)
 }
 
