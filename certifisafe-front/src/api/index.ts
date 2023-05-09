@@ -8,3 +8,5 @@ export const CERTIFICATES_IS_VALID_ID = (id: number) => API_URL + "certificate/"
 export const CERTIFICATES_IS_VALID_FILE = (id: number) => API_URL + "certificate/valid";
 
 export const REQUESTS_URL = API_URL + "request";
+
+export const LOGIN_URL = () => "http://localhost:8080/api/login";
