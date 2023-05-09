@@ -26,6 +26,10 @@
     font-size: smaller;
 }
 
+.buttons {
+    margin-top: 20px;
+}
+
 .accentButton {
     font-family: 'Lato', sans-serif;
     display: inline-block;
@@ -51,4 +55,9 @@
     box-shadow: none;
     font-size: medium;
     font-weight: 400;
+    cursor: pointer;
+}
+
+.cancelButton:hover {
+    color: #86919D;
 }

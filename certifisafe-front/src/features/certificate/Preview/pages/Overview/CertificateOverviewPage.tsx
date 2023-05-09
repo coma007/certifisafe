@@ -57,7 +57,8 @@ const CertificateOreviewPage = () => {
                 <div className={CertificateOreviewPageCSS.table} >
                     <Table headers={headers} rows={rows} />
                 </div>
-                <ModalWindow isOpen={withdrawIsOpen}
+                <ModalWindow height="67%"
+                    isOpen={withdrawIsOpen}
                     closeWithdrawalModal={closeWithdrawModal}
                     title="Withdraw Certificate"
                     description="To withdraw the certificate, you need to provide us some more info on why you want to withdraw it. "
