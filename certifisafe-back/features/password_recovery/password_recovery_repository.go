@@ -43,7 +43,7 @@ func (i *DefaultPasswordRecoveryRepository) GetRequest(id int32) (PasswordRecove
 
 func (i *DefaultPasswordRecoveryRepository) GetRequestByCode(code string) (PasswordRecoveryRequest, error) {
 	var r PasswordRecoveryRequest
-	result := i.DB.Where("code=?", code).First(&r)
+	result := i.DB.Model(PasswordRecoveryRequest{}).Where("code=?", code).First(&r)
 
 	return r, result.Error
 }

@@ -114,6 +114,8 @@ func automigrate(db *gorm.DB) {
 	utils.CheckError(err)
 	err = db.AutoMigrate(&password_recovery.PasswordRecoveryRequest{})
 	utils.CheckError(err)
+	err = db.AutoMigrate(&auth.Verification{})
+	utils.CheckError(err)
 }
 
 func createRoot(keyStore certificate2.DefaultFileStoreCertificateRepository, db certificate2.CertificateRepository) error {

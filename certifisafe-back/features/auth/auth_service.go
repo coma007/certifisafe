@@ -9,7 +9,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"
+	twilio "github.com/twilio/twilio-go"
+	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"math/big"
 	"net/smtp"
 	"path/filepath"
@@ -41,7 +44,7 @@ type AuthService interface {
 	GetUserFromToken(tokenString string) user2.User
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
 	GetUserByEmail(email string) (user2.User, error)
-	RequestPasswordRecoveryToken(email string) error
+	RequestPasswordRecoveryToken(email string, t int) error
 	PasswordRecovery(request *password_recovery2.PasswordRecovery) error
 }
 
@@ -113,23 +116,19 @@ func (s *DefaultAuthService) Register(u *user2.User) (*user2.User, error) {
 		return &user2.User{}, err
 	}
 	_, err = s.userRepository.GetUserByEmail(u.Email)
-	if err != nil {
-		if err == ErrNoUserWithEmail {
-			passwordBytes, err := s.hashToken(u.Password)
-			utils.CheckError(err)
-			u.Password = string(passwordBytes)
-			createdUser, err := s.userRepository.CreateUser(*u)
-			if err != nil {
-				return &user2.User{}, err
-			}
-
-			//add phone option
-			s.sendVerification(u)
-
-			return &createdUser, nil
-		} else {
-			return &user2.User{}, ErrTakenEmail
+	if err == gorm.ErrRecordNotFound {
+		passwordBytes, err := s.hashToken(u.Password)
+		utils.CheckError(err)
+		u.Password = string(passwordBytes)
+		createdUser, err := s.userRepository.CreateUser(*u)
+		if err != nil {
+			return &user2.User{}, err
 		}
+
+		//add phone option
+		s.sendVerification(u)
+
+		return &createdUser, nil
 	}
 
 	return &user2.User{}, ErrTakenEmail
@@ -158,7 +157,7 @@ func (s *DefaultAuthService) GetUserFromToken(tokenString string) user2.User {
 
 func (s *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {
 	tokens := strings.Split(tokenString, " ")
-	schema, tokenString := tokens[0], tokens[1]
+	schema, tokenString := tokens[1], tokens[0]
 	//tokenString = tokenString[1 : len(tokenString)-1]
 
 	if schema != "Bearer" {
@@ -177,8 +176,15 @@ func (s *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims,
 	return token, claims, false, nil
 }
 
-func (s *DefaultAuthService) RequestPasswordRecoveryToken(email string) error {
-	user, err := s.userRepository.GetUserByEmail(email)
+// 0 - email, 1 - phone
+func (s *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int) error {
+	var user user2.User
+	var err error
+	if t == 0 {
+		user, err = s.userRepository.GetUserByEmail(value)
+	} else {
+		user, err = s.userRepository.GetUserByPhone(value)
+	}
 	if err != nil {
 		return err
 	}
@@ -186,7 +192,7 @@ func (s *DefaultAuthService) RequestPasswordRecoveryToken(email string) error {
 	to := []string{user.Email}
 
 	templateFile, _ := filepath.Abs("resources/templates/passwordRecovery.html")
-	t, err := template.ParseFiles(templateFile)
+	temp, err := template.ParseFiles(templateFile)
 
 	if err != nil {
 		return err
@@ -202,7 +208,7 @@ func (s *DefaultAuthService) RequestPasswordRecoveryToken(email string) error {
 		return err
 	}
 
-	t.Execute(&body, struct {
+	temp.Execute(&body, struct {
 		Name string
 		Code string
 	}{
@@ -215,11 +221,39 @@ func (s *DefaultAuthService) RequestPasswordRecoveryToken(email string) error {
 		return err
 	}
 
+	if t == 1 {
+		err = s.sendSMS(verificationToken)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	err = s.sendMail(to, body)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *DefaultAuthService) sendSMS(verificationToken string) error {
+	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+		Username: "ACfa3e5d6f88377babb803e52047931303",
+		Password: "b94ed9430a56e4b7f04cb578b30ddb7c",
+	})
+
+	params := &openapi.CreateMessageParams{}
+	params.SetTo("+38162711935")
+	params.SetFrom("+12708136240")
+	params.SetBody("Here is your one time recovery code: " + verificationToken)
+
+	_, err := client.Api.CreateMessage(params)
+	if err != nil {
+		fmt.Println(err.Error())
+	} else {
+		fmt.Println("SMS sent successfully!")
+	}
+	return err
 }
 
 func (s *DefaultAuthService) PasswordRecovery(request *password_recovery2.PasswordRecovery) error {
@@ -285,7 +319,7 @@ func (s *DefaultAuthService) sendMail(to []string, body bytes.Buffer) error {
 func (s *DefaultAuthService) sendVerification(user *user2.User) error {
 	to := []string{user.Email}
 
-	templateFile, _ := filepath.Abs("utils/emailVerification.html")
+	templateFile, _ := filepath.Abs("resources/templates/emailVerification.html")
 	t, err := template.ParseFiles(templateFile)
 
 	if err != nil {

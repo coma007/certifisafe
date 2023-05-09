@@ -2,6 +2,7 @@ package password_recovery
 
 type PasswordRecoveryRequestDTO struct {
 	Email string
+	Type  int
 }
 
 type PasswordResetDTO struct {

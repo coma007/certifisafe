@@ -10,6 +10,7 @@ type UserRepository interface {
 	DeleteUser(id uint) error
 	CreateUser(user User) (User, error)
 	GetUserByEmail(email string) (User, error)
+	GetUserByPhone(phone string) (User, error)
 }
 
 type DefaultUserRepository struct {
@@ -36,6 +37,12 @@ func (i *DefaultUserRepository) GetUser(id uint) (User, error) {
 func (i *DefaultUserRepository) GetUserByEmail(email string) (User, error) {
 	var u User
 	result := i.DB.Where("email=?", email).First(&u)
+	return u, result.Error
+}
+
+func (i *DefaultUserRepository) GetUserByPhone(phone string) (User, error) {
+	var u User
+	result := i.DB.Where("phone=?", phone).First(&u)
 	return u, result.Error
 }
 

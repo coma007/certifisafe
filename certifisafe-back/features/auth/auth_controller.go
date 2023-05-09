@@ -58,7 +58,7 @@ func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http
 		return
 	}
 
-	err = ah.service.RequestPasswordRecoveryToken(request.Email)
+	err = ah.service.RequestPasswordRecoveryToken(request.Email, request.Type)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
