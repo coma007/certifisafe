@@ -101,7 +101,17 @@ func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *ht
 		return
 	}
 
-	err = controller.service.DeclineRequest(id)
+	reason := struct {
+		Reason string
+	}{}
+
+	err = utils.ReadRequestBody(w, r, &reason)
+	if err != nil || reason.Reason == "" {
+		http.Error(w, "invalid reason", http.StatusBadRequest)
+		return
+	}
+
+	err = controller.service.DeclineRequest(id, reason.Reason)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
