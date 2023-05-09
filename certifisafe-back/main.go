@@ -15,6 +15,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
@@ -51,50 +53,58 @@ func main() {
 	}(db)
 
 	userRepository := user2.NewDefaultUserRepository(db)
-	passwordRecoveryRepository := password_recovery.NewDefaultPasswordRecoveryRepository(db)
-	verificationRepository := auth.NewInMemoryVerificationRepository(db)
-
-	authService = auth.NewDefaultAuthService(userRepository, passwordRecoveryRepository, verificationRepository)
-	authController := auth.NewAuthHandler(authService)
+	//passwordRecoveryRepository := password_recovery.NewDefaultPasswordRecoveryRepository(db)
+	//verificationRepository := auth.NewInMemoryVerificationRepository(db)
+	//
+	//authService = auth.NewDefaultAuthService(userRepository, passwordRecoveryRepository, verificationRepository)
+	//authController := auth.NewAuthHandler(authService)
 
 	certificateRepository := certificate2.NewDefaultCertificateRepository(db)
 	certificateFileStoreRepository := certificate2.NewDefaultFileStoreCertificateRepository()
 	certificateService := certificate2.NewDefaultCertificateService(certificateRepository, certificateFileStoreRepository, userRepository)
 	certificateController := certificate2.NewCertificateController(certificateService, authService)
+	//
+	//requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository)
+	//requestService := request2.NewDefaultRequestService(requestRepository, certificateService, userRepository)
+	//requestController := request2.NewRequestController(requestService, certificateService, authService)
 
-	requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository)
-	requestService := request2.NewDefaultRequestService(requestRepository, certificateService, userRepository)
-	requestController := request2.NewRequestController(requestService, certificateService, authService)
+	router := mux.NewRouter()
 
-	router := httprouter.New()
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	originsOk := handlers.AllowedOrigins([]string{"*"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
-	router.GET("/api/certificate/:id", certificateController.GetCertificate)
-	router.GET("/api/certificate", certificateController.GetCertificates)
-	router.GET("/api/certificate/:id/download", certificateController.DownloadCertificate)
-	router.PATCH("/api/certificate/:id/withdraw", certificateController.WithdrawCertificate)
-	router.GET("/api/certificate/:id/valid", certificateController.IsValid)
-	router.POST("/api/certificate/valid", certificateController.IsValidFile)
+	router.HandleFunc("/api/certificate/:id", certificateController.GetCertificate).Methods("GET")
+	router.HandleFunc("/api/certificate", certificateController.GetCertificates).Methods("GET")
+	//router.GET("/api/certificate/:id/download", certificateController.DownloadCertificate)
+	//router.PATCH("/api/certificate/:id/withdraw", certificateController.WithdrawCertificate)
+	//router.GET("/api/certificate/:id/valid", certificateController.IsValid)
+	//router.POST("/api/certificate/valid", certificateController.IsValidFile)
+	//
+	//router.POST("/api/request", requestController.CreateRequest)
+	//router.GET("/api/request/:id", requestController.GetRequest)
+	//router.GET("/api/request", requestController.GetAllRequestsByUser)
+	//router.PATCH("/api/request/accept/:id", requestController.AcceptRequest)
+	//router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
+	//router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
+	//router.POST("/api/certificate/generate", requestController.GenerateCertificates)
+	//
+	//router.POST("/api/login", authController.Login)
+	//router.POST("/api/register", authController.Register)
+	//router.GET("/api/verify-email/:verificationCode", authController.VerifyEmail)
+	//router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
+	//router.POST("/api/password-recovery", authController.PasswordRecovery)
 
-	router.POST("/api/request", requestController.CreateRequest)
-	router.GET("/api/request/:id", requestController.GetRequest)
-	router.GET("/api/request", requestController.GetAllRequestsByUser)
-	router.PATCH("/api/request/accept/:id", requestController.AcceptRequest)
-	router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
-	router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
-	router.POST("/api/certificate/generate", requestController.GenerateCertificates)
-
-	router.POST("/api/login", authController.Login)
-	router.POST("/api/register", authController.Register)
-	router.GET("/api/verify-email/:verificationCode", authController.VerifyEmail)
-	router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
-	router.POST("/api/password-recovery", authController.PasswordRecovery)
-
+	//router.HandlerFunc("GET", "/*any", corsMiddleware)
+	//router.HandlerFunc("PATCH", "/*any", corsMiddleware)
+	//router.HandlerFunc("POST", "/*any", corsMiddleware)
+	//router.HandlerFunc("PUT", "/*any", corsMiddleware)
+	//router.HandlerFunc("DELETE", "/*any", corsMiddleware)
 	//createRoot(*certificateFileStoreRepository, certificateRepository)
 	//runScript(db, "resources/database/data.sql")
 
 	fmt.Println("http server runs on :8080")
-	err = http.ListenAndServe(":8080", router)
-	log.Fatal(err)
+	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(router)))
 }
 
 func automigrate(db *gorm.DB) {
@@ -192,6 +202,17 @@ func runScript(db *gorm.DB, script string) {
 
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func corsMiddleware(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
 }
 

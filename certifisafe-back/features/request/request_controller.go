@@ -34,8 +34,8 @@ func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request
 	utils.ReturnResponse(w, err, request, http.StatusCreated)
 }
 
-func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadIDfromUrl(w, ps)
+func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request) {
+	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
 	}
@@ -66,7 +66,7 @@ func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter,
 }
 
 func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadIDfromUrl(w, ps)
+	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
 	}
@@ -81,7 +81,7 @@ func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request
 }
 
 func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadIDfromUrl(w, ps)
+	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
 	}
@@ -96,7 +96,7 @@ func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *htt
 }
 
 func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadIDfromUrl(w, ps)
+	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
 	}

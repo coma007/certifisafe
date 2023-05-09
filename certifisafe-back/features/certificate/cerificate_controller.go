@@ -39,8 +39,8 @@ func getErrorStatus(err error) int {
 	return http.StatusInternalServerError
 }
 
-func (ch *CertificateController) GetCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+func (ch *CertificateController) GetCertificate(w http.ResponseWriter, r *http.Request) {
+	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}
@@ -54,7 +54,7 @@ func (ch *CertificateController) GetCertificate(w http.ResponseWriter, r *http.R
 	utils.ReturnResponse(w, err, certificate, http.StatusOK)
 }
 
-func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.Request) {
 	certificates, err := ch.service.GetCertificates()
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -64,8 +64,8 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 	utils.ReturnResponse(w, err, CertificatesToDTOs(certificates), http.StatusOK)
 }
 
-func (ch *CertificateController) DownloadCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+func (ch *CertificateController) DownloadCertificate(w http.ResponseWriter, r *http.Request) {
+	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}
@@ -87,8 +87,8 @@ func (ch *CertificateController) DownloadCertificate(w http.ResponseWriter, r *h
 	w.Header().Set("Content-Disposition", "attachment; filename=certificate.zip")
 }
 
-func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request) {
+	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}
@@ -104,8 +104,8 @@ func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *h
 	utils.ReturnResponse(w, err, certificate, http.StatusOK)
 }
 
-func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, err := utils.ReadCertificateIDFromUrl(w, ps)
+func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request) {
+	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}

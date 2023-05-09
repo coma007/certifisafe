@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 	"io"
 	"math/big"
 	"net/http"
@@ -10,8 +10,9 @@ import (
 	"strconv"
 )
 
-func ReadIDfromUrl(w http.ResponseWriter, ps httprouter.Params) (int, error) {
-	id, err := strconv.Atoi(ps.ByName("id"))
+func ReadIDfromUrl(w http.ResponseWriter, r *http.Request) (int, error) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
 	if err != nil {
 		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return 0, err
@@ -19,8 +20,9 @@ func ReadIDfromUrl(w http.ResponseWriter, ps httprouter.Params) (int, error) {
 	return id, err
 }
 
-func ReadCertificateIDFromUrl(w http.ResponseWriter, ps httprouter.Params) (big.Int, error) {
-	id, err := StringToBigInt(ps.ByName("id"))
+func ReadCertificateIDFromUrl(w http.ResponseWriter, r *http.Request) (big.Int, error) {
+	params := mux.Vars(r)
+	id, err := StringToBigInt(params["id"])
 	if err != nil {
 		http.Error(w, "invalid ID", http.StatusBadRequest)
 		return big.Int{}, err
