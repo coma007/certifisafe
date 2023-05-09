@@ -106,7 +106,7 @@ const RequestOreviewPage = () => {
                 <ModalWindow height="55%"
                     isOpen={declineIsOpen}
                     closeWithdrawalModal={closeDeclineModal}
-                    title="Withdraw Certificate"
+                    title="Decline Request"
                     description="To decline the request, you need to provide us some more info on why you want to decline it."
                     buttonText="DECLINE" />
             </div>
