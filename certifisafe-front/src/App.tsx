@@ -1,11 +1,12 @@
 import AppCSS from './App.module.scss';
 import HomePage from 'pages/home/HomePage';
-import PreviewPage from 'features/certificate/Preview/pages/PreviewPage/PreviewPage';
+import RequestOreviewPage from 'features/request/Preview/pages/Overview/RequestOverviewPage';
+import CertificateOreviewPage from 'features/certificate/Preview/pages/Overview/CertificateOverviewPage';
 
 function App() {
   return (
     <div className={AppCSS.main}>
-      <PreviewPage></PreviewPage>
+      <RequestOreviewPage></RequestOreviewPage>
     </div >
   )
 }

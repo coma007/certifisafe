@@ -3,13 +3,12 @@ import PageTitle from "components/view/PageTitle/PageTitle"
 import Table from "components/view/Table/Table"
 import { TableRowData } from "components/view/TableRow/TableRow"
 import { formatDate } from "utils/DateUtils"
-import PreviewPageCSS from "./PreviewPage.module.scss"
+import CertificateOreviewPageCSS from "./CertificateOverviewPage.module.scss"
 import Download from "assets/actions/download.png"
 import Withdraw from "assets/actions/withdraw.png"
 import ImageButton from "components/tables/ImageButton/ImageButton"
-import Tooltip from "components/view/Tooltip/Tooltip"
 
-const PreviewPage = () => {
+const CertificateOreviewPage = () => {
 
     const header: TableRowData = {
         content: "aaa",
@@ -17,8 +16,8 @@ const PreviewPage = () => {
     }
 
     const headers: TableRowData[] = [
-        { content: "Name", widthPercentage: 30 },
-        { content: "Date", widthPercentage: 10 },
+        { content: "Name", widthPercentage: 28 },
+        { content: "Date", widthPercentage: 12 },
         { content: "Subject", widthPercentage: 15 },
         { content: "Issuer", widthPercentage: 15 },
         { content: "Type", widthPercentage: 10 },
@@ -38,11 +37,11 @@ const PreviewPage = () => {
     const rows: TableRowData[][] = [row, row, row, row, row];
 
     return (
-        <div className={`page pageWithCols ${PreviewPageCSS.cols}`}>
+        <div className={`page pageWithCols ${CertificateOreviewPageCSS.cols}`}>
             <Menu />
             <div>
                 <PageTitle title="Certificates overview" description="Take a detailed view of your certificates." />
-                <div className={PreviewPageCSS.table} >
+                <div className={CertificateOreviewPageCSS.table} >
                     <Table headers={headers} rows={rows} />
                 </div>
             </div>
@@ -50,4 +49,4 @@ const PreviewPage = () => {
     )
 }
 
-export default PreviewPage
+export default CertificateOreviewPage

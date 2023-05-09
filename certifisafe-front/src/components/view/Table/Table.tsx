@@ -2,6 +2,7 @@ import TableRow, { TableRowData } from "../TableRow/TableRow"
 import TableCSS from "./Table.module.scss"
 
 // TODO make table resizable
+// TODO add filter and pagination
 const Table = (props: { headers: TableRowData[], rows: TableRowData[][] }) => {
 
     const columnWidths = props.headers.map(header => header.widthPercentage);
