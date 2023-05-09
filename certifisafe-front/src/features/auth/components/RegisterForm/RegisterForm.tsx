@@ -3,6 +3,7 @@ import InputField from 'components/forms/InputField/InputField'
 import RegisterFormCSS from './RegisterForm.module.scss'
 import { useState } from 'react';
 import { AuthService } from 'features/auth/services/AuthService';
+import { useNavigate } from "react-router-dom";
 
 const RegisterForm = () => {
   
@@ -11,6 +12,8 @@ const RegisterForm = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const navigate = useNavigate();
 
   const firstNameChange = (event : any) => {
     setFirstName(event.target.value);
@@ -36,7 +39,7 @@ const RegisterForm = () => {
     (async function () {
       try {
           await AuthService.register({Email: email, Password: password, Phone: phoneNumber, FirstName: firstName, LastName: lastName})
-          alert("Success")
+          navigate("/login")
       } catch (error: any) {
           alert(error.response.data);
       }
