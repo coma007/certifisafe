@@ -1,6 +1,6 @@
 import AppCSS from './App.module.scss';
 import HomePage from 'pages/home/HomePage';
-import PreviewPage from 'features/managing/Preview/pages/PreviewPage/PreviewPage';
+import PreviewPage from 'features/certificate/Preview/pages/PreviewPage/PreviewPage';
 
 function App() {
   return (

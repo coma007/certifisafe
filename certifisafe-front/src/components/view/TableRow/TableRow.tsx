@@ -1,7 +1,19 @@
+import TableRowCSS from "./TableRow.module.scss"
 
-const TableRow = () => {
+export interface TableRowData {
+    content: any;
+    widthPercentage: number;
+}
+
+const TableRow = (props: { data: TableRowData[], className: string }) => {
     return (
-        <div>TableRow</div>
+        <div className={`${props.className} ${TableRowCSS.row}`}>
+            {props.data.map((rowData, index) => (
+                <span key={index} style={{ width: `${rowData.widthPercentage}%` }}>
+                    {rowData.content}
+                </span>
+            ))}
+        </div>
     )
 }
 
