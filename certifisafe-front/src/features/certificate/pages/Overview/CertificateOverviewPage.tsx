@@ -7,14 +7,27 @@ import CertificateOreviewPageCSS from "./CertificateOverviewPage.module.scss"
 import Download from "assets/actions/download.png"
 import Withdraw from "assets/actions/withdraw.png"
 import ImageButton from "components/tables/ImageButton/ImageButton"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Modal from "react-modal";
 import ModalWindow from "components/view/Modal/ModalWindow"
+import { CertificateService } from "features/certificate/services/CertificateService"
+import { Certificate } from "features/certificate/types/Certificate"
 
 const CertificateOreviewPage = () => {
 
-    // const [certificates, setCertificates] = useState < []CertificateDTO> ();
     const [withdrawIsOpen, setWithdrawModalIsOpen] = useState(false);
+    const [tableData, setTableData] = useState<TableRowData[][]>([]);
+
+    useEffect(() => {
+        (async function () {
+            try {
+                const fetchedCertificates = await CertificateService.getAll();
+                populateData(fetchedCertificates);
+            } catch (error) {
+                console.error(error);
+            }
+        })()
+    }, []);
 
     const openWithdrawModal = () => {
         setWithdrawModalIsOpen(true);
@@ -37,18 +50,29 @@ const CertificateOreviewPage = () => {
         { content: "Type", widthPercentage: 10 },
         { content: "Status", widthPercentage: 10 },
         { content: "", widthPercentage: 5 },
-        { content: "", widthPercentage: 5 }]
+        { content: "", widthPercentage: 5 }
+    ]
 
-    const row: TableRowData[] = [{ content: "My certificate 1", widthPercentage: 0 },
-    { content: formatDate(new Date(Date.now())), widthPercentage: 0 },
-    { content: "UNS", widthPercentage: 0 },
-    { content: "Google Inc.", widthPercentage: 0 },
-    { content: "root", widthPercentage: 0 },
-    { content: <i>ACTIVE</i>, widthPercentage: 0 },
-    { content: <ImageButton path={Download} tooltipText="Download" onClick={null} />, widthPercentage: 0 },
-    { content: <ImageButton path={Withdraw} tooltipText="Withdraw" onClick={openWithdrawModal} />, widthPercentage: 0 }]
 
-    const rows: TableRowData[][] = [row, row, row, row, row];
+    const populateData = (certificates: Certificate[]) => {
+        let data: TableRowData[][] = []
+        if (certificates !== undefined) {
+            certificates.forEach(certificate => {
+                data.push([
+                    { content: certificate.Name, widthPercentage: 28 },
+                    { content: formatDate(new Date(certificate.ValidFrom)), widthPercentage: 12 },
+                    { content: certificate.Subject.FirstName, widthPercentage: 15 },
+                    { content: certificate.Issuer.FirstName, widthPercentage: 15 },
+                    { content: certificate.Type.toLowerCase(), widthPercentage: 10 },
+                    { content: <i> {certificate.Status}</i>, widthPercentage: 10 },
+                    { content: <ImageButton path={Download} tooltipText="Download" onClick={null} />, widthPercentage: 5 },
+                    { content: <ImageButton path={Withdraw} tooltipText="Withdraw" onClick={openWithdrawModal} />, widthPercentage: 5 }]
+                );
+            });
+        }
+        setTableData(data);
+    }
+
 
     return (
         <div className={`page pageWithCols ${CertificateOreviewPageCSS.cols}`}>
@@ -56,7 +80,7 @@ const CertificateOreviewPage = () => {
             <div>
                 <PageTitle title="Certificates overview" description="Take a detailed view of your certificates." />
                 <div className={CertificateOreviewPageCSS.table} >
-                    <Table headers={headers} rows={rows} />
+                    <Table headers={headers} rows={tableData} />
                 </div>
                 <ModalWindow height="67%"
                     isOpen={withdrawIsOpen}
