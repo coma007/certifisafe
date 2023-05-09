@@ -1,4 +1,4 @@
-import LoginForm from '../../components/LoginForm/LoginForm'
+import LoginForm from 'features/auth/components/LoginForm/LoginForm'
 import Banner from 'components/navigation/Banner/Banner'
 
 const LoginPage = () => {

@@ -1,6 +1,5 @@
 import AppCSS from './App.module.scss';
-import CertificateOreviewPage from 'features/certificate/Preview/pages/Overview/CertificateOverviewPage';
-import RequestOreviewPage from 'features/request/Preview/pages/Overview/RequestOverviewPage';
+import RequestOreviewPage from 'features/request/pages/Overview/RequestOverviewPage';
 
 function App() {
   return (

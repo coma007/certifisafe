@@ -13,6 +13,7 @@ import ModalWindow from "components/view/Modal/ModalWindow"
 
 const CertificateOreviewPage = () => {
 
+    // const [certificates, setCertificates] = useState < []CertificateDTO> ();
     const [withdrawIsOpen, setWithdrawModalIsOpen] = useState(false);
 
     const openWithdrawModal = () => {
