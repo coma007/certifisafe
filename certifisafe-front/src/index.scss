@@ -18,6 +18,10 @@ a {
   text-decoration: none;
 }
 
+textarea {
+  font-family: 'Lato', sans-serif;
+}
+
 .alignRight {
   float: right;
 }
@@ -75,9 +79,11 @@ a {
 #root {
   --primary-color: #86919D;
   --primary-color-transparent: rgba(134, 145, 157, 0.9);
+  --card-background: rgba(134, 145, 157, 0.1);
+
   --auth-page-main-width: 53%;
   --auth-form-margin-top: 17%;
   --auth-form-margin-side: 17%;
   --auth-form-margin-bottom: 2%;
-  --card-background: rgba(134, 145, 157, 0.1);
+  --menu-width: 5%;
 }

@@ -1,0 +1,8 @@
+.cols {
+    grid-template-columns: var(--menu-width) calc(100% - var(--menu-width));
+}
+
+.table {
+    width: 80%;
+    margin: auto;
+}

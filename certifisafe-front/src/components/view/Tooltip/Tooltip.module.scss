@@ -1,4 +1,5 @@
 .tooltip .tooltipText,
+.bottomTooltip .tooltipText,
 .noTooltip .tooltipText {
     position: absolute;
     z-index: 1;
@@ -16,6 +17,13 @@
     color: #fff;
 }
 
-.tooltip:hover .tooltipText {
+.tooltip:hover .tooltipText,
+.bottomTooltip:hover .tooltipText {
     visibility: visible;
+}
+
+.bottomTooltip .tooltipText {
+    margin-left: -65px;
+    margin-top: 50px;
+    padding: 3px 10px;
 }

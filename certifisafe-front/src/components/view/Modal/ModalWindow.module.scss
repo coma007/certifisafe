@@ -1,0 +1,63 @@
+.window {
+    padding: 30px;
+}
+
+.window h2 {
+    margin-bottom: 10px;
+}
+
+.window p {
+    margin: 25px 0;
+    color: rgba(134, 145, 157, 0.9);
+}
+
+.window textarea {
+    width: 100%;
+    height: 150px;
+    resize: none;
+    margin: 5px 0;
+    padding: 15px;
+    border: 1px solid lightgrey;
+    border-radius: 10px;
+    font-size: medium;
+}
+
+.warning {
+    font-size: smaller;
+}
+
+.buttons {
+    margin-top: 20px;
+}
+
+.accentButton {
+    font-family: 'Lato', sans-serif;
+    display: inline-block;
+    margin-right: 30px;
+    padding: 10px 20px;
+    border: 0px;
+    border-radius: 10px;
+    background-color: #86919D;
+    color: white;
+    font-weight: 400;
+    font-size: medium;
+    cursor: pointer;
+}
+
+.accentButton:hover {
+    background-color: rgba(134, 145, 157, 0.9);
+}
+
+.cancelButton {
+    font-family: 'Lato', sans-serif;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: medium;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.cancelButton:hover {
+    color: #86919D;
+}

@@ -12,7 +12,7 @@ const LoginForm = () => {
           Forgot password ?
         </a>
         <span className="alignRight">
-          <Button text="Sign in" />
+          <Button onClick={null} text="Sign in" />
         </span>
       </div>
     </div >

@@ -1,8 +1,8 @@
 import ButtonCSS from './Button.module.scss'
 
-const Button = ({ text }: { text: string }) => {
+const Button = (props: { text: string, onClick: any }) => {
     return (
-        <button className={ButtonCSS.button}>{text}</button>
+        <button className={ButtonCSS.button} onClick={props.onClick}>{props.text}</button>
     )
 }
 
