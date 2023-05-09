@@ -5,6 +5,8 @@ import (
 	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"errors"
+	"fmt"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -17,7 +19,7 @@ func NewAuthHandler(cs AuthService) *AuthController {
 }
 
 func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request) {
-
+	fmt.Println("Usao")
 	var credentials user.Credentials
 	err := utils.ReadRequestBody(w, r, &credentials)
 	if err != nil {
@@ -80,6 +82,13 @@ func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+
+	w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 }
 
 func (ah *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Request) {
@@ -103,7 +112,8 @@ func getAuthErrorStatus(err error) int {
 		errors.Is(err, ErrWrongPasswordFormat) ||
 		errors.Is(err, ErrCodeUsed) ||
 		errors.Is(err, ErrCodeNotFound) ||
-		errors.Is(err, ErrNotActivated) {
+		errors.Is(err, ErrNotActivated) ||
+		errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest
 	}
 	return http.StatusInternalServerError

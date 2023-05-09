@@ -18,7 +18,15 @@ const LoginForm = () => {
   };
 
   const onClick = () => {
-    AuthService.login({Email: email, Password: password})
+    (async function () {
+      try {
+          const jwt = await AuthService.login({Email: email, Password: password});
+          localStorage.setItem("token", jwt)
+          console.log(jwt)
+      } catch (error) {
+          console.log(error);
+      }
+  })()
   }
 
   return (

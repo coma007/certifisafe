@@ -15,10 +15,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/julienschmidt/httprouter"
 	_ "github.com/lib/pq"
+	"github.com/rs/cors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
@@ -70,11 +69,11 @@ func main() {
 
 	router := mux.NewRouter()
 
-	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	//headersOk := handlers.AllowedHeaders([]string{"X-Requested-With"})
+	//originsOk := handlers.AllowedOrigins([]string{"*"})
+	//methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
-	router.HandleFunc("/api/certificate/:id", certificateController.GetCertificate).Methods("GET")
+	router.HandleFunc("/api/certificate/:id", middleware(certificateController.GetCertificate)).Methods("GET")
 	router.HandleFunc("/api/certificate", certificateController.GetCertificates).Methods("GET")
 	//router.GET("/api/certificate/:id/download", certificateController.DownloadCertificate)
 	//router.PATCH("/api/certificate/:id/withdraw", certificateController.WithdrawCertificate)
@@ -104,7 +103,9 @@ func main() {
 	//runScript(db, "resources/database/data.sql")
 
 	fmt.Println("http server runs on :8080")
-	log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(router)))
+	//log.Fatal(http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(router)))
+	handler := cors.Default().Handler(router)
+	http.ListenAndServe(":8080", handler)
 }
 
 func automigrate(db *gorm.DB) {
@@ -218,9 +219,9 @@ func corsMiddleware(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func middleware(n httprouter.Handle) httprouter.Handle {
+func middleware(f func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	// TODO what is usage of this ?
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		if token == "" {
 			http.Error(w, "Missing token", http.StatusUnauthorized)
@@ -233,6 +234,6 @@ func middleware(n httprouter.Handle) httprouter.Handle {
 			return
 		}
 
-		n(w, r, ps)
+		f(w, r)
 	}
 }

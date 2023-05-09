@@ -12,4 +12,20 @@ export const AuthService = {
         // const response = await axios.post(url, credentials);
         return response.data;
     },
+
+    
 }
+
+axios.interceptors.request.use(
+    config => {
+      const token = localStorage.getItem("token")
+      if (token) {
+        config.headers['Authorization'] = token + ' Bearer'
+      }
+      // config.headers['Content-Type'] = 'application/json';
+      return config
+    },
+    error => {
+      Promise.reject(error)
+    }
+  )
