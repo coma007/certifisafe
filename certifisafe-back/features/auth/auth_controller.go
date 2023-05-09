@@ -5,7 +5,6 @@ import (
 	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"errors"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
@@ -17,7 +16,7 @@ func NewAuthHandler(cs AuthService) *AuthController {
 	return &AuthController{service: cs}
 }
 
-func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	var credentials user.Credentials
 	err := utils.ReadRequestBody(w, r, &credentials)
@@ -34,7 +33,7 @@ func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request, ps httpr
 	utils.ReturnResponse(w, err, token, http.StatusOK)
 }
 
-func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 	var u user.UserRegisterDTO
 	err := utils.ReadRequestBody(w, r, &u)
@@ -51,7 +50,7 @@ func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request, ps ht
 	utils.ReturnResponse(w, err, user.ModelToUserBaseDTO(newUser), http.StatusOK)
 }
 
-func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http.Request) {
 	var request password_recovery.PasswordRecoveryRequestDTO
 	err := utils.ReadRequestBody(w, r, &request)
 	if err != nil {
@@ -67,7 +66,7 @@ func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Request) {
 	var request password_recovery.PasswordResetDTO
 	err := utils.ReadRequestBody(w, r, &request)
 	if err != nil {
@@ -83,8 +82,8 @@ func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (ah *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	code := ps.ByName("verificationCode")
+func (ah *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	code := utils.ReadVerificationCodeFromUrl(w, r)
 	err := ah.service.VerifyEmail(code)
 	if err != nil {
 		http.Error(w, "Email verification failed", getAuthErrorStatus(err))

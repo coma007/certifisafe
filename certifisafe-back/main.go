@@ -53,11 +53,11 @@ func main() {
 	}(db)
 
 	userRepository := user2.NewDefaultUserRepository(db)
-	//passwordRecoveryRepository := password_recovery.NewDefaultPasswordRecoveryRepository(db)
-	//verificationRepository := auth.NewInMemoryVerificationRepository(db)
-	//
-	//authService = auth.NewDefaultAuthService(userRepository, passwordRecoveryRepository, verificationRepository)
-	//authController := auth.NewAuthHandler(authService)
+	passwordRecoveryRepository := password_recovery.NewDefaultPasswordRecoveryRepository(db)
+	verificationRepository := auth.NewInMemoryVerificationRepository(db)
+
+	authService = auth.NewDefaultAuthService(userRepository, passwordRecoveryRepository, verificationRepository)
+	authController := auth.NewAuthHandler(authService)
 
 	certificateRepository := certificate2.NewDefaultCertificateRepository(db)
 	certificateFileStoreRepository := certificate2.NewDefaultFileStoreCertificateRepository()
@@ -88,12 +88,12 @@ func main() {
 	//router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
 	//router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)
 	//router.POST("/api/certificate/generate", requestController.GenerateCertificates)
-	//
-	//router.POST("/api/login", authController.Login)
-	//router.POST("/api/register", authController.Register)
-	//router.GET("/api/verify-email/:verificationCode", authController.VerifyEmail)
-	//router.POST("/api/password-recovery-request", authController.PasswordRecoveryRequest)
-	//router.POST("/api/password-recovery", authController.PasswordRecovery)
+
+	router.HandleFunc("/api/login", authController.Login).Methods("POST")
+	router.HandleFunc("/api/register", authController.Register).Methods("POST")
+	router.HandleFunc("/api/verify-email/{verificationCode}", authController.VerifyEmail).Methods("GET")
+	router.HandleFunc("/api/password-recovery-request", authController.PasswordRecoveryRequest).Methods("POST")
+	router.HandleFunc("/api/password-recovery", authController.PasswordRecovery).Methods("POST")
 
 	//router.HandlerFunc("GET", "/*any", corsMiddleware)
 	//router.HandlerFunc("PATCH", "/*any", corsMiddleware)

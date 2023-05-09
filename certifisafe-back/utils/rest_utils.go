@@ -30,6 +30,12 @@ func ReadCertificateIDFromUrl(w http.ResponseWriter, r *http.Request) (big.Int, 
 	return id, err
 }
 
+func ReadVerificationCodeFromUrl(w http.ResponseWriter, r *http.Request) string {
+	params := mux.Vars(r)
+	code := params["verificationCode"]
+	return code
+}
+
 func ReadRequestBody(w http.ResponseWriter, r *http.Request, req interface{}) error {
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
