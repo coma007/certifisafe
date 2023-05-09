@@ -45,7 +45,7 @@ const RequestOreviewPage = () => {
     { content: formatDate(new Date(Date.now())), widthPercentage: 0 },
     { content: "UNS", widthPercentage: 0 },
     { content: "intermediate", widthPercentage: 0 },
-    { content: <ImageButton path={Accept} tooltipText="Accept" onClick={null} />, widthPercentage: 0 },
+    { content: <ImageButton path={Accept} tooltipText="Accept" onClick={() => null} />, widthPercentage: 0 },
     { content: <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} />, widthPercentage: 0 }]
 
     const rowsMe: TableRowData[][] = [rowMe, rowMe, rowMe, rowMe, rowMe];
@@ -64,7 +64,7 @@ const RequestOreviewPage = () => {
         { content: "UNS", widthPercentage: 0 },
         { content: "intermediate", widthPercentage: 0 },
         { content: <i>PENDING</i>, widthPercentage: 0 },
-        { content: <ImageButton path={Remove} tooltipText="Remove" onClick={null} />, widthPercentage: 0 }
+        { content: <ImageButton path={Remove} tooltipText="Remove" onClick={() => null} />, widthPercentage: 0 }
     ]
 
     const rowsMy: TableRowData[][] = [rowMy, rowMy, rowMy, rowMy, rowMy];

@@ -25,7 +25,6 @@ const LoginForm = () => {
       try {
         const jwt = await AuthService.login({ Email: email, Password: password });
         localStorage.setItem("token", jwt)
-        console.log(jwt)
         navigate("/")
 
       } catch (error) {
