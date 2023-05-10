@@ -55,17 +55,19 @@ const RequestOverviewPage = () => {
     }, []);
 
 
-    const populateMeData = (request: CertificateRequest[]) => {
+    const populateMeData = (requests: CertificateRequest[]) => {
         let data: TableRowData[][] = []
-        if (request !== undefined && request !== null) {
-            request.forEach(request => {
+        if (requests !== undefined && requests !== null) {
+            requests.forEach(request => {
                 data.push([
                     { content: request.CertificateName, widthPercentage: 35 },
                     { content: formatDate(new Date(request.Date)), widthPercentage: 12 },
                     { content: request.Subject.FirstName, widthPercentage: 25 },
                     { content: request.CertificateType, widthPercentage: 13 },
-                    { content: <ImageButton path={Accept} tooltipText="Accept" onClick={() => null} />, widthPercentage: 10 },
-                    { content: <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} />, widthPercentage: 5 }
+                    { content: request.Status.toLowerCase() === "pending" ? <ImageButton path={Accept} tooltipText="Accept" onClick={() => null} /> : null, widthPercentage: 10 },
+                    { content: request.Status.toLowerCase() === "pending" ?  <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} />: null, widthPercentage: 5 }
+                    // { content: <ImageButton path={Accept} tooltipText="Accept" onClick={() => null} />, widthPercentage: 10 },
+                    // { content: <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} />, widthPercentage: 5 }
                 ]);
             });
         }
