@@ -115,8 +115,6 @@ const RequestOverviewPage = () => {
         { content: "Status", widthPercentage: 10 },
         { content: "", widthPercentage: 5 }]
 
-    
-
     return (
         <div className={`page pageWithCols ${CertificateRequestOverviewPageCSS.cols}`}>
             <Menu />

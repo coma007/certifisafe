@@ -17,8 +17,8 @@ const RegisterPage = () => {
         </div>
         <RegisterForm />
         <div className="authBottomMessage">
-          Do not have an account ?
-          <br /> <a href='#'>Sign up here.</a>
+          Already have an account ?
+          <br /> <a href='login'>Sign in here.</a>
         </div>
       </div >
     </div>

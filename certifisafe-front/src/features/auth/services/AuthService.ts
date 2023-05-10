@@ -1,5 +1,5 @@
-import { LOGIN_URL } from "api";
-import { Credentials } from "../models/AuthModels";
+import { LOGIN_URL, REGISTER_URL } from "api";
+import { Credentials, UserRegister } from "../models/AuthModels";
 import axios from "axios";
 
 export const AuthService = {
@@ -8,6 +8,15 @@ export const AuthService = {
         let url = LOGIN_URL();
 
         let response = await axios.post(url, credentials);
+
+        // const response = await axios.post(url, credentials);
+        return response.data;
+    },
+
+    register: async (user: UserRegister): Promise<string> => {
+        let url = REGISTER_URL();
+
+        let response = await axios.post(url, user);
 
         // const response = await axios.post(url, credentials);
         return response.data;

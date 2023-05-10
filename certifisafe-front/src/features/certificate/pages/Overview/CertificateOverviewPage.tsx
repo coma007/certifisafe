@@ -65,7 +65,11 @@ const CertificateOreviewPage = () => {
                     { content: certificate.Issuer.FirstName, widthPercentage: 15 },
                     { content: certificate.Type.toLowerCase(), widthPercentage: 10 },
                     { content: <i> {certificate.Status}</i>, widthPercentage: 10 },
-                    { content: <ImageButton path={Download} tooltipText="Download" onClick={null} />, widthPercentage: 5 },
+                    {
+                        content: <ImageButton path={Download} tooltipText="Download" onClick={() => {
+                            CertificateService.download(certificate.Serial); console.log("usao")
+                        }} />, widthPercentage: 5
+                    },
                     { content: <ImageButton path={Withdraw} tooltipText="Withdraw" onClick={openWithdrawModal} />, widthPercentage: 5 }]
                 );
             });
