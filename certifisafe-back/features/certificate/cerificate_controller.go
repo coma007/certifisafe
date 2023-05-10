@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
@@ -120,7 +119,7 @@ func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request)
 	utils.ReturnResponse(w, err, &result, http.StatusOK)
 }
 
-func (ch *CertificateController) IsValidFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (ch *CertificateController) IsValidFile(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)

@@ -4,7 +4,6 @@ import (
 	"certifisafe-back/features/auth"
 	certificate2 "certifisafe-back/features/certificate"
 	"certifisafe-back/utils"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
@@ -18,7 +17,7 @@ func NewRequestController(service RequestService, certificateService certificate
 	return &RequestController{service: service, certificateService: certificateService, authService: authService}
 }
 
-func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request) {
 	var req NewRequestDTO
 	err := utils.ReadRequestBody(w, r, &req)
 	if err != nil {
@@ -53,7 +52,19 @@ func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnResponse(w, err, request, http.StatusOK)
 }
 
-func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (controller *RequestController) GetAllRequestsByUserSigning(w http.ResponseWriter, r *http.Request) {
+	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
+
+	requests, err := controller.service.GetAllRequestsByUserSigning(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnResponse(w, err, requests, http.StatusOK)
+}
+
+func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter, r *http.Request) {
 	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
 	requests, err := controller.service.GetAllRequestsByUser(user)
@@ -65,7 +76,7 @@ func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter,
 	utils.ReturnResponse(w, err, requests, http.StatusOK)
 }
 
-func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
@@ -80,7 +91,7 @@ func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
@@ -95,7 +106,7 @@ func (controller *RequestController) AcceptRequest(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
@@ -120,7 +131,7 @@ func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *ht
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (controller *RequestController) GenerateCertificates(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (controller *RequestController) GenerateCertificates(w http.ResponseWriter, r *http.Request) {
 	// dummy data
 	rootDTO := &NewRequestDTO{
 		ParentSerial:    nil,

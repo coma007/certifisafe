@@ -12,6 +12,7 @@ type CertificateRepository interface {
 	UpdateCertificate(certificate *Certificate) error
 	isRevoked(id uint64) (bool, error)
 	BeginTransaction() *gorm.DB
+	GetByUserId(id uint) ([]Certificate, error)
 }
 
 type DefaultCertificateRepository struct {
@@ -41,6 +42,12 @@ func (i *DefaultCertificateRepository) GetCertificate(id uint64) (Certificate, e
 func (i *DefaultCertificateRepository) GetCertificates() ([]Certificate, error) {
 	var certificates []Certificate
 	result := i.DB.Preload("Issuer").Preload("Subject").Find(&certificates)
+	return certificates, result.Error
+}
+
+func (i *DefaultCertificateRepository) GetByUserId(id uint) ([]Certificate, error) {
+	var certificates []Certificate
+	result := i.DB.Preload("Issuer").Preload("Subject").Where("Subject.ID=?", id).Find(&certificates)
 	return certificates, result.Error
 }
 
