@@ -2,6 +2,7 @@ package request
 
 import (
 	"certifisafe-back/features/certificate"
+	user2 "certifisafe-back/features/user"
 	"errors"
 	"gorm.io/gorm"
 )
@@ -22,12 +23,14 @@ type RequestRepository interface {
 type DefaultRequestRepository struct {
 	DB                    *gorm.DB
 	certificateRepository certificate.CertificateRepository
+	userRepository        user2.UserRepository
 }
 
-func NewDefaultRequestRepository(db *gorm.DB, certificateRepo certificate.CertificateRepository) *DefaultRequestRepository {
+func NewDefaultRequestRepository(db *gorm.DB, certificateRepo certificate.CertificateRepository, userRepo user2.UserRepository) *DefaultRequestRepository {
 	return &DefaultRequestRepository{
 		DB:                    db,
 		certificateRepository: certificateRepo,
+		userRepository:        userRepo,
 	}
 }
 

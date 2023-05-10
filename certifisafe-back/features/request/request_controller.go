@@ -18,7 +18,7 @@ func NewRequestController(service RequestService, certificateService certificate
 	return &RequestController{service: service, certificateService: certificateService, authService: authService}
 }
 
-func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request) {
 	var req NewRequestDTO
 	err := utils.ReadRequestBody(w, r, &req)
 	if err != nil {
@@ -53,7 +53,19 @@ func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnResponse(w, err, request, http.StatusOK)
 }
 
-func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (controller *RequestController) GetAllRequestsByUserSigning(w http.ResponseWriter, r *http.Request) {
+	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
+
+	requests, err := controller.service.GetAllRequestsByUserSigning(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.ReturnResponse(w, err, requests, http.StatusOK)
+}
+
+func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter, r *http.Request) {
 	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
 	requests, err := controller.service.GetAllRequestsByUser(user)

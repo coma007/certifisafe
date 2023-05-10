@@ -63,9 +63,9 @@ func main() {
 	certificateService := certificate2.NewDefaultCertificateService(certificateRepository, certificateFileStoreRepository, userRepository)
 	certificateController := certificate2.NewCertificateController(certificateService, authService)
 	//
-	//requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository)
-	//requestService := request2.NewDefaultRequestService(requestRepository, certificateService, userRepository)
-	//requestController := request2.NewRequestController(requestService, certificateService, authService)
+	requestRepository := request2.NewDefaultRequestRepository(db, certificateRepository, userRepository)
+	requestService := request2.NewDefaultRequestService(requestRepository, certificateService, userRepository)
+	requestController := request2.NewRequestController(requestService, certificateService, authService)
 
 	router := mux.NewRouter()
 
@@ -80,9 +80,10 @@ func main() {
 	//router.GET("/api/certificate/:id/valid", certificateController.IsValid)
 	//router.POST("/api/certificate/valid", certificateController.IsValidFile)
 	//
-	//router.POST("/api/request", requestController.CreateRequest)
+	router.HandleFunc("/api/request", middleware(requestController.CreateRequest)).Methods("POST")
 	//router.GET("/api/request/:id", requestController.GetRequest)
-	//router.GET("/api/request", requestController.GetAllRequestsByUser)
+	router.HandleFunc("/api/request/signing", middleware(requestController.GetAllRequestsByUserSigning)).Methods("GET")
+	router.HandleFunc("/api/request/user", middleware(requestController.GetAllRequestsByUser)).Methods("GET")
 	//router.PATCH("/api/request/accept/:id", requestController.AcceptRequest)
 	//router.PATCH("/api/request/decline/:id", requestController.DeclineRequest)
 	//router.PATCH("/api/request/delete/:id", requestController.DeleteRequest)

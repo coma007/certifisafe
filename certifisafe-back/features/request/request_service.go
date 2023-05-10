@@ -11,6 +11,7 @@ type RequestService interface {
 	CreateRequest(req *NewRequestDTO) (*RequestDTO, error)
 	GetRequest(id int) (*RequestDTO, error)
 	GetAllRequests() ([]*RequestDTO, error)
+	GetAllRequestsByUserSigning(user user.User) ([]*RequestDTO, error)
 	GetAllRequestsByUser(user user.User) ([]*RequestDTO, error)
 	UpdateRequest(req *Request) error
 	DeleteRequest(id int) error
@@ -67,10 +68,19 @@ func (service *DefaultRequestService) GetAllRequests() ([]*RequestDTO, error) {
 	return requestsDTO, err
 }
 
-func (service *DefaultRequestService) GetAllRequestsByUser(user user.User) ([]*RequestDTO, error) {
+func (service *DefaultRequestService) GetAllRequestsByUserSigning(user user.User) ([]*RequestDTO, error) {
 	if user.IsAdmin {
 		return service.GetAllRequests()
 	}
+	requests, err := service.repository.GetAllRequestsByUser(int(user.ID))
+	var requestsDTO []*RequestDTO
+	for i := 0; i < len(requests); i++ {
+		requestsDTO = append(requestsDTO, RequestToDTO(requests[i]))
+	}
+	return requestsDTO, err
+}
+
+func (service *DefaultRequestService) GetAllRequestsByUser(user user.User) ([]*RequestDTO, error) {
 	requests, err := service.repository.GetAllRequestsByUser(int(user.ID))
 	var requestsDTO []*RequestDTO
 	for i := 0; i < len(requests); i++ {
