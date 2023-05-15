@@ -25,7 +25,7 @@ func NewDefaultFileStoreCertificateRepository() *DefaultFileStoreCertificateRepo
 	return &DefaultFileStoreCertificateRepository{}
 }
 
-func (i *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber uint64, certPEM bytes.Buffer,
+func (repository *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber uint64, certPEM bytes.Buffer,
 	certPrivKeyPEM bytes.Buffer) (x509.Certificate, error) {
 
 	privateKey := certPrivKeyPEM.Bytes()
@@ -43,7 +43,7 @@ func (i *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber u
 		return x509.Certificate{}, err
 	}
 	defer keyOut.Close()
-	certificate, err := i.GetCertificate(uint(serialNumber))
+	certificate, err := repository.GetCertificate(uint(serialNumber))
 	if err != nil {
 		return x509.Certificate{}, err
 	}
@@ -51,7 +51,7 @@ func (i *DefaultFileStoreCertificateRepository) CreateCertificate(serialNumber u
 	return certificate, nil
 }
 
-func (i *DefaultFileStoreCertificateRepository) GetCertificate(serialNumber uint) (x509.Certificate, error) {
+func (repository *DefaultFileStoreCertificateRepository) GetCertificate(serialNumber uint) (x509.Certificate, error) {
 	catls, err := tls.LoadX509KeyPair(GetPublicName(uint64(serialNumber)), GetPrivateName(uint64(serialNumber)))
 	if err != nil {
 		return x509.Certificate{}, err
@@ -64,7 +64,7 @@ func (i *DefaultFileStoreCertificateRepository) GetCertificate(serialNumber uint
 	return *certificate, nil
 }
 
-func (i *DefaultFileStoreCertificateRepository) GetPrivateKey(serial uint) (*rsa.PrivateKey, error) {
+func (repository *DefaultFileStoreCertificateRepository) GetPrivateKey(serial uint) (*rsa.PrivateKey, error) {
 	keyIn, err := os.ReadFile(GetPrivateName(uint64(serial)))
 
 	block, _ := pem.Decode(keyIn)

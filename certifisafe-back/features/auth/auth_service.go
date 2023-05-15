@@ -2,14 +2,14 @@ package auth
 
 import (
 	"bytes"
-	password_recovery2 "certifisafe-back/features/password_recovery"
-	user2 "certifisafe-back/features/user"
+	"certifisafe-back/features/password_recovery"
+	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"crypto/rand"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"
-	twilio "github.com/twilio/twilio-go"
+	"github.com/twilio/twilio-go"
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -39,29 +39,29 @@ var (
 type AuthService interface {
 	Login(email string, password string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
-	Register(user *user2.User) (*user2.User, error)
+	Register(user *user.User) (*user.User, error)
 	VerifyEmail(verificationCode string) error
-	GetUserFromToken(tokenString string) user2.User
+	GetUserFromToken(tokenString string) user.User
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
-	GetUserByEmail(email string) (user2.User, error)
+	GetUserByEmail(email string) (user.User, error)
 	RequestPasswordRecoveryToken(email string, t int) error
-	PasswordRecovery(request *password_recovery2.PasswordRecovery) error
+	PasswordRecovery(request *password_recovery.PasswordRecovery) error
 }
 
 // TODO check if everything works - Duti (Bobi made changes)
 // TODO separate mails to email_service.go
 type DefaultAuthService struct {
-	userRepository              user2.UserRepository
-	passwordRecoveryRepository  password_recovery2.PasswordRecoveryRepository
+	userRepository              user.UserRepository
+	passwordRecoveryRepository  password_recovery.PasswordRecoveryRepository
 	verificationRepository      VerificationRepository
 	verificationTokenCharacters string
 }
 
-func NewDefaultAuthService(userRepository user2.UserRepository, passwordRecoveryRepository password_recovery2.PasswordRecoveryRepository,
-	verificationRepository VerificationRepository) *DefaultAuthService {
-	return &DefaultAuthService{userRepository: userRepository,
-		passwordRecoveryRepository:  passwordRecoveryRepository,
-		verificationRepository:      verificationRepository,
+func NewDefaultAuthService(userRepo user.UserRepository, passwordRecoveryRepo password_recovery.PasswordRecoveryRepository,
+	verificationRepo VerificationRepository) *DefaultAuthService {
+	return &DefaultAuthService{userRepository: userRepo,
+		passwordRecoveryRepository:  passwordRecoveryRepo,
+		verificationRepository:      verificationRepo,
 		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
 }
 
@@ -72,8 +72,8 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func (s *DefaultAuthService) Login(email string, password string) (string, error) {
-	user, err := s.GetUserByEmail(email)
+func (service *DefaultAuthService) Login(email string, password string) (string, error) {
+	user, err := service.GetUserByEmail(email)
 	if err != nil {
 		if err == ErrNoUserWithEmail {
 			return "", ErrBadCredentials
@@ -105,38 +105,38 @@ func (s *DefaultAuthService) Login(email string, password string) (string, error
 	return "", ErrBadCredentials
 }
 
-func (s *DefaultAuthService) GetUserByEmail(email string) (user2.User, error) {
-	return s.userRepository.GetUserByEmail(email)
+func (service *DefaultAuthService) GetUserByEmail(email string) (user.User, error) {
+	return service.userRepository.GetUserByEmail(email)
 }
 
-func (s *DefaultAuthService) Register(u *user2.User) (*user2.User, error) {
+func (service *DefaultAuthService) Register(u *user.User) (*user.User, error) {
 	u.IsActive = false
-	_, err := s.validateRegistrationData(u)
+	_, err := service.validateRegistrationData(u)
 	if err != nil {
-		return &user2.User{}, err
+		return &user.User{}, err
 	}
-	_, err = s.userRepository.GetUserByEmail(u.Email)
+	_, err = service.userRepository.GetUserByEmail(u.Email)
 	if err == gorm.ErrRecordNotFound {
-		passwordBytes, err := s.hashToken(u.Password)
+		passwordBytes, err := service.hashToken(u.Password)
 		utils.CheckError(err)
 		u.Password = string(passwordBytes)
-		createdUser, err := s.userRepository.CreateUser(*u)
+		createdUser, err := service.userRepository.CreateUser(*u)
 		if err != nil {
-			return &user2.User{}, err
+			return &user.User{}, err
 		}
 
 		//add phone option
-		s.sendVerification(u)
+		service.sendVerification(u)
 
 		return &createdUser, nil
 	}
 
-	return &user2.User{}, ErrTakenEmail
+	return &user.User{}, ErrTakenEmail
 }
 
-func (s *DefaultAuthService) ValidateToken(tokenString string) (bool, error) {
+func (service *DefaultAuthService) ValidateToken(tokenString string) (bool, error) {
 
-	token, _, b, err2 := s.GetClaims(tokenString)
+	token, _, b, err2 := service.GetClaims(tokenString)
 	if err2 != nil {
 		return b, err2
 	}
@@ -148,14 +148,14 @@ func (s *DefaultAuthService) ValidateToken(tokenString string) (bool, error) {
 	return false, nil
 }
 
-func (s *DefaultAuthService) GetUserFromToken(tokenString string) user2.User {
-	_, claims, _, _ := s.GetClaims(tokenString)
+func (service *DefaultAuthService) GetUserFromToken(tokenString string) user.User {
+	_, claims, _, _ := service.GetClaims(tokenString)
 	email := claims.Email
-	user, _ := s.GetUserByEmail(email)
+	user, _ := service.GetUserByEmail(email)
 	return user
 }
 
-func (s *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {
+func (service *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error) {
 	tokens := strings.Split(tokenString, " ")
 	schema, tokenString := tokens[0], tokens[1]
 	if strings.ToLower(strings.TrimSpace(tokenString)) == `bearer` {
@@ -180,13 +180,13 @@ func (s *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *Claims,
 }
 
 // 0 - email, 1 - phone
-func (s *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int) error {
-	var user user2.User
+func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int) error {
+	var user user.User
 	var err error
 	if t == 0 {
-		user, err = s.userRepository.GetUserByEmail(value)
+		user, err = service.userRepository.GetUserByEmail(value)
 	} else {
-		user, err = s.userRepository.GetUserByPhone(value)
+		user, err = service.userRepository.GetUserByPhone(value)
 	}
 	if err != nil {
 		return err
@@ -203,9 +203,9 @@ func (s *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int) e
 
 	var body bytes.Buffer
 	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%s\n\n", mimeHeaders)))
+	body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%service\n\n", mimeHeaders)))
 
-	verificationToken, err := s.getVerificationToken(4, false)
+	verificationToken, err := service.getVerificationToken(4, false)
 
 	if err != nil {
 		return err
@@ -219,27 +219,27 @@ func (s *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int) e
 		Code: verificationToken,
 	})
 
-	_, err = s.passwordRecoveryRepository.CreateRequest(1, password_recovery2.PasswordRecoveryRequest{Email: user.Email, Code: string(verificationToken)})
+	_, err = service.passwordRecoveryRepository.CreateRequest(1, password_recovery.PasswordRecoveryRequest{Email: user.Email, Code: string(verificationToken)})
 	if err != nil {
 		return err
 	}
 
 	if t == 1 {
-		err = s.sendSMS(verificationToken)
+		err = service.sendSMS(verificationToken)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	err = s.sendMail(to, body)
+	err = service.sendMail(to, body)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *DefaultAuthService) sendSMS(verificationToken string) error {
+func (service *DefaultAuthService) sendSMS(verificationToken string) error {
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username: "ACfa3e5d6f88377babb803e52047931303",
 		Password: "b94ed9430a56e4b7f04cb578b30ddb7c",
@@ -259,12 +259,12 @@ func (s *DefaultAuthService) sendSMS(verificationToken string) error {
 	return err
 }
 
-func (s *DefaultAuthService) PasswordRecovery(request *password_recovery2.PasswordRecovery) error {
-	//token, err := s.hashToken(request.Code)
+func (service *DefaultAuthService) PasswordRecovery(request *password_recovery.PasswordRecovery) error {
+	//token, err := service.hashToken(request.Code)
 	//if err != nil {
 	//	return err
 	//}
-	r, err := s.passwordRecoveryRepository.GetRequestByCode(string(request.Code))
+	r, err := service.passwordRecoveryRepository.GetRequestByCode(string(request.Code))
 	if err != nil {
 		return err
 	}
@@ -272,41 +272,41 @@ func (s *DefaultAuthService) PasswordRecovery(request *password_recovery2.Passwo
 		return ErrCodeUsed
 	}
 
-	user, err := s.userRepository.GetUserByEmail(r.Email)
+	user, err := service.userRepository.GetUserByEmail(r.Email)
 
 	//verify password
-	if !s.verifyPassword(request.NewPassword) {
+	if !service.verifyPassword(request.NewPassword) {
 		return ErrWrongPasswordFormat
 	}
 
-	hashedPassword, err := s.hashToken(request.NewPassword)
+	hashedPassword, err := service.hashToken(request.NewPassword)
 	if err != nil {
 		return err
 	}
 	user.Password = string(hashedPassword)
-	s.userRepository.UpdateUser(user.ID, user)
-	s.passwordRecoveryRepository.UseRequestsForEmail(user.Email)
+	service.userRepository.UpdateUser(user.ID, user)
+	service.passwordRecoveryRepository.UseRequestsForEmail(user.Email)
 	return nil
 }
 
-func (s *DefaultAuthService) VerifyEmail(verificationCode string) error {
-	verification, err := s.verificationRepository.GetVerificationByCode(verificationCode)
+func (service *DefaultAuthService) VerifyEmail(verificationCode string) error {
+	verification, err := service.verificationRepository.GetVerificationByCode(verificationCode)
 	if err != nil {
 		return ErrCodeNotFound
 	}
-	user, err := s.userRepository.GetUserByEmail(verification.Email)
+	user, err := service.userRepository.GetUserByEmail(verification.Email)
 	if err != nil {
 		return err
 	}
 	user.IsActive = true
-	_, err = s.userRepository.UpdateUser(user.ID, user)
+	_, err = service.userRepository.UpdateUser(user.ID, user)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *DefaultAuthService) sendMail(to []string, body bytes.Buffer) error {
+func (service *DefaultAuthService) sendMail(to []string, body bytes.Buffer) error {
 	from := "ftn.project.usertest@gmail.com"
 	password := "zmiwmhfweojejlqy"
 
@@ -319,7 +319,7 @@ func (s *DefaultAuthService) sendMail(to []string, body bytes.Buffer) error {
 	return nil
 }
 
-func (s *DefaultAuthService) sendVerification(user *user2.User) error {
+func (service *DefaultAuthService) sendVerification(user *user.User) error {
 	to := []string{user.Email}
 
 	templateFile, _ := filepath.Abs("resources/templates/emailVerification.html")
@@ -331,14 +331,14 @@ func (s *DefaultAuthService) sendVerification(user *user2.User) error {
 
 	var body bytes.Buffer
 	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%s\n\n", mimeHeaders)))
+	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%service\n\n", mimeHeaders)))
 
-	verificationToken, err := s.getVerificationToken(10, true)
+	verificationToken, err := service.getVerificationToken(10, true)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.verificationRepository.CreateVerification(0, Verification{
+	_, err = service.verificationRepository.CreateVerification(0, Verification{
 		Email: user.Email,
 		Code:  verificationToken,
 	})
@@ -355,26 +355,26 @@ func (s *DefaultAuthService) sendVerification(user *user2.User) error {
 		Code: verificationToken,
 	})
 
-	s.sendMail(to, body)
+	service.sendMail(to, body)
 	return nil
 }
 
-func (s *DefaultAuthService) getVerificationToken(length int, verification bool) (string, error) {
+func (service *DefaultAuthService) getVerificationToken(length int, verification bool) (string, error) {
 
 	verificationString := ""
 	for true {
 		for i := 0; i < length; i++ {
-			nBig, err := rand.Int(rand.Reader, big.NewInt(int64(len(s.verificationTokenCharacters))))
+			nBig, err := rand.Int(rand.Reader, big.NewInt(int64(len(service.verificationTokenCharacters))))
 			if err != nil {
 				return "", err
 			}
-			verificationString += string(s.verificationTokenCharacters[nBig.Int64()])
+			verificationString += string(service.verificationTokenCharacters[nBig.Int64()])
 		}
 		var err error
 		if verification {
-			_, err = s.verificationRepository.GetVerificationByCode(verificationString)
+			_, err = service.verificationRepository.GetVerificationByCode(verificationString)
 		} else {
-			_, err = s.passwordRecoveryRepository.GetRequestByCode(verificationString)
+			_, err = service.passwordRecoveryRepository.GetRequestByCode(verificationString)
 		}
 		if err != nil {
 			break
@@ -385,12 +385,12 @@ func (s *DefaultAuthService) getVerificationToken(length int, verification bool)
 	return verificationString, nil
 }
 
-func (s *DefaultAuthService) hashToken(password string) ([]byte, error) {
+func (service *DefaultAuthService) hashToken(password string) ([]byte, error) {
 	passwordBytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	return passwordBytes, err
 }
 
-func (s *DefaultAuthService) validateRegistrationData(u *user2.User) (bool, error) {
+func (service *DefaultAuthService) validateRegistrationData(u *user.User) (bool, error) {
 	match, err := regexp.Match("^[\\w-\\+\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", []byte(u.Email))
 	if err != nil || !match || u.Email == "" {
 		return false, ErrWrongEmailFormat
@@ -398,7 +398,7 @@ func (s *DefaultAuthService) validateRegistrationData(u *user2.User) (bool, erro
 		return false, ErrEmptyName
 	}
 
-	if !s.verifyPassword(u.Password) {
+	if !service.verifyPassword(u.Password) {
 		return false, ErrWrongPasswordFormat
 	}
 	match, err = regexp.Match("^[0-9]*$", []byte(u.Phone))
@@ -408,7 +408,7 @@ func (s *DefaultAuthService) validateRegistrationData(u *user2.User) (bool, erro
 	return true, nil
 }
 
-func (s *DefaultAuthService) verifyPassword(password string) bool {
+func (service *DefaultAuthService) verifyPassword(password string) bool {
 	number, upper, lower := false, false, false
 
 	for _, c := range password {

@@ -15,7 +15,7 @@ type RequestRepository interface {
 	CreateRequest(request *Request) (*Request, error)
 	GetRequest(id int) (*Request, error)
 	GetAllRequests() ([]*Request, error)
-	GetAllRequestsByUser() ([]*Request, error)
+	GetAllRequestsByUser(userId int) ([]*Request, error)
 	UpdateRequest(request *Request) error
 	DeleteRequest(id int) error
 }

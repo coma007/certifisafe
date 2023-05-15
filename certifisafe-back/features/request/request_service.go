@@ -20,17 +20,17 @@ type RequestService interface {
 }
 
 type DefaultRequestService struct {
-	repository         *DefaultRequestRepository
-	certificateService *certificate.DefaultCertificateService
-	userRepository     *user.DefaultUserRepository
+	requestRepository  RequestRepository
+	certificateService certificate.CertificateService
+	userRepo           user.UserRepository
 }
 
-func NewDefaultRequestService(repo *DefaultRequestRepository, certificateService *certificate.DefaultCertificateService, userRepository *user.DefaultUserRepository) *DefaultRequestService {
-	return &DefaultRequestService{repo, certificateService, userRepository}
+func NewDefaultRequestService(requestRepo RequestRepository, certificateService certificate.CertificateService, userRepo user.UserRepository) *DefaultRequestService {
+	return &DefaultRequestService{requestRepo, certificateService, userRepo}
 }
 
 func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO) (*RequestDTO, error) {
-	subject, err := service.userRepository.GetUser(req.SubjectId)
+	subject, err := service.userRepo.GetUser(req.SubjectId)
 	if req.ParentSerial == nil {
 		req.CertificateType = "ROOT"
 	}
@@ -49,18 +49,18 @@ func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO) (*Reques
 		SubjectID:           req.SubjectId,
 		Subject:             user.User{},
 	}
-	request, err := service.repository.CreateRequest(&newRequest)
+	request, err := service.requestRepository.CreateRequest(&newRequest)
 	request, err = service.acceptCertificateIfNeeded(request)
 	return RequestToDTO(request), err
 }
 
 func (service *DefaultRequestService) GetRequest(id int) (*RequestDTO, error) {
-	request, err := service.repository.GetRequest(id)
+	request, err := service.requestRepository.GetRequest(id)
 	return RequestToDTO(request), err
 }
 
 func (service *DefaultRequestService) GetAllRequests() ([]*RequestDTO, error) {
-	requests, err := service.repository.GetAllRequests()
+	requests, err := service.requestRepository.GetAllRequests()
 	var requestsDTO []*RequestDTO
 	for i := 0; i < len(requests); i++ {
 		requestsDTO = append(requestsDTO, RequestToDTO(requests[i]))
@@ -72,7 +72,7 @@ func (service *DefaultRequestService) GetAllRequestsByUserSigning(user user.User
 	if user.IsAdmin {
 		return service.GetAllRequests()
 	}
-	requests, err := service.repository.GetAllRequestsByUser(int(user.ID))
+	requests, err := service.requestRepository.GetAllRequestsByUser(int(user.ID))
 	var requestsDTO []*RequestDTO
 	for i := 0; i < len(requests); i++ {
 		requestsDTO = append(requestsDTO, RequestToDTO(requests[i]))
@@ -81,7 +81,7 @@ func (service *DefaultRequestService) GetAllRequestsByUserSigning(user user.User
 }
 
 func (service *DefaultRequestService) GetAllRequestsByUser(user user.User) ([]*RequestDTO, error) {
-	requests, err := service.repository.GetAllRequestsByUser(int(user.ID))
+	requests, err := service.requestRepository.GetAllRequestsByUser(int(user.ID))
 	var requestsDTO []*RequestDTO
 	for i := 0; i < len(requests); i++ {
 		requestsDTO = append(requestsDTO, RequestToDTO(requests[i]))
@@ -90,11 +90,11 @@ func (service *DefaultRequestService) GetAllRequestsByUser(user user.User) ([]*R
 }
 
 func (service *DefaultRequestService) UpdateRequest(req *Request) error {
-	return service.repository.UpdateRequest(req)
+	return service.requestRepository.UpdateRequest(req)
 }
 
 func (service *DefaultRequestService) DeleteRequest(id int) error {
-	return service.repository.DeleteRequest(id)
+	return service.requestRepository.DeleteRequest(id)
 }
 
 func (service *DefaultRequestService) acceptCertificateIfNeeded(request *Request) (*Request, error) {
@@ -107,7 +107,7 @@ func (service *DefaultRequestService) acceptCertificateIfNeeded(request *Request
 }
 
 func (service *DefaultRequestService) AcceptRequest(id int) (*Request, error) {
-	request, err := service.repository.GetRequest(id)
+	request, err := service.requestRepository.GetRequest(id)
 	if err != nil {
 		return nil, err
 	}
@@ -117,15 +117,15 @@ func (service *DefaultRequestService) AcceptRequest(id int) (*Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	return request, service.repository.UpdateRequest(request)
+	return request, service.requestRepository.UpdateRequest(request)
 }
 
 func (service *DefaultRequestService) DeclineRequest(id int, reason string) error {
-	request, err := service.repository.GetRequest(id)
+	request, err := service.requestRepository.GetRequest(id)
 	if err != nil {
 		return err
 	}
 	request.Status = REJECTED
 	request.RejectedReason = &reason
-	return service.repository.UpdateRequest(request)
+	return service.requestRepository.UpdateRequest(request)
 }

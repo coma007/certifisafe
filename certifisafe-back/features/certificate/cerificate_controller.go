@@ -12,12 +12,12 @@ import (
 )
 
 type CertificateController struct {
-	service     CertificateService
-	authService auth.AuthService
+	certificateService CertificateService
+	authService        auth.AuthService
 }
 
-func NewCertificateController(cs CertificateService, as auth.AuthService) *CertificateController {
-	return &CertificateController{service: cs, authService: as}
+func NewCertificateController(certificateService CertificateService, authService auth.AuthService) *CertificateController {
+	return &CertificateController{certificateService: certificateService, authService: authService}
 }
 
 func getErrorStatus(err error) int {
@@ -38,13 +38,13 @@ func getErrorStatus(err error) int {
 	return http.StatusInternalServerError
 }
 
-func (ch *CertificateController) GetCertificate(w http.ResponseWriter, r *http.Request) {
+func (controller *CertificateController) GetCertificate(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}
 
-	certificate, err := ch.service.GetCertificate(id.Uint64())
+	certificate, err := controller.certificateService.GetCertificate(id.Uint64())
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
@@ -53,8 +53,8 @@ func (ch *CertificateController) GetCertificate(w http.ResponseWriter, r *http.R
 	utils.ReturnResponse(w, err, certificate, http.StatusOK)
 }
 
-func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.Request) {
-	certificates, err := ch.service.GetCertificates()
+func (controller *CertificateController) GetCertificates(w http.ResponseWriter, r *http.Request) {
+	certificates, err := controller.certificateService.GetCertificates()
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
@@ -63,13 +63,13 @@ func (ch *CertificateController) GetCertificates(w http.ResponseWriter, r *http.
 	utils.ReturnResponse(w, err, CertificatesToDTOs(certificates), http.StatusOK)
 }
 
-func (ch *CertificateController) DownloadCertificate(w http.ResponseWriter, r *http.Request) {
+func (controller *CertificateController) DownloadCertificate(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}
-	user := ch.authService.GetUserFromToken(r.Header.Get("Authorization"))
-	publicPath, privatePath, err := ch.service.GetCertificateFiles(id.Uint64(), user)
+	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
+	publicPath, privatePath, err := controller.certificateService.GetCertificateFiles(id.Uint64(), user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -86,15 +86,15 @@ func (ch *CertificateController) DownloadCertificate(w http.ResponseWriter, r *h
 	w.Header().Set("Content-Disposition", "attachment; filename=certificate.zip")
 }
 
-func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request) {
+func (controller *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}
-	user := ch.authService.GetUserFromToken(r.Header.Get("Authorization"))
+	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
 	var certificate CertificateDTO
-	certificate, err = ch.service.WithdrawCertificate(id.Uint64(), user)
+	certificate, err = controller.certificateService.WithdrawCertificate(id.Uint64(), user)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return
@@ -103,13 +103,13 @@ func (ch *CertificateController) WithdrawCertificate(w http.ResponseWriter, r *h
 	utils.ReturnResponse(w, err, certificate, http.StatusOK)
 }
 
-func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request) {
+func (controller *CertificateController) IsValid(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadCertificateIDFromUrl(w, r)
 	if err != nil {
 		return
 	}
 
-	result, err := ch.service.IsValidById(id.Uint64())
+	result, err := controller.certificateService.IsValidById(id.Uint64())
 	fmt.Print(result)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
@@ -119,7 +119,7 @@ func (ch *CertificateController) IsValid(w http.ResponseWriter, r *http.Request)
 	utils.ReturnResponse(w, err, &result, http.StatusOK)
 }
 
-func (ch *CertificateController) IsValidFile(w http.ResponseWriter, r *http.Request) {
+func (controller *CertificateController) IsValidFile(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
@@ -152,7 +152,7 @@ func (ch *CertificateController) IsValidFile(w http.ResponseWriter, r *http.Requ
 		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
 		return
 	}
-	result, err := ch.service.IsValid(*cert)
+	result, err := controller.certificateService.IsValid(*cert)
 	if err != nil {
 		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
 		return

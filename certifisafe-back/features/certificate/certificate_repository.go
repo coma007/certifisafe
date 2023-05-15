@@ -25,37 +25,37 @@ func NewDefaultCertificateRepository(db *gorm.DB) *DefaultCertificateRepository 
 	}
 }
 
-func (i *DefaultCertificateRepository) CreateCertificate(certificate Certificate) (Certificate, error) {
-	result := i.DB.Create(&certificate)
+func (repository *DefaultCertificateRepository) CreateCertificate(certificate Certificate) (Certificate, error) {
+	result := repository.DB.Create(&certificate)
 	if result.Error != nil {
 		return Certificate{}, result.Error
 	}
-	return i.GetCertificate(uint64(certificate.ID))
+	return repository.GetCertificate(uint64(certificate.ID))
 }
 
-func (i *DefaultCertificateRepository) GetCertificate(id uint64) (Certificate, error) {
+func (repository *DefaultCertificateRepository) GetCertificate(id uint64) (Certificate, error) {
 	var certificate Certificate
-	result := i.DB.Preload("Issuer").Preload("Subject").Preload("ParentCertificate").First(&certificate, id)
+	result := repository.DB.Preload("Issuer").Preload("Subject").Preload("ParentCertificate").First(&certificate, id)
 	return certificate, result.Error
 }
 
-func (i *DefaultCertificateRepository) GetCertificates() ([]Certificate, error) {
+func (repository *DefaultCertificateRepository) GetCertificates() ([]Certificate, error) {
 	var certificates []Certificate
-	result := i.DB.Preload("Issuer").Preload("Subject").Find(&certificates)
+	result := repository.DB.Preload("Issuer").Preload("Subject").Find(&certificates)
 	return certificates, result.Error
 }
 
-func (i *DefaultCertificateRepository) GetByUserId(id uint) ([]Certificate, error) {
+func (repository *DefaultCertificateRepository) GetByUserId(id uint) ([]Certificate, error) {
 	var certificates []Certificate
-	result := i.DB.Preload("Issuer").Preload("Subject").Where("Subject.ID=?", id).Find(&certificates)
+	result := repository.DB.Preload("Issuer").Preload("Subject").Where("Subject.ID=?", id).Find(&certificates)
 	return certificates, result.Error
 }
 
-func (i *DefaultCertificateRepository) GetLeafCertificates() ([]Certificate, error) {
+func (repository *DefaultCertificateRepository) GetLeafCertificates() ([]Certificate, error) {
 	var certificates []Certificate
-	result := i.DB.Where(
+	result := repository.DB.Where(
 		"id NOT IN (?)",
-		i.DB.Table("certificates").
+		repository.DB.Table("certificates").
 			Select("parent_certificate_id").
 			Where("parent_certificate_id IS NOT NULL")).
 		Preload("ParentCertificate",
@@ -67,15 +67,15 @@ func (i *DefaultCertificateRepository) GetLeafCertificates() ([]Certificate, err
 	return certificates, result.Error
 }
 
-func (i *DefaultCertificateRepository) UpdateCertificate(certificate *Certificate) error {
-	result := i.DB.Save(&certificate)
+func (repository *DefaultCertificateRepository) UpdateCertificate(certificate *Certificate) error {
+	result := repository.DB.Save(&certificate)
 	return result.Error
 }
 
-func (i *DefaultCertificateRepository) isRevoked(id uint64) (bool, error) {
+func (repository *DefaultCertificateRepository) isRevoked(id uint64) (bool, error) {
 	var count int64 = 1
 
-	err := i.DB.
+	err := repository.DB.
 		Unscoped().
 		Model(&Certificate{}).
 		Where("status=?  and id=?", WITHDRAWN, id).
@@ -83,6 +83,6 @@ func (i *DefaultCertificateRepository) isRevoked(id uint64) (bool, error) {
 		Error
 	return count != 0, err
 }
-func (i *DefaultCertificateRepository) BeginTransaction() *gorm.DB {
-	return i.DB.Begin()
+func (repository *DefaultCertificateRepository) BeginTransaction() *gorm.DB {
+	return repository.DB.Begin()
 }

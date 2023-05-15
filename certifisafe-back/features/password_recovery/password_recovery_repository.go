@@ -30,43 +30,43 @@ func NewDefaultPasswordRecoveryRepository(db *gorm.DB) *DefaultPasswordRecoveryR
 	}
 }
 
-func (i *DefaultPasswordRecoveryRepository) CreateRequest(id int32, user PasswordRecoveryRequest) (PasswordRecoveryRequest, error) {
-	result := i.DB.Create(&user)
+func (repository *DefaultPasswordRecoveryRepository) CreateRequest(id int32, user PasswordRecoveryRequest) (PasswordRecoveryRequest, error) {
+	result := repository.DB.Create(&user)
 	return user, result.Error
 }
 
-func (i *DefaultPasswordRecoveryRepository) GetRequest(id int32) (PasswordRecoveryRequest, error) {
+func (repository *DefaultPasswordRecoveryRepository) GetRequest(id int32) (PasswordRecoveryRequest, error) {
 	var r PasswordRecoveryRequest
-	result := i.DB.First(&r, id)
+	result := repository.DB.First(&r, id)
 	return r, result.Error
 }
 
-func (i *DefaultPasswordRecoveryRepository) GetRequestByCode(code string) (PasswordRecoveryRequest, error) {
+func (repository *DefaultPasswordRecoveryRepository) GetRequestByCode(code string) (PasswordRecoveryRequest, error) {
 	var r PasswordRecoveryRequest
-	result := i.DB.Model(PasswordRecoveryRequest{}).Where("code=?", code).First(&r)
+	result := repository.DB.Model(PasswordRecoveryRequest{}).Where("code=?", code).First(&r)
 
 	return r, result.Error
 }
 
-func (i *DefaultPasswordRecoveryRepository) GetRequestsByEmail(email string) ([]*PasswordRecoveryRequest, error) {
+func (repository *DefaultPasswordRecoveryRepository) GetRequestsByEmail(email string) ([]*PasswordRecoveryRequest, error) {
 	var requests []*PasswordRecoveryRequest
-	result := i.DB.Where("email=?", email).Find(&requests)
+	result := repository.DB.Where("email=?", email).Find(&requests)
 
 	return requests, result.Error
 }
 
-func (i *DefaultPasswordRecoveryRepository) UpdateRequest(id int32, req PasswordRecoveryRequest) (PasswordRecoveryRequest, error) {
-	result := i.DB.Save(&req)
+func (repository *DefaultPasswordRecoveryRepository) UpdateRequest(id int32, req PasswordRecoveryRequest) (PasswordRecoveryRequest, error) {
+	result := repository.DB.Save(&req)
 	return req, result.Error
 }
 
-func (i *DefaultPasswordRecoveryRepository) DeleteRequest(id int32) error {
-	result := i.DB.Delete(&PasswordRecoveryRequest{}, id)
+func (repository *DefaultPasswordRecoveryRepository) DeleteRequest(id int32) error {
+	result := repository.DB.Delete(&PasswordRecoveryRequest{}, id)
 	return result.Error
 }
 
-func (i *DefaultPasswordRecoveryRepository) UseRequestsForEmail(email string) error {
-	requests, err := i.GetRequestsByEmail(email)
+func (repository *DefaultPasswordRecoveryRepository) UseRequestsForEmail(email string) error {
+	requests, err := repository.GetRequestsByEmail(email)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (i *DefaultPasswordRecoveryRepository) UseRequestsForEmail(email string) er
 			continue
 		}
 		requests[j].IsUsed = true
-		_, err = i.UpdateRequest(int32(requests[j].ID), *requests[j])
+		_, err = repository.UpdateRequest(int32(requests[j].ID), *requests[j])
 		if err != nil {
 			return err
 		}

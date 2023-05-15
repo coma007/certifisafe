@@ -23,41 +23,41 @@ type DefaultVerificationRepository struct {
 	DB *gorm.DB
 }
 
-func NewInMemoryVerificationRepository(db *gorm.DB) *DefaultVerificationRepository {
+func NewDefaultVerificationRepository(db *gorm.DB) *DefaultVerificationRepository {
 	return &DefaultVerificationRepository{
 		DB: db,
 	}
 }
 
-func (i *DefaultVerificationRepository) CreateVerification(id int32, user Verification) (Verification, error) {
-	result := i.DB.Create(&user)
+func (repository *DefaultVerificationRepository) CreateVerification(id int32, user Verification) (Verification, error) {
+	result := repository.DB.Create(&user)
 	return user, result.Error
 }
 
-func (i *DefaultVerificationRepository) GetVerification(id int32) (Verification, error) {
+func (repository *DefaultVerificationRepository) GetVerification(id int32) (Verification, error) {
 	var verification Verification
-	result := i.DB.First(&verification, id)
+	result := repository.DB.First(&verification, id)
 	return verification, result.Error
 }
 
-func (i *DefaultVerificationRepository) GetVerificationByCode(code string) (Verification, error) {
+func (repository *DefaultVerificationRepository) GetVerificationByCode(code string) (Verification, error) {
 	var verification Verification
-	result := i.DB.Where("code=?", code).First(&verification)
+	result := repository.DB.Where("code=?", code).First(&verification)
 	return verification, result.Error
 }
 
-func (i *DefaultVerificationRepository) GetVerificationByEmail(email string) (*Verification, error) {
+func (repository *DefaultVerificationRepository) GetVerificationByEmail(email string) (*Verification, error) {
 	var verification Verification
-	result := i.DB.Where("email=?", email).First(&verification)
+	result := repository.DB.Where("email=?", email).First(&verification)
 	return &verification, result.Error
 }
 
-func (i *DefaultVerificationRepository) UpdateVerification(id int32, req Verification) (Verification, error) {
-	result := i.DB.Save(&req)
+func (repository *DefaultVerificationRepository) UpdateVerification(id int32, req Verification) (Verification, error) {
+	result := repository.DB.Save(&req)
 	return req, result.Error
 }
 
-func (i *DefaultVerificationRepository) DeleteVerification(id int32) error {
-	result := i.DB.Delete(&Verification{}, id)
+func (repository *DefaultVerificationRepository) DeleteVerification(id int32) error {
+	result := repository.DB.Delete(&Verification{}, id)
 	return result.Error
 }

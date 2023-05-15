@@ -36,21 +36,21 @@ type CertificateService interface {
 }
 
 type DefaultCertificateService struct {
-	certificateRepo         CertificateRepository
-	certificateKeyStoreRepo FileStoreCertificateRepository
-	userRepo                user.UserRepository
+	certificateRepo          CertificateRepository
+	certificateFileStoreRepo FileStoreCertificateRepository
+	userRepo                 user.UserRepository
 }
 
-func NewDefaultCertificateService(cRepo CertificateRepository, cKSRepo FileStoreCertificateRepository,
-	uRepo user.UserRepository) *DefaultCertificateService {
+func NewDefaultCertificateService(certificateRepo CertificateRepository, fileStoreCertificateRepo FileStoreCertificateRepository,
+	userRepository user.UserRepository) *DefaultCertificateService {
 	return &DefaultCertificateService{
-		certificateRepo:         cRepo,
-		certificateKeyStoreRepo: cKSRepo,
-		userRepo:                uRepo,
+		certificateRepo:          certificateRepo,
+		certificateFileStoreRepo: fileStoreCertificateRepo,
+		userRepo:                 userRepository,
 	}
 }
 
-func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certificateName string, certificateType CertificateType, subjectId uint) (CertificateDTO, error) {
+func (service *DefaultCertificateService) CreateCertificate(parentSerial *uint, certificateName string, certificateType CertificateType, subjectId uint) (CertificateDTO, error) {
 	var certificate x509.Certificate
 	var certificatePEM bytes.Buffer
 	var certificatePrivKeyPEM bytes.Buffer
@@ -60,13 +60,13 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 	var parentCertificate *Certificate
 
 	if parentSerial != nil {
-		temp, err := d.certificateRepo.GetCertificate(uint64(*parentSerial))
+		temp, err := service.certificateRepo.GetCertificate(uint64(*parentSerial))
 		parentCertificate = &temp
 		utils.CheckError(err)
 		issuer = parentCertificate.Subject
 	}
 
-	newSubject, err := d.userRepo.GetUser(subjectId)
+	newSubject, err := service.userRepo.GetUser(subjectId)
 	utils.CheckError(err)
 
 	certificateDB := Certificate{
@@ -86,7 +86,7 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 	switch certificateType {
 	case ROOT:
 		{
-			certificateDB, err = d.setDatesAndSave(&certificateDB, 5)
+			certificateDB, err = service.setDatesAndSave(&certificateDB, 5)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
@@ -100,18 +100,18 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 		}
 	case INTERMEDIATE:
 		{
-			certificateDB, err = d.setDatesAndSave(&certificateDB, 1)
+			certificateDB, err = service.setDatesAndSave(&certificateDB, 1)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
-			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
+			parent, err = service.certificateFileStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
 			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
-			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
+			privateKey, err := service.certificateFileStoreRepo.GetPrivateKey(*parentSerial)
 			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateSubordinateCa(subject, parent.Subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return CertificateDTO{}, err
@@ -119,18 +119,18 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 		}
 	case END:
 		{
-			certificateDB, err = d.setDatesAndSave(&certificateDB, 1)
+			certificateDB, err = service.setDatesAndSave(&certificateDB, 1)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
-			parent, err = d.certificateKeyStoreRepo.GetCertificate(*parentSerial)
+			parent, err = service.certificateFileStoreRepo.GetCertificate(*parentSerial)
 			if err != nil {
 				return CertificateDTO{}, err
 			}
 
 			subject.SerialNumber = strconv.FormatUint(uint64(certificateDB.ID), 10)
-			privateKey, err := d.certificateKeyStoreRepo.GetPrivateKey(*parentSerial)
+			privateKey, err := service.certificateFileStoreRepo.GetPrivateKey(*parentSerial)
 			certificate, certificatePEM, certificatePrivKeyPEM, err = GenerateLeafCert(subject, parent.Subject, uint64(certificateDB.ID), &parent, privateKey)
 			if err != nil {
 				return CertificateDTO{}, err
@@ -143,7 +143,7 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 	}
 	certificate.SerialNumber = new(big.Int).SetUint64(uint64(certificateDB.ID))
 
-	_, err = d.certificateKeyStoreRepo.CreateCertificate(certificate.SerialNumber.Uint64(), certificatePEM, certificatePrivKeyPEM)
+	_, err = service.certificateFileStoreRepo.CreateCertificate(certificate.SerialNumber.Uint64(), certificatePEM, certificatePrivKeyPEM)
 	if err != nil {
 		return CertificateDTO{}, err
 	}
@@ -151,30 +151,30 @@ func (d *DefaultCertificateService) CreateCertificate(parentSerial *uint, certif
 	return *CertificateToDTO(&certificateDB), nil
 }
 
-func (d *DefaultCertificateService) setDatesAndSave(certificateDB *Certificate, years int) (Certificate, error) {
+func (service *DefaultCertificateService) setDatesAndSave(certificateDB *Certificate, years int) (Certificate, error) {
 	validFrom := time.Now()
 	validTo := time.Now().AddDate(years, 0, 0)
 	certificateDB.ValidTo = validTo
 	certificateDB.ValidFrom = validFrom
 
-	return d.certificateRepo.CreateCertificate(*certificateDB)
+	return service.certificateRepo.CreateCertificate(*certificateDB)
 }
 
-func (d *DefaultCertificateService) GetCertificate(id uint64) (Certificate, error) {
-	certificate, err := d.certificateRepo.GetCertificate(id)
+func (service *DefaultCertificateService) GetCertificate(id uint64) (Certificate, error) {
+	certificate, err := service.certificateRepo.GetCertificate(id)
 	return certificate, err
 }
 
-func (d *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
-	certificates, err := d.certificateRepo.GetCertificates()
+func (service *DefaultCertificateService) GetCertificates() ([]Certificate, error) {
+	certificates, err := service.certificateRepo.GetCertificates()
 	if err != nil {
 		return nil, err
 	}
 	return certificates, nil
 }
 
-func (d *DefaultCertificateService) GetCertificateFiles(certificateID uint64, user user.User) (string, string, error) {
-	certificate, err := d.GetCertificate(certificateID)
+func (service *DefaultCertificateService) GetCertificateFiles(certificateID uint64, user user.User) (string, string, error) {
+	certificate, err := service.GetCertificate(certificateID)
 	if err != nil {
 		return "", "", err
 	}
@@ -186,9 +186,9 @@ func (d *DefaultCertificateService) GetCertificateFiles(certificateID uint64, us
 	return public, private, err
 }
 
-func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user.User) (CertificateDTO, error) {
+func (service *DefaultCertificateService) WithdrawCertificate(id uint64, user user.User) (CertificateDTO, error) {
 
-	certificate, err := d.GetCertificate(id)
+	certificate, err := service.GetCertificate(id)
 	if err != nil {
 		return CertificateDTO{}, err
 	}
@@ -197,14 +197,14 @@ func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user.Use
 	//	return CertificateDTO{}, errors.New("no permissions")
 	//}
 
-	transaction := d.certificateRepo.BeginTransaction()
+	transaction := service.certificateRepo.BeginTransaction()
 	{
-		certificate, err = d.invalidateCertificate(&certificate)
+		certificate, err = service.invalidateCertificate(&certificate)
 		if err != nil {
 			transaction.Rollback()
 			return CertificateDTO{}, err
 		}
-		err = d.invalidateCertificatesSignedBy(&certificate)
+		err = service.invalidateCertificatesSignedBy(&certificate)
 		if err != nil {
 			transaction.Rollback()
 			return CertificateDTO{}, err
@@ -214,21 +214,21 @@ func (d *DefaultCertificateService) WithdrawCertificate(id uint64, user user.Use
 	return *CertificateToDTO(&certificate), nil
 }
 
-func (d *DefaultCertificateService) IsValidById(id uint64) (bool, error) {
-	certificate, err := d.certificateKeyStoreRepo.GetCertificate(uint(id))
+func (service *DefaultCertificateService) IsValidById(id uint64) (bool, error) {
+	certificate, err := service.certificateFileStoreRepo.GetCertificate(uint(id))
 	if err != nil {
 		return false, nil
 	}
-	return d.IsValid(certificate)
+	return service.IsValid(certificate)
 }
 
-func (d *DefaultCertificateService) IsValid(certificate x509.Certificate) (bool, error) {
+func (service *DefaultCertificateService) IsValid(certificate x509.Certificate) (bool, error) {
 
 	if !isTimeValid(certificate) {
 		return false, nil
 	}
 
-	isRevoked, err := d.certificateRepo.isRevoked(certificate.SerialNumber.Uint64())
+	isRevoked, err := service.certificateRepo.isRevoked(certificate.SerialNumber.Uint64())
 	if err != nil {
 		return false, err
 	}
@@ -236,7 +236,7 @@ func (d *DefaultCertificateService) IsValid(certificate x509.Certificate) (bool,
 		return false, nil
 	}
 
-	if !d.checkChain(certificate) {
+	if !service.checkChain(certificate) {
 		return false, nil
 	}
 
@@ -247,7 +247,7 @@ func isTimeValid(c x509.Certificate) bool {
 	return !(c.NotAfter.Before(time.Now()) || c.NotAfter.Before(c.NotBefore))
 }
 
-func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) bool {
+func (service *DefaultCertificateService) checkChain(certificate x509.Certificate) bool {
 	// if it is root check if it is self-signed(subject is same as issuer)
 	if certificate.IsCA && certificate.Issuer.SerialNumber == certificate.SerialNumber.String() {
 		err := certificate.CheckSignatureFrom(&certificate)
@@ -263,7 +263,7 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 	if err != nil {
 		return false
 	}
-	parent, err := d.certificateKeyStoreRepo.GetCertificate(uint(parentSerial.Uint64()))
+	parent, err := service.certificateFileStoreRepo.GetCertificate(uint(parentSerial.Uint64()))
 	if err != nil {
 		return false
 	}
@@ -272,7 +272,7 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 		return false
 	}
 
-	isRevoked, err := d.certificateRepo.isRevoked(parentSerial.Uint64())
+	isRevoked, err := service.certificateRepo.isRevoked(parentSerial.Uint64())
 	if isRevoked {
 		return false
 	}
@@ -281,23 +281,23 @@ func (d *DefaultCertificateService) checkChain(certificate x509.Certificate) boo
 	if err != nil {
 		return false
 	}
-	return d.checkChain(parent)
+	return service.checkChain(parent)
 }
 
-func (d *DefaultCertificateService) invalidateCertificate(certificate *Certificate) (Certificate, error) {
+func (service *DefaultCertificateService) invalidateCertificate(certificate *Certificate) (Certificate, error) {
 	certificate.ValidTo = time.Now()
 	certificate.Status = WITHDRAWN
-	err := d.certificateRepo.UpdateCertificate(certificate)
+	err := service.certificateRepo.UpdateCertificate(certificate)
 	return *certificate, err
 }
 
-func (d *DefaultCertificateService) invalidateCertificatesSignedBy(invalidCertificate *Certificate) error {
-	leafCertificates, err := d.certificateRepo.GetLeafCertificates()
+func (service *DefaultCertificateService) invalidateCertificatesSignedBy(invalidCertificate *Certificate) error {
+	leafCertificates, err := service.certificateRepo.GetLeafCertificates()
 	if err != nil {
 		return err
 	}
 	for _, leafCertificate := range leafCertificates {
-		err = d.invalidateChain(&leafCertificate, invalidCertificate)
+		err = service.invalidateChain(&leafCertificate, invalidCertificate)
 		if err != nil {
 			return err
 		}
@@ -305,26 +305,26 @@ func (d *DefaultCertificateService) invalidateCertificatesSignedBy(invalidCertif
 	return nil
 }
 
-func (d *DefaultCertificateService) getChainPartToInvalidCertificate(chain []*Certificate, certificate *Certificate, invalidCertificate *Certificate) []*Certificate {
+func (service *DefaultCertificateService) getChainPartToInvalidCertificate(chain []*Certificate, certificate *Certificate, invalidCertificate *Certificate) []*Certificate {
 	if certificate.ID == invalidCertificate.ID {
 		return chain
 	}
 	chain = append(chain, certificate)
 	if certificate.Type != ROOT {
-		return d.getChainPartToInvalidCertificate(chain, certificate.ParentCertificate, invalidCertificate)
+		return service.getChainPartToInvalidCertificate(chain, certificate.ParentCertificate, invalidCertificate)
 	}
 	return nil
 }
 
-func (d *DefaultCertificateService) invalidateChain(leafCertificate *Certificate, invalidCertificate *Certificate) error {
+func (service *DefaultCertificateService) invalidateChain(leafCertificate *Certificate, invalidCertificate *Certificate) error {
 	var chain []*Certificate
-	chain = d.getChainPartToInvalidCertificate(chain, leafCertificate, invalidCertificate)
+	chain = service.getChainPartToInvalidCertificate(chain, leafCertificate, invalidCertificate)
 	var err error
 	if chain == nil {
 		return nil
 	}
 	for _, certificate := range chain {
-		_, err = d.invalidateCertificate(certificate)
+		_, err = service.invalidateCertificate(certificate)
 		if err != nil {
 			return err
 		}

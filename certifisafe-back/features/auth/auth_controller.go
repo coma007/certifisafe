@@ -11,14 +11,14 @@ import (
 )
 
 type AuthController struct {
-	service AuthService
+	authService AuthService
 }
 
-func NewAuthHandler(cs AuthService) *AuthController {
-	return &AuthController{service: cs}
+func NewAuthController(authService AuthService) *AuthController {
+	return &AuthController{authService: authService}
 }
 
-func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request) {
+func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Usao")
 	var credentials user.Credentials
 	err := utils.ReadRequestBody(w, r, &credentials)
@@ -26,7 +26,7 @@ func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := ah.service.Login(credentials.Email, credentials.Password)
+	token, err := controller.authService.Login(credentials.Email, credentials.Password)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -35,7 +35,7 @@ func (ah *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnResponse(w, err, token, http.StatusOK)
 }
 
-func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request) {
+func (controller *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 
 	var u user.UserRegisterDTO
 	err := utils.ReadRequestBody(w, r, &u)
@@ -43,7 +43,7 @@ func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newUser, err := ah.service.Register(user.UserRegisterDTOtoModel(&u))
+	newUser, err := controller.authService.Register(user.UserRegisterDTOtoModel(&u))
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -52,14 +52,14 @@ func (ah *AuthController) Register(w http.ResponseWriter, r *http.Request) {
 	utils.ReturnResponse(w, err, user.ModelToUserBaseDTO(newUser), http.StatusOK)
 }
 
-func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http.Request) {
+func (controller *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http.Request) {
 	var request password_recovery.PasswordRecoveryRequestDTO
 	err := utils.ReadRequestBody(w, r, &request)
 	if err != nil {
 		return
 	}
 
-	err = ah.service.RequestPasswordRecoveryToken(request.Email, request.Type)
+	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -68,14 +68,14 @@ func (ah *AuthController) PasswordRecoveryRequest(w http.ResponseWriter, r *http
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Request) {
+func (controller *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Request) {
 	var request password_recovery.PasswordResetDTO
 	err := utils.ReadRequestBody(w, r, &request)
 	if err != nil {
 		return
 	}
 
-	err = ah.service.PasswordRecovery(password_recovery.PasswordResetDTOtoModel(&request))
+	err = controller.authService.PasswordRecovery(password_recovery.PasswordResetDTOtoModel(&request))
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -91,9 +91,9 @@ func (ah *AuthController) PasswordRecovery(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-func (ah *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+func (controller *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	code := utils.ReadVerificationCodeFromUrl(w, r)
-	err := ah.service.VerifyEmail(code)
+	err := controller.authService.VerifyEmail(code)
 	if err != nil {
 		http.Error(w, "Email verification failed", getAuthErrorStatus(err))
 		return
