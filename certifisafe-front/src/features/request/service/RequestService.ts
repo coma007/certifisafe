@@ -1,16 +1,16 @@
 import { REQUESTS_BY_USER_SIGNING_URL, REQUESTS_BY_USER_URL, REQUESTS_URL } from "api";
-import { CertificateRequest } from "../types/CertificateRequest";
+import { Request } from "../types/Request";
 import axios from "axios";
 
-export const CertificateRequestService = {
+export const RequestService = {
 
-    getAllByUserSigning: async (): Promise<CertificateRequest[]> => {
+    getAllByUserSigning: async (): Promise<Request[]> => {
         let url = REQUESTS_BY_USER_SIGNING_URL;
         const response = await axios.get(url);
         return response.data;
     },
 
-    getByUser: async (): Promise<CertificateRequest[]> => {
+    getByUser: async (): Promise<Request[]> => {
         let url = REQUESTS_BY_USER_URL;
         const response = await axios.get(url);
         return response.data;

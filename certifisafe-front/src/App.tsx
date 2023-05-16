@@ -1,12 +1,11 @@
 import AppCSS from './App.module.scss';
-import RequestOreviewPage from 'features/request/pages/Overview/RequestOverviewPage';
-import CertificateOreviewPage from 'features/certificate/pages/Overview/CertificateOverviewPage';
-import LoginPage from 'features/auth/pages/LoginPage/LoginPage';
-import HomePage from 'pages/home/HomePage';
-import RegisterPage from 'features/auth/pages/RegisterPage/RegisterPage';
 import Router from 'routes/Router';
+import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { AuthService } from 'features/auth/services/AuthService';
 
 function App() {
+  
   return (
     <div className={AppCSS.main}>
       <Router></Router>

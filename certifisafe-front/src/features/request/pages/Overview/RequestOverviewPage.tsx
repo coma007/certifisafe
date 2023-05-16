@@ -9,9 +9,9 @@ import Remove from "assets/actions/withdraw.png"
 import ImageButton from "components/tables/ImageButton/ImageButton"
 import { SetStateAction, useEffect, useState } from "react"
 import ModalWindow from "components/view/Modal/ModalWindow"
-import { CertificateRequest } from "features/request/types/CertificateRequest"
-import { CertificateRequestService } from "features/request/service/CertificateRequestService"
-import CertificateRequestOverviewPageCSS from "./RequestOverviewPage.module.scss"
+import { Request } from "features/request/types/Request"
+import {  RequestService } from "features/request/service/RequestService"
+import RequestOverviewPageCSS from "./RequestOverviewPage.module.scss"
 
 const RequestOverviewPage = () => {
     const [selectedOption, setSelectedOption] = useState("foryou");
@@ -35,7 +35,7 @@ const RequestOverviewPage = () => {
     useEffect(() => {
         (async function () {
             try {
-                const fetchedRequests = await CertificateRequestService.getAllByUserSigning();
+                const fetchedRequests = await RequestService.getAllByUserSigning();
                 populateMeData(fetchedRequests);
             } catch (error) {
                 console.error(error);
@@ -46,7 +46,7 @@ const RequestOverviewPage = () => {
     useEffect(() => {
         (async function () {
             try {
-                const fetchedRequests = await CertificateRequestService.getByUser();
+                const fetchedRequests = await RequestService.getByUser();
                 populateMyData(fetchedRequests);
             } catch (error) {
                 console.error(error);
@@ -55,7 +55,7 @@ const RequestOverviewPage = () => {
     }, []);
 
 
-    const populateMeData = (requests: CertificateRequest[]) => {
+    const populateMeData = (requests: Request[]) => {
         let data: TableRowData[][] = []
         if (requests !== undefined && requests !== null) {
             requests.forEach(request => {
@@ -65,7 +65,7 @@ const RequestOverviewPage = () => {
                     { content: request.Subject.FirstName, widthPercentage: 25 },
                     { content: request.CertificateType, widthPercentage: 13 },
                     { content: request.Status.toLowerCase() === "pending" ? <ImageButton path={Accept} tooltipText="Accept" onClick={() => null} /> : null, widthPercentage: 10 },
-                    { content: request.Status.toLowerCase() === "pending" ?  <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} />: null, widthPercentage: 5 }
+                    { content: request.Status.toLowerCase() === "pending" ? <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} /> : null, widthPercentage: 5 }
                     // { content: <ImageButton path={Accept} tooltipText="Accept" onClick={() => null} />, widthPercentage: 10 },
                     // { content: <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} />, widthPercentage: 5 }
                 ]);
@@ -75,7 +75,7 @@ const RequestOverviewPage = () => {
     }
 
 
-    const populateMyData = (request: CertificateRequest[]) => {
+    const populateMyData = (request: Request[]) => {
         let data: TableRowData[][] = []
         if (request !== undefined && request !== null) {
             request.forEach(request => {
@@ -116,14 +116,14 @@ const RequestOverviewPage = () => {
         { content: "", widthPercentage: 5 }]
 
     return (
-        <div className={`page pageWithCols ${CertificateRequestOverviewPageCSS.cols}`}>
+        <div className={`page pageWithCols ${RequestOverviewPageCSS.cols}`}>
             <Menu />
             <div>
                 <PageTitle title="Requests overview" description="Take a detailed view of requests made for you." />
 
 
-                <div className={CertificateRequestOverviewPageCSS.table} >
-                    <div className={CertificateRequestOverviewPageCSS.radioContainer}>
+                <div className={RequestOverviewPageCSS.table} >
+                    <div className={RequestOverviewPageCSS.radioContainer}>
                         <input
                             type="radio"
                             name="radioGroup"
