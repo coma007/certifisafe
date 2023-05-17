@@ -10,7 +10,7 @@ import ImageButton from "components/tables/ImageButton/ImageButton"
 import { SetStateAction, useEffect, useState } from "react"
 import ModalWindow from "components/view/Modal/ModalWindow"
 import { Request } from "features/request/types/Request"
-import {  RequestService } from "features/request/service/RequestService"
+import { RequestService } from "features/request/service/RequestService"
 import RequestOverviewPageCSS from "./RequestOverviewPage.module.scss"
 
 const RequestOverviewPage = () => {
@@ -116,7 +116,7 @@ const RequestOverviewPage = () => {
         { content: "", widthPercentage: 5 }]
 
     return (
-        <div className={`page pageWithCols ${RequestOverviewPageCSS.cols}`}>
+        <div className={`page pageWithCols pageWithMenu`}>
             <Menu />
             <div>
                 <PageTitle title="Requests overview" description="Take a detailed view of requests made for you." />
