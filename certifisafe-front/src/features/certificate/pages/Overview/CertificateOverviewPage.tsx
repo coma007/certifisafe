@@ -8,7 +8,6 @@ import Download from "assets/actions/download.png"
 import Withdraw from "assets/actions/withdraw.png"
 import ImageButton from "components/tables/ImageButton/ImageButton"
 import { useEffect, useState } from "react"
-import Modal from "react-modal";
 import ModalWindow from "components/view/Modal/ModalWindow"
 import { CertificateService } from "features/certificate/services/CertificateService"
 import { Certificate } from "features/certificate/types/Certificate"
@@ -36,11 +35,6 @@ const CertificateOreviewPage = () => {
     const closeWithdrawModal = () => {
         setWithdrawModalIsOpen(false);
     };
-
-    const header: TableRowData = {
-        content: "aaa",
-        widthPercentage: 20
-    }
 
     const headers: TableRowData[] = [
         { content: "Name", widthPercentage: 28 },
@@ -79,7 +73,7 @@ const CertificateOreviewPage = () => {
 
 
     return (
-        <div className={`page pageWithCols ${CertificateOreviewPageCSS.cols}`}>
+        <div className={`page pageWithCols pageWithMenu`}>
             <Menu />
             <div>
                 <PageTitle title="Certificates overview" description="Take a detailed view of your certificates." />

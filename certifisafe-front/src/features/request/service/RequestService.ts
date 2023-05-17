@@ -1,4 +1,4 @@
-import { REQUESTS_BY_USER_SIGNING_URL, REQUESTS_BY_USER_URL, REQUESTS_URL } from "api";
+import { REQUESTS_BY_USER_SIGNING_URL, REQUESTS_BY_USER_URL } from "api";
 import { Request } from "../types/Request";
 import axios from "axios";
 

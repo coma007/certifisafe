@@ -1,7 +1,6 @@
 import LoginForm from 'features/auth/components/LoginForm/LoginForm'
 import Banner from 'components/navigation/Banner/Banner'
 import { AuthService } from 'features/auth/services/AuthService'
-import { Navigate } from 'react-router-dom'
 
 const LoginPage = () => {
     return (
