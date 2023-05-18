@@ -1,4 +1,5 @@
 import LoginPage, { Logout } from 'features/auth/pages/LoginPage/LoginPage';
+import ProfilePage from 'features/auth/pages/ProfilePage/ProfilePage';
 import RegisterPage from 'features/auth/pages/RegisterPage/RegisterPage';
 import CertificateOreviewPage from 'features/certificate/pages/Overview/CertificateOverviewPage';
 import CertificateVerifyPage from 'features/certificate/pages/Verify/CertificateVerifyPage';
@@ -21,6 +22,7 @@ const Router = () => {
                     <Route path="/certificates" element={<CertificateOreviewPage />} />
                     <Route path="/verify" element={<CertificateVerifyPage />} />
                     <Route path="/requests" element={<RequestOreviewPage />} />
+                    <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/logout" element={<Logout />} />
                 </Route>
             </Routes>
