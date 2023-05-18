@@ -2,6 +2,12 @@ import LoginForm from 'features/auth/components/LoginForm/LoginForm'
 import Banner from 'components/navigation/Banner/Banner'
 import { AuthService } from 'features/auth/services/AuthService'
 
+import TooltipCSS from 'components/view/Tooltip/Tooltip.module.scss'
+
+import Gmail from 'assets/oauth/gmail.png'
+import Facebook from 'assets/oauth/facebook.png'
+import Tooltip from 'components/view/Tooltip/Tooltip'
+
 const LoginPage = () => {
     return (
         <div className="page pageTwoCols">
@@ -17,6 +23,17 @@ const LoginPage = () => {
                     </span>
                 </div>
                 <LoginForm />
+                <div className="oauth">
+                    Or use alternative way to sign in <br />
+                    <button className={TooltipCSS.bottomTooltip}>
+                        <img src={Gmail} />
+                        <Tooltip tooltipText="Sign in with Gmail account" />
+                    </button>
+                    <button className={TooltipCSS.bottomTooltip}>
+                        <img src={Facebook} />
+                        <Tooltip tooltipText="Sign in with Facebook account" />
+                    </button>
+                </div>
                 <div className="authBottomMessage">
                     Do not have an account ?
                     <br /> <a href='register'>Sign up here.</a>

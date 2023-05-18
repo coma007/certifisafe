@@ -48,7 +48,7 @@ const RegisterForm = () => {
   }
 
   return (
-    <div className={RegisterFormCSS.form}>
+    <div>
       <InputField className={RegisterFormCSS.inlineInput} usage="First name" value={firstName} onChange={firstNameChange} />
       <InputField className={`alignRight ${RegisterFormCSS.inlineInput}`} usage="Last name" value={lastName} onChange={lastNameChange} />
       <InputField className={RegisterFormCSS.inlineInput} usage="Email" value={email} onChange={emailChange} />

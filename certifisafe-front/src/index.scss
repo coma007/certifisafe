@@ -80,6 +80,29 @@ textarea {
   grid-template-columns: var(--menu-width) calc(100% - var(--menu-width));
 }
 
+
+.oauth {
+  width: 80%;
+  margin: auto;
+  margin-top: 15%;
+  color: var(--primary-color-transparent);
+  font-size: 17px;
+  text-align: center;
+}
+
+.oauth button {
+  cursor: pointer;
+  padding: 5px;
+  margin: 0 5px;
+  border: none;
+  background-color: transparent;
+}
+
+.oauth button img {
+  height: 30px;
+  width: auto;
+}
+
 #root {
   --primary-color: #86919D;
   --primary-color-transparent: rgba(134, 145, 157, 0.9);
