@@ -20,7 +20,7 @@ const Menu = () => {
             <MenuItem className={MenuCSS.margin} tooltipText="Verify certificate" tooltip={true} image={Verify} path="/verify" />
             <MenuItem className={MenuCSS.margin} tooltipText="New certificate" tooltip={true} image={Create} path="" />
             <MenuItem className={MenuCSS.margin} tooltipText="Requests" tooltip={true} image={Request} path="/requests" />
-            <MenuItem className={MenuCSS.nonMainOption} tooltipText="Profile" tooltip={true} image={Profile} path="" />
+            <MenuItem className={MenuCSS.nonMainOption} tooltipText="Profile" tooltip={true} image={Profile} path="/profile" />
             <MenuItem className={MenuCSS.nonMainOption} tooltipText="Sign out" tooltip={true} image={Logout} path="/logout" />
         </div>
     )
