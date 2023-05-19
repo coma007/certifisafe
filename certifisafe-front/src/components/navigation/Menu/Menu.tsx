@@ -13,7 +13,7 @@ import { useState } from 'react'
 import RequestCreatePage from 'features/request/pages/Create/RequestCreatePage'
 
 const Menu = () => {
-    const [createIsOpen, setCreateIsOpen] = useState(true);
+    const [createIsOpen, setCreateIsOpen] = useState(false);
     const openCreateModal = () => {
         setCreateIsOpen(true);
     };
