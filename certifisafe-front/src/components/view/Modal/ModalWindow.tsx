@@ -3,7 +3,7 @@ import React from 'react'
 import Modal from "react-modal"
 import ModalWindowCSS from "./ModalWindow.module.scss"
 
-const ModalWindow = (props: { height: string, isOpen: any, closeWithdrawalModal: any, title: string, description: string, warning?: string, buttonText: string }) => {
+const ModalWindow = (props: { height: string, isOpen: any, closeWithdrawalModal: any, title: string, buttonText: string, children?: React.ReactNode }) => {
     Modal.setAppElement('#root')
     return (
         <Modal style={{
@@ -23,11 +23,7 @@ const ModalWindow = (props: { height: string, isOpen: any, closeWithdrawalModal:
             onRequestClose={props.closeWithdrawalModal}>
             <div className={ModalWindowCSS.window}>
                 <h2>{props.title}</h2>
-                <p>{props.description}</p>
-                <textarea placeholder='Write your reason ...'></textarea>
-                {props.warning !== undefined ? (
-                    <p className={ModalWindowCSS.warning}>{props.warning}</p>
-                ) : null}
+                {props.children}
                 <div className={ModalWindowCSS.buttons}>
                     <button className={ModalWindowCSS.accentButton}
                         onClick={props.closeWithdrawalModal}>{props.buttonText}</button>

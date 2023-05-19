@@ -9,6 +9,7 @@ import Withdraw from "assets/actions/withdraw.png"
 import ImageButton from "components/tables/ImageButton/ImageButton"
 import { useEffect, useState } from "react"
 import ModalWindow from "components/view/Modal/ModalWindow"
+import ModalWindowCSS from "components/view/Modal/ModalWindow.module.scss"
 import { CertificateService } from "features/certificate/services/CertificateService"
 import { Certificate } from "features/certificate/types/Certificate"
 
@@ -80,13 +81,16 @@ const CertificateOreviewPage = () => {
                 <div className={CertificateOreviewPageCSS.table} >
                     <Table headers={headers} rows={tableData} />
                 </div>
-                <ModalWindow height="67%"
+                <ModalWindow
+                    height="75%"
                     isOpen={withdrawIsOpen}
                     closeWithdrawalModal={closeWithdrawModal}
-                    title="Withdraw Certificate"
-                    description="To withdraw the certificate, you need to provide us some more info on why you want to withdraw it. "
-                    warning="Please note that if the certificate is revoked, all in the chain below it is automatically retracted. This means that all certificates signed by this certificate, as well as certificates signed by those certificates will be automatically revoked."
-                    buttonText="WITHDRAW" />
+                    title="Withdraw certificate"
+                    buttonText="WITHDRAW" >
+                    <p>To withdraw the certificate, you need to provide us some more info on why you want to withdraw it. </p>
+                    <textarea placeholder='Write your reason ...'></textarea>
+                    <p className={ModalWindowCSS.warning}>Please note that if the certificate is revoked, all in the chain below it is automatically retracted. This means that all certificates signed by this certificate, as well as certificates signed by those certificates will be automatically revoked.</p>
+                </ModalWindow>
             </div>
         </div>
     )
