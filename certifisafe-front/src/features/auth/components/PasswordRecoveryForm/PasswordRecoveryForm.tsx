@@ -9,9 +9,9 @@ const PasswordRecoveryForm = () => {
     return (
         <div>
             <VerificationInput length={4} placeholder={""} autoFocus={true} classNames={{
-                character: PasswordRecoveryFormCSS.field,
-                characterInactive: PasswordRecoveryFormCSS.fieldInactive,
-                characterSelected: PasswordRecoveryFormCSS.fieldActive,
+                character: "codeField",
+                characterInactive: "codeFieldInactive",
+                characterSelected: "codeFieldActive",
             }} />
             <p className={PasswordRecoveryFormCSS.label}>
                 Did not receive code ?

@@ -11,7 +11,6 @@ const PasswordRecoveryPage = () => {
     setIsCodeSent(true);
   }
 
-
   return (
     <div className="page pageTwoCols">
       <div>
@@ -32,7 +31,7 @@ const PasswordRecoveryPage = () => {
           <div className="authTitle">
             <h2>Reset password</h2>
             <span>
-              We have sent you an email with a verification code.
+              We have sent you email and SMS with a verification code.
               <br />
               Please enter the code below and a new password.
             </span>

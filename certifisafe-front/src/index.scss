@@ -103,6 +103,20 @@ textarea {
   width: auto;
 }
 
+.codeField {
+  border: 1px solid var(--primary-color);
+  border-radius: 10px;
+}
+
+.codeFieldInactive {
+  background-color: transparent;
+}
+
+.codeFieldActive {
+  outline: 2px solid var(--primary-color);
+  color: black;
+}
+
 #root {
   --primary-color: #86919D;
   --primary-color-transparent: rgba(134, 145, 157, 0.9);
