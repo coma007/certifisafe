@@ -1,0 +1,17 @@
+.option {
+    margin-bottom: -7px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.option input {
+    margin-top: 1px;
+    margin-right: 10px;
+}
+
+.description {
+    margin-left: auto;
+    font-size: 14px;
+    color: rgba(134, 145, 157, 0.9);
+}

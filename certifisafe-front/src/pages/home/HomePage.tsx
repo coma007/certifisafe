@@ -23,12 +23,12 @@ const HomePage = () => {
             </div>
             <div className={HomePageCSS.content}>
                 <div className={HomePageCSS.grid}>
-                    <Card>
+                    <Card link="/certificates">
                         <h3>Preview your certificates</h3>
                         <img src={Certificate} />
                         <p>Take a look of all of your certificates, including withdrawn and expired ones.</p>
                     </Card>
-                    <Card>
+                    <Card link="/verify">
                         <h3>Verify certificate</h3>
                         <img src={Verify} />
                         <p>Verify any certificate by unique identificator or copy of the certificate.</p>
@@ -38,7 +38,7 @@ const HomePage = () => {
                         <img src={Create} />
                         <p>Create request for intermediate or end certificate.</p>
                     </Card>
-                    <Card>
+                    <Card link="/requests">
                         <h3>Preview your requests</h3>
                         <img src={Request} />
                         <p>Take a look of all certificate creation requests made by you and made for you.</p>

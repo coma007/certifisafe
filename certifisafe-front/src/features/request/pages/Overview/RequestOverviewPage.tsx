@@ -9,6 +9,7 @@ import Remove from "assets/actions/withdraw.png"
 import ImageButton from "components/tables/ImageButton/ImageButton"
 import { SetStateAction, useEffect, useState } from "react"
 import ModalWindow from "components/view/Modal/ModalWindow"
+import ModalWindowCSS from "components/view/Modal/ModalWindow.module.scss"
 import { Request } from "features/request/types/Request"
 import { RequestService } from "features/request/service/RequestService"
 import RequestOverviewPageCSS from "./RequestOverviewPage.module.scss"
@@ -148,12 +149,15 @@ const RequestOverviewPage = () => {
                     )}
                 </div>
 
-                <ModalWindow height="55%"
+                <ModalWindow
+                    height="55%"
                     isOpen={declineIsOpen}
                     closeWithdrawalModal={closeDeclineModal}
-                    title="Decline Request"
-                    description="To decline the request, you need to provide us some more info on why you want to decline it."
-                    buttonText="DECLINE" />
+                    title="Decline request"
+                    buttonText="DECLINE" >
+                    <p>To decline the request, you need to provide us some more info on why you want to decline it.</p>
+                    <textarea placeholder='Write your reason ...'></textarea>
+                </ModalWindow>
             </div>
         </div>
     )
