@@ -1,29 +1,45 @@
-import Button from 'components/forms/Button/Button';
-import InputField from 'components/forms/InputField/InputField';
 import Banner from 'components/navigation/Banner/Banner';
+import EmailForm from 'features/auth/components/EmailForm/EmailForm';
 import PasswordRecoveryForm from 'features/auth/components/PasswordRecoveryForm/PasswordRecoveryForm';
+import { send } from 'process';
 import React, { useState } from 'react'
-import VerificationInput from "react-verification-input";
 
 const PasswordRecoveryPage = () => {
+  let [isCodeSent, setIsCodeSent] = useState<boolean>(false);
+
+  const sendCode = () => {
+    setIsCodeSent(true);
+  }
+
 
   return (
-
     <div className="page pageTwoCols">
       <div>
         <Banner />
       </div>
-      <div className="rightCol">
-        <div className="authTitle">
-          <h2>Reset password</h2>
-          <span >
-            We have sent you an email with verification code.
-            <br />
-            Please enter the code bellow and new password.
-          </span>
+      {isCodeSent === false ? (
+        <div className="rightCol">
+          <div className="authTitle">
+            <h2>Forgot password ?</h2>
+            <span>
+              Please enter your email, and shortly, we will send you verification code for password reset.
+            </span>
+          </div>
+          <EmailForm onClick={sendCode} />
         </div>
-        <PasswordRecoveryForm />
-      </div >
+      ) : (
+        <div className="rightCol">
+          <div className="authTitle">
+            <h2>Reset password</h2>
+            <span>
+              We have sent you an email with a verification code.
+              <br />
+              Please enter the code below and a new password.
+            </span>
+          </div>
+          <PasswordRecoveryForm />
+        </div>
+      )}
     </div>
   )
 }
