@@ -5,7 +5,7 @@ import { AuthService } from 'features/auth/services/AuthService'
 import { useState } from 'react'
 import { useNavigate } from "react-router-dom";
 
-const LoginForm = () => {
+const LoginForm = (props: { twoFactor: any }) => {
 
   const navigate = useNavigate();
 
@@ -24,10 +24,12 @@ const LoginForm = () => {
     (async function () {
       try {
         const jwt = await AuthService.login({ Email: email, Password: password });
+        props.twoFactor();
+        // TODO change flow bellow
         localStorage.setItem("token", jwt)
-        navigate("/")
+        // navigate("/")
 
-      } catch (error : any) {
+      } catch (error: any) {
         alert(error.response.data);
       }
     })()

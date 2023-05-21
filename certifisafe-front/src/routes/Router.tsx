@@ -1,3 +1,4 @@
+import PasswordRecoveryPage from 'features/auth/pages/PasswordRecoveryPage/PasswordRecoveryPage';
 import LoginPage, { Logout } from 'features/auth/pages/LoginPage/LoginPage';
 import ProfilePage from 'features/auth/pages/ProfilePage/ProfilePage';
 import RegisterPage from 'features/auth/pages/RegisterPage/RegisterPage';
@@ -16,6 +17,7 @@ const Router = () => {
                 <Route index element={<HomePage />} />
                 <Route element={<NonAuthGuard />}>
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/passwordRecovery" element={<PasswordRecoveryPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                 </Route>
                 <Route element={<AuthGuard />}>
