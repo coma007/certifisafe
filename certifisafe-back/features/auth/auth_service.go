@@ -14,7 +14,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"math/big"
-	"net/smtp"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -48,18 +47,18 @@ type AuthService interface {
 	PasswordRecovery(request *password_recovery.PasswordRecovery) error
 }
 
-// TODO check if everything works - Duti (Bobi made changes)
-// TODO separate mails to email_service.go
 type DefaultAuthService struct {
+	mailService                 MailService
 	userRepository              user.UserRepository
 	passwordRecoveryRepository  password_recovery.PasswordRecoveryRepository
 	verificationRepository      VerificationRepository
 	verificationTokenCharacters string
 }
 
-func NewDefaultAuthService(userRepo user.UserRepository, passwordRecoveryRepo password_recovery.PasswordRecoveryRepository,
+func NewDefaultAuthService(mailService MailService, userRepo user.UserRepository, passwordRecoveryRepo password_recovery.PasswordRecoveryRepository,
 	verificationRepo VerificationRepository) *DefaultAuthService {
-	return &DefaultAuthService{userRepository: userRepo,
+	return &DefaultAuthService{mailService: mailService,
+		userRepository:              userRepo,
 		passwordRecoveryRepository:  passwordRecoveryRepo,
 		verificationRepository:      verificationRepo,
 		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
@@ -232,7 +231,7 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 		return nil
 	}
 
-	err = service.sendMail(to, body)
+	err = service.mailService.SendMail(to, body)
 	if err != nil {
 		return err
 	}
@@ -306,19 +305,6 @@ func (service *DefaultAuthService) VerifyEmail(verificationCode string) error {
 	return nil
 }
 
-func (service *DefaultAuthService) sendMail(to []string, body bytes.Buffer) error {
-	from := "ftn.project.usertest@gmail.com"
-	password := "zmiwmhfweojejlqy"
-
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
-
-	auth := smtp.PlainAuth("", from, password, smtpHost)
-
-	go smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
-	return nil
-}
-
 func (service *DefaultAuthService) sendVerification(user *user.User) error {
 	to := []string{user.Email}
 
@@ -355,7 +341,7 @@ func (service *DefaultAuthService) sendVerification(user *user.User) error {
 		Code: verificationToken,
 	})
 
-	service.sendMail(to, body)
+	service.mailService.SendMail(to, body)
 	return nil
 }
 
