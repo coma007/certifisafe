@@ -148,6 +148,7 @@ func (service *DefaultAuthService) ValidateToken(tokenString string) (bool, erro
 	return false, nil
 }
 
+// TODO: return error if user doesn't exist
 func (service *DefaultAuthService) GetUserFromToken(tokenString string) user.User {
 	_, claims, _, _ := service.GetClaims(tokenString)
 	email := claims.Email

@@ -4,6 +4,7 @@ import (
 	"certifisafe-back/features/auth"
 	certificate2 "certifisafe-back/features/certificate"
 	"certifisafe-back/utils"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"net/http"
 )
 
@@ -21,6 +22,12 @@ func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request
 	var req NewRequestDTO
 	err := utils.ReadRequestBody(w, r, &req)
 	if err != nil {
+		return
+	}
+
+	err = req.Validate()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -55,6 +62,8 @@ func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request) {
 func (controller *RequestController) GetAllRequestsByUserSigning(w http.ResponseWriter, r *http.Request) {
 	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
+	//TODO check if error is returned
+
 	requests, err := controller.service.GetAllRequestsByUserSigning(user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -66,6 +75,8 @@ func (controller *RequestController) GetAllRequestsByUserSigning(w http.Response
 
 func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter, r *http.Request) {
 	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
+
+	//TODO check if error is returned
 
 	requests, err := controller.service.GetAllRequestsByUser(user)
 	if err != nil {
@@ -117,8 +128,16 @@ func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *ht
 	}{}
 
 	err = utils.ReadRequestBody(w, r, &reason)
-	if err != nil || reason.Reason == "" {
+	if err != nil {
 		http.Error(w, "invalid reason", http.StatusBadRequest)
+		return
+	}
+
+	err = validation.ValidateStruct(&reason,
+		validation.Field(&reason.Reason, validation.Required, validation.Length(3, 50)),
+	)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
