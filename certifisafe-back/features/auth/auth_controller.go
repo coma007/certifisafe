@@ -52,7 +52,6 @@ func (controller *AuthController) Register(w http.ResponseWriter, r *http.Reques
 
 	err = u.Validate()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -75,7 +74,6 @@ func (controller *AuthController) PasswordRecoveryRequest(w http.ResponseWriter,
 
 	err = request.Validate()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -98,7 +96,6 @@ func (controller *AuthController) PasswordRecovery(w http.ResponseWriter, r *htt
 
 	err = request.Validate()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
