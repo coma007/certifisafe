@@ -26,12 +26,12 @@ func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// template for validation
-	//err = credentials.Validate()
-	//if err != nil {
-	//	w.WriteHeader(http.StatusBadRequest)
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//	return
-	//}
+	err = credentials.Validate()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	token, err := controller.authService.Login(credentials.Email, credentials.Password)
 	if err != nil {

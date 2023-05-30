@@ -26,7 +26,6 @@ import (
 )
 
 func main() {
-
 	config := utils.Config()
 	password := config["password"]
 	dbuser := config["user"]
