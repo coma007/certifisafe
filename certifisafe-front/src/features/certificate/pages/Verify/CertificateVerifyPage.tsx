@@ -4,7 +4,7 @@ import Menu from 'components/navigation/Menu/Menu'
 import PageTitle from 'components/view/PageTitle/PageTitle'
 import CertificateVerifyPageCSS from './CertificateVerifyPage.module.scss'
 import Card from 'components/view/Card/Card'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 
@@ -16,18 +16,56 @@ const CertificateVerifyPage = () => {
     const [isValid, setValid] = useState<boolean | undefined>(undefined);
     const [certificateId, setCertificateId] = useState("");
 
+    let fileRef = useRef<HTMLInputElement>(null);
+
+
     const schema = yup.object().shape({
         "certificate id": yup.number()
         .test("int", "Must be integer", val => {
           return val === undefined ? false : val % 1 == 0;
-        }).typeError("certificate id must be an integer")
+        }).typeError("certificate id must be an integer"),
+
+        file: yup.mixed()
+          .test("is-file-too-big", "File exceeds 10MB", () => {
+            let valid = true;
+            const files = fileRef?.current?.files;
+            if (files) {
+                const fileArr = Array.from(files);
+                fileArr.forEach((file) => {
+                  const size = file.size / 1024 / 1024;
+                  if (size > 10) {
+                    valid = false;
+                  }
+                });
+            }
+            return valid;
+          })
+          .test(
+            "is-file-of-correct-type",
+            "File is not of supported type",
+            () => {
+              let valid = true;
+              const files = fileRef?.current?.files;
+              if (files) {
+                const fileArr = Array.from(files);
+                fileArr.forEach((file) => {
+                  const type = file.type.split("/")[1];
+                  const validTypes = [
+                    "pkix-cert",
+                  ];
+                  if (!validTypes.includes(type)) {
+                    valid = false;
+                  }
+                });
+              }
+              return valid;
+            }
+          )
       })
 
-      const onClick = () => {
-        (async function () {
-          
-        })()
-      }
+    const getExtension = (filename: string) => {
+    return filename.split('.').pop()
+    }
 
     return (
         <div className={`page pageWithCols pageWithMenu`}>
@@ -38,6 +76,7 @@ const CertificateVerifyPage = () => {
                     <Formik
                         initialValues={{
                             certificateId: '',
+                            file: "",
                         }}
                         validationSchema={schema}
                         onSubmit={values => {
@@ -69,9 +108,10 @@ const CertificateVerifyPage = () => {
                                     <label htmlFor="file-upload" className={CertificateVerifyPageCSS.fileUpload}>
                                         Upload a copy<img src={Upload} />
                                     </label>
-                                    <input id="file-upload" type="file" />
+                                    <input name="file" ref={fileRef} id="file-upload" type="file" />
+                                    <ErrorMessage name="file" />
                                 </div>
-                                <Button submit={"submit"} text={'VERIFY'} onClick={onClick} />
+                                <Button submit={"submit"} text={'VERIFY'} onClick={undefined} />
                             </div>
                             <div className={CertificateVerifyPageCSS.card}>
                                 {(isValid !== undefined) &&
