@@ -45,8 +45,6 @@ const LoginForm = (props: { twoFactor: any }) => {
          email: '',
        }}
        validationSchema={schema}
-       validateOnChange={false}
-       validateOnBlur={false}
        onSubmit={values => {
 
        }}
