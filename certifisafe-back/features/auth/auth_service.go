@@ -23,16 +23,18 @@ import (
 )
 
 var (
-	ErrNoUserWithEmail     = errors.New("no user for given email")
-	ErrBadCredentials      = errors.New("bad username or password")
-	ErrNotActivated        = errors.New("account is not activated")
-	ErrTakenEmail          = errors.New("email already taken")
-	ErrWrongEmailFormat    = errors.New("not valid email")
-	ErrEmptyName           = errors.New("name cannot be empty")
-	ErrWrongPhoneFormat    = errors.New("not valid phone")
-	ErrWrongPasswordFormat = errors.New("not valid password")
-	ErrCodeUsed            = errors.New("verification code is used")
-	ErrCodeNotFound        = errors.New("verification code cannot be found")
+	ErrNoUserWithEmail      = errors.New("no user for given email")
+	ErrBadCredentials       = errors.New("bad username or password")
+	ErrNotActivated         = errors.New("account is not activated")
+	ErrPasswordChange       = errors.New("password needs to be changed, email has been sent")
+	ErrPasswordNotAvailable = errors.New("cannot use old password")
+	ErrTakenEmail           = errors.New("email already taken")
+	ErrWrongEmailFormat     = errors.New("not valid email")
+	ErrEmptyName            = errors.New("name cannot be empty")
+	ErrWrongPhoneFormat     = errors.New("not valid phone")
+	ErrWrongPasswordFormat  = errors.New("not valid password")
+	ErrCodeUsed             = errors.New("verification code is used")
+	ErrCodeNotFound         = errors.New("verification code cannot be found")
 )
 
 type AuthService interface {
@@ -51,16 +53,19 @@ type DefaultAuthService struct {
 	mailService                 MailService
 	userRepository              user.UserRepository
 	passwordRecoveryRepository  password_recovery.PasswordRecoveryRepository
+	passwordHistoryRepository   password_recovery.PasswordHistoryRepository
 	verificationRepository      VerificationRepository
 	verificationTokenCharacters string
 }
 
 func NewDefaultAuthService(mailService MailService, userRepo user.UserRepository, passwordRecoveryRepo password_recovery.PasswordRecoveryRepository,
+	passwordHistoryRepo password_recovery.PasswordHistoryRepository,
 	verificationRepo VerificationRepository) *DefaultAuthService {
 	return &DefaultAuthService{mailService: mailService,
 		userRepository:              userRepo,
 		passwordRecoveryRepository:  passwordRecoveryRepo,
 		verificationRepository:      verificationRepo,
+		passwordHistoryRepository:   passwordHistoryRepo,
 		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
 }
 
@@ -84,6 +89,13 @@ func (service *DefaultAuthService) Login(email string, password string) (string,
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) == nil {
 		if !user.IsActive {
 			return "", ErrNotActivated
+		}
+		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60 {
+			err := service.RequestPasswordRecoveryToken(user.Email, 0)
+			if err != nil {
+				return "", err
+			}
+			return "", ErrPasswordChange
 		}
 		expirationTime := time.Now().Add(time.Minute * 60)
 
@@ -278,11 +290,15 @@ func (service *DefaultAuthService) PasswordRecovery(request *password_recovery.P
 		return ErrWrongPasswordFormat
 	}
 
+	if service.isPasswordUsed(user.Email, request.NewPassword) {
+		return ErrPasswordNotAvailable
+	}
 	hashedPassword, err := service.hashToken(request.NewPassword)
 	if err != nil {
 		return err
 	}
 	user.Password = string(hashedPassword)
+	user.LastPasswordSet = time.Now()
 	service.userRepository.UpdateUser(user.ID, user)
 	service.passwordRecoveryRepository.UseRequestsForEmail(user.Email)
 	return nil
@@ -410,4 +426,43 @@ func (service *DefaultAuthService) verifyPassword(password string) bool {
 		}
 	}
 	return number && upper && lower && len(password) >= 8
+}
+
+func (service *DefaultAuthService) isPasswordUsed(email string, password string) bool {
+
+	history, err := service.passwordHistoryRepository.GetHistoryByEmail(email)
+	if err != nil {
+		return true
+	}
+
+	for _, element := range history {
+		if bcrypt.CompareHashAndPassword([]byte(element.ForbiddenPassword), []byte(password)) == nil {
+			return true
+		}
+	}
+
+	numberOfPasswords := len(history)
+	if numberOfPasswords == 2 {
+		firstPassword := history[0]
+		for _, element := range history {
+			if element.ID < firstPassword.ID {
+				firstPassword = element
+			}
+		}
+		service.passwordHistoryRepository.DeleteHistory(int32(firstPassword.ID))
+	}
+	hashedPassword, err := service.hashToken(password)
+	if err != nil {
+		return true
+	}
+	_, err = service.passwordHistoryRepository.CreateHistory(0, password_recovery.PasswordHistory{
+		Model:             gorm.Model{},
+		Deleted:           gorm.DeletedAt{},
+		UserEmail:         email,
+		ForbiddenPassword: string(hashedPassword),
+	})
+	if err != nil {
+		return true
+	}
+	return false
 }
