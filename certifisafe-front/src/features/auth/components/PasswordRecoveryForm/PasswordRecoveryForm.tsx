@@ -19,16 +19,16 @@ const PasswordRecoveryForm = () => {
     .required();
     
     const schema = yup.object().shape({
-        newPassword: passwordValidator,
-        confirmPassword: passwordValidator.oneOf([yup.ref('newPassword')], 'Passwords must match'),
+        "new password": passwordValidator,
+        "confirm password": passwordValidator.oneOf([yup.ref('new password')], 'Passwords must match'),
       })
 
 
     return (
         <Formik
         initialValues={{
-          newPassword: "",
-          confirmPassword: "",
+            "new password": "",
+            "confirm password": "",
         }}
         validationSchema={schema}
         onSubmit={values => {
@@ -48,17 +48,17 @@ const PasswordRecoveryForm = () => {
                         <b> Click to resend.</b>
                     </a>
                 </p>
-                <Field component={ InputField} className={PasswordRecoveryFormCSS.input}  usage="New password" value={newPassword} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
+                <Field name="new password" component={ InputField} className={PasswordRecoveryFormCSS.input}  usage="New password" value={newPassword} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                         setNewPassword(e.target.value);
-                        setFieldValue("newPassword", e.target.value);
+                        setFieldValue("new password", e.target.value);
                     }}/>
-                <ErrorMessage name="newPassword" />
+                <ErrorMessage name="new password" />
 
-                <Field component={ InputField} className={PasswordRecoveryFormCSS.input} usage="Confirm password" value={confirmPassword} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
+                <Field name="confirm password" component={ InputField} className={PasswordRecoveryFormCSS.input} usage="Confirm password" value={confirmPassword} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                             setConfirmPassword(e.target.value);
-                            setFieldValue("confirmPassword", e.target.value);
+                            setFieldValue("confirm password", e.target.value);
                         }}/>
-                <ErrorMessage name="confirmPassword" />
+                <ErrorMessage name="confirm password" />
                 <span className="alignRight">
                     <Button submit={undefined} onClick={undefined} text="Reset" />
                 </span>

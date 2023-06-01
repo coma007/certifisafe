@@ -16,7 +16,6 @@ const EmailForm = (props: { onClick: any }) => {
     return (
         <Formik
             initialValues={{
-            password: '',
             email: '',
             }}
             validationSchema={schema}

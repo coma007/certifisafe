@@ -28,12 +28,12 @@ const RegisterForm = () => {
   .typeError("Must be a phone number").required();
 
   const schema = yup.object().shape({
-    firstName: yup.string().required(),
-    lastName: yup.string().required(),
-    phoneNumber: phoneValidator,
+    "first name": yup.string().required(),
+    "last name": yup.string().required(),
+    "phone number": phoneValidator,
     email: yup.string().email().required(),
     password: passwordValidator,
-    confirmPassword: passwordValidator.oneOf([yup.ref('password')], 'Passwords must match'),
+    "confirm password": passwordValidator.oneOf([yup.ref('password')], 'Passwords must match'),
   })
 
   const navigate = useNavigate();
@@ -53,12 +53,12 @@ const RegisterForm = () => {
   return (
     <Formik
     initialValues={{
-      firstName: "",
-      lastName: "",
-      phoneNumber: "",
+      "first name": "",
+      "last name": "",
+      "phone number": "",
       email: "",
       password: "",
-      confirmPassword: "",
+      "confirm password": "",
     }}
     validationSchema={schema}
     onSubmit={values => {
@@ -67,17 +67,17 @@ const RegisterForm = () => {
   >
     {({ errors, touched, setFieldValue }) => (
       <Form>
-        <Field component={ InputField} className={RegisterFormCSS.inlineInput} usage="First name" value={firstName} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
+        <Field name="first name" component={ InputField} className={RegisterFormCSS.inlineInput} usage="First name" value={firstName} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setFirstName(e.target.value);
-                    setFieldValue("firstName", e.target.value);
+                    setFieldValue("first name", e.target.value);
                   }}/>
-        <ErrorMessage name="firstName" />
+        <ErrorMessage name="first name" />
 
         <Field component={ InputField} className={`alignRight ${RegisterFormCSS.inlineInput}`}  usage="Last name" value={lastName} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setLastName(e.target.value);
-                    setFieldValue("lastName", e.target.value);
+                    setFieldValue("last name", e.target.value);
                   }}/>
-        <ErrorMessage name="lastName" />
+        <ErrorMessage name="last name" />
 
         <Field component={ InputField} className={RegisterFormCSS.inlineInput} usage="Email" value={email} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setEmail(e.target.value);
@@ -87,9 +87,9 @@ const RegisterForm = () => {
 
         <Field component={ InputField} className={`alignRight ${RegisterFormCSS.inlineInput}`} usage="Phone number" value={phoneNumber} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setPhoneNumber(e.target.value);
-                    setFieldValue("phoneNumber", e.target.value);
+                    setFieldValue("phone number", e.target.value);
                   }}/>
-        <ErrorMessage name="phoneNumber" />
+        <ErrorMessage name="phone number" />
 
         <Field component={ InputField} className={RegisterFormCSS.inlineInput} usage="Password" value={password} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setPassword(e.target.value);
@@ -99,9 +99,9 @@ const RegisterForm = () => {
 
         <Field component={ InputField} className={`alignRight ${RegisterFormCSS.inlineInput}`} usage="Confirm password" value={confirmPassword} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setConfirmPassword(e.target.value);
-                    setFieldValue("confirmPassword", e.target.value);
+                    setFieldValue("confirm password", e.target.value);
                   }}/>
-        <ErrorMessage name="confirmPassword" />
+        <ErrorMessage name="confirm password" />
 
 
         <div className={RegisterFormCSS.button}>
