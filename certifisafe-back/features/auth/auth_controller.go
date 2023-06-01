@@ -115,6 +115,8 @@ func getAuthErrorStatus(err error) int {
 		errors.Is(err, ErrNotActivated) ||
 		errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest
+	} else if errors.Is(err, ErrPasswordChange) {
+		return http.StatusForbidden
 	}
 	return http.StatusInternalServerError
 }
