@@ -39,7 +39,7 @@ const CertificateVerifyPage = () => {
                             </label>
                             <input id="file-upload" type="file" />
                         </div>
-                        <Button text={'VERIFY'} onClick={undefined} />
+                        <Button submit={undefined} text={'VERIFY'} onClick={undefined} />
                     </div>
                     <div className={CertificateVerifyPageCSS.card}>
                         {(isValid !== undefined) &&

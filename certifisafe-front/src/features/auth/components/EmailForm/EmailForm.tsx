@@ -8,7 +8,7 @@ const EmailForm = (props: { onClick: any }) => {
         <div>
             <InputField usage='Email' className={EmailFormCSS.input} />
             <span className="alignRight">
-                <Button onClick={props.onClick} text="Send code" />
+                <Button submit={undefined} onClick={props.onClick} text="Send code" />
             </span>
         </div>
     )

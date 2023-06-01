@@ -22,7 +22,7 @@ const PasswordRecoveryForm = () => {
             <InputField usage='New password' className={PasswordRecoveryFormCSS.input} />
             <InputField usage='Confirm password' className={PasswordRecoveryFormCSS.input} />
             <span className="alignRight">
-                <Button onClick={undefined} text="Reset" />
+                <Button submit={undefined} onClick={undefined} text="Reset" />
             </span>
         </div>
     )

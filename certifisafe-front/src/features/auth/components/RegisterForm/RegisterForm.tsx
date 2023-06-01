@@ -57,7 +57,7 @@ const RegisterForm = () => {
       <InputField className={`alignRight ${RegisterFormCSS.inlineInput}`} usage="Confirm password" />
       <div className={RegisterFormCSS.button}>
         <span className="alignRight">
-          <Button onClick={onClick} text="Get started" />
+          <Button submit={undefined} onClick={onClick} text="Get started" />
         </span>
       </div>
     </div >

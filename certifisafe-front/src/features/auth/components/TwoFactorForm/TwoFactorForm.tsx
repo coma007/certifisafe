@@ -13,7 +13,7 @@ const TwoFactorForm = () => {
                 characterSelected: "codeFieldActive",
             }} />
             <span className="alignRight">
-                <Button onClick={undefined} text="Sign in" />
+                <Button submit={undefined} onClick={undefined} text="Sign in" />
             </span>
         </div>
     )
