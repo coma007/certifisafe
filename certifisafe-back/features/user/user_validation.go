@@ -14,7 +14,7 @@ func (ur UserRegisterDTO) Validate() error {
 			password_recovery.PasswordValidation[0], password_recovery.PasswordValidation[1], password_recovery.PasswordValidation[2]),
 		validation.Field(&ur.FirstName, validation.Required),
 		validation.Field(&ur.LastName, validation.Required),
-		validation.Field(&ur.LastName, validation.Required),
+		validation.Field(&ur.Phone, validation.Required, is.Int, validation.Length(6, 12)),
 	)
 }
 
