@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { CERTIFICATES_DOWNLOAD_URL, CERTIFICATES_ID_URL, CERTIFICATES_URL, CERTIFICATES_WITHDRAW_URL } from 'api/index';
+import { CERTIFICATES_DOWNLOAD_URL, CERTIFICATES_ID_URL, CERTIFICATES_URL, CERTIFICATES_WITHDRAW_URL, CERTIFICATES_IS_VALID_FILE, CERTIFICATES_IS_VALID_ID   } from 'api/index';
 import { Certificate } from '../types/Certificate';
 
 export const CertificateService = {
@@ -34,6 +34,19 @@ export const CertificateService = {
     withdraw: async (id: number): Promise<Certificate> => {
         let url = CERTIFICATES_WITHDRAW_URL(id);
         const response = await axios.patch(url);
+        return response.data;
+    },
+
+    verifyByFile: async (file: File): Promise<boolean> => {
+        let url = CERTIFICATES_IS_VALID_FILE();
+        let formData = new FormData();
+        formData.append("file", file);
+
+        const response = await axios.post(url, formData, {
+            headers: {
+            'Content-Type': file.type
+            }
+        })
         return response.data;
     }
 }

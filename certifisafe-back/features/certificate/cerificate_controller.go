@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 type CertificateController struct {
@@ -119,6 +120,15 @@ func (controller *CertificateController) IsValid(w http.ResponseWriter, r *http.
 	utils.ReturnResponse(w, err, &result, http.StatusOK)
 }
 
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 func (controller *CertificateController) IsValidFile(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -135,7 +145,14 @@ func (controller *CertificateController) IsValidFile(w http.ResponseWriter, r *h
 	defer file.Close()
 
 	fileBytes := make([]byte, handler.Size)
-	_, err = bufio.NewReader(file).Read(fileBytes)
+	buf := bufio.NewReader(file)
+	if strings.Split(handler.Filename, ".")[1] != "crt" ||
+		!stringInSlice(handler.Header.Get("Content-Type"), []string{"application/pkix-cert", "application/x-x509-ca-cert"}) {
+		http.Error(w, "file type not allowed", http.StatusBadRequest)
+		return
+	}
+
+	_, err = buf.Read(fileBytes)
 	if err != nil {
 		utils.ReturnResponse(w, err, nil, http.StatusBadRequest)
 		return
