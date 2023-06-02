@@ -12,6 +12,7 @@ import Upload from "assets/actions/upload.png"
 import Valid from "assets/actions/valid.png"
 import Unvalid from "assets/actions/unvalid.png"
 import { CertificateService } from 'features/certificate/services/CertificateService'
+import { AxiosError } from 'axios'
 
 const CertificateVerifyPage = () => {
     const [isValid, setValid] = useState<boolean | undefined>(undefined);
@@ -19,9 +20,13 @@ const CertificateVerifyPage = () => {
 
     let fileRef = useRef<HTMLInputElement>(null);
 
+    const handleResponse = (response: boolean) => {
+      setValid(response); 
+    }
+
 
     const schemaId = yup.object().shape({
-        "certificate id": yup.number()
+        "certificate id": yup.number().required()
         .test("int", "Must be integer", val => {
           return val === undefined ? false : val % 1 == 0;
         }).typeError("certificate id must be an integer"),
@@ -80,7 +85,12 @@ const CertificateVerifyPage = () => {
                         }}
                         validationSchema={schemaId}
                         onSubmit={values => {
-                
+                          CertificateService.verifyById(parseInt(certificateId)).then((response: boolean) => {
+                            handleResponse(response);
+                          }).catch((error: AxiosError) => {
+                            alert(error.response?.data);
+                            setValid(undefined);
+                          })
                         }}
                     >
                         {({ errors, touched, setFieldValue }) => (
@@ -118,7 +128,10 @@ const CertificateVerifyPage = () => {
                             const fileArr = Array.from(files);
                             fileArr.forEach((file) => {
                               CertificateService.verifyByFile(file).then((response: boolean) => {
-                                setValid(response); 
+                                handleResponse(response);
+                              }).catch((error: AxiosError) => {
+                                alert(error.response?.data);
+                                setValid(undefined);
                               })
                             });
                           }

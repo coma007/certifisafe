@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"gorm.io/gorm"
 	"os"
 	"strconv"
@@ -54,11 +55,11 @@ func (repository *DefaultFileStoreCertificateRepository) CreateCertificate(seria
 func (repository *DefaultFileStoreCertificateRepository) GetCertificate(serialNumber uint) (x509.Certificate, error) {
 	catls, err := tls.LoadX509KeyPair(GetPublicName(uint64(serialNumber)), GetPrivateName(uint64(serialNumber)))
 	if err != nil {
-		return x509.Certificate{}, err
+		return x509.Certificate{}, errors.New("no such certificate exists")
 	}
 	certificate, err := x509.ParseCertificate(catls.Certificate[0])
 	if err != nil {
-		return x509.Certificate{}, err
+		return x509.Certificate{}, errors.New("no such certificate exists")
 	}
 
 	return *certificate, nil

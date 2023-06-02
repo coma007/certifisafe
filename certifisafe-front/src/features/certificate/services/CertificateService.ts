@@ -48,5 +48,12 @@ export const CertificateService = {
             }
         })
         return response.data;
+    },
+
+
+    verifyById: async (id: number): Promise<boolean> => {
+        let url = CERTIFICATES_IS_VALID_ID(id);
+        const response = await axios.get(url);
+        return response.data;
     }
 }
