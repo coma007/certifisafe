@@ -24,7 +24,7 @@ const ProfilePage = () => {
                         </div>
                         <InputField usage='Email' className={ProfilePageCSS.input} />
                         <InputField usage='Phone' className={ProfilePageCSS.input} />
-                        <Button text='SAVE' onClick={undefined} />
+                        <Button submit={undefined} text='SAVE' onClick={undefined} />
                     </div>
                     <div className={ProfilePageCSS.subsection}>
                         <div className={ProfilePageCSS.warning}>
@@ -34,7 +34,7 @@ const ProfilePage = () => {
                         <InputField usage='Old Password' className={ProfilePageCSS.input} />
                         <InputField usage='New Password' className={ProfilePageCSS.input} />
                         <InputField usage='Confirm Password' className={ProfilePageCSS.input} />
-                        <Button text='CHANGE' onClick={undefined} />
+                        <Button submit={undefined} text='CHANGE' onClick={undefined} />
                     </div>
                 </div>
             </div>

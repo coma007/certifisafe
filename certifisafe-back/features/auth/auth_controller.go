@@ -5,9 +5,9 @@ import (
 	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
 type AuthController struct {
@@ -19,10 +19,17 @@ func NewAuthController(authService AuthService) *AuthController {
 }
 
 func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Usao")
 	var credentials user.Credentials
 	err := utils.ReadRequestBody(w, r, &credentials)
 	if err != nil {
+		return
+	}
+
+	// template for validation
+	err = credentials.Validate()
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -43,6 +50,12 @@ func (controller *AuthController) Register(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	err = u.Validate()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	newUser, err := controller.authService.Register(user.UserRegisterDTOtoModel(&u))
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
@@ -59,6 +72,12 @@ func (controller *AuthController) PasswordRecoveryRequest(w http.ResponseWriter,
 		return
 	}
 
+	err = request.Validate()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
@@ -72,6 +91,12 @@ func (controller *AuthController) PasswordRecovery(w http.ResponseWriter, r *htt
 	var request password_recovery.PasswordResetDTO
 	err := utils.ReadRequestBody(w, r, &request)
 	if err != nil {
+		return
+	}
+
+	err = request.Validate()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -93,6 +118,11 @@ func (controller *AuthController) PasswordRecovery(w http.ResponseWriter, r *htt
 
 func (controller *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	code := utils.ReadVerificationCodeFromUrl(w, r)
+
+	if strings.Compare("", strings.TrimSpace(code)) == 0 {
+		http.Error(w, "Code cannot be empty string", http.StatusBadRequest)
+		return
+	}
 	err := controller.authService.VerifyEmail(code)
 	if err != nil {
 		http.Error(w, "Email verification failed", getAuthErrorStatus(err))

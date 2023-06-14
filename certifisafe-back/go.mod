@@ -5,8 +5,6 @@ go 1.20
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/gorilla/mux v1.8.0
-	github.com/julienschmidt/httprouter v1.3.0
-	github.com/lib/pq v1.10.7
 	github.com/rs/cors v1.9.0
 	github.com/twilio/twilio-go v1.7.0
 	golang.org/x/crypto v0.7.0
@@ -16,6 +14,8 @@ require (
 )
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
+	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect

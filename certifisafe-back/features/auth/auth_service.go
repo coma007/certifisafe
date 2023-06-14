@@ -148,6 +148,7 @@ func (service *DefaultAuthService) ValidateToken(tokenString string) (bool, erro
 	return false, nil
 }
 
+// TODO: return error if user doesn't exist
 func (service *DefaultAuthService) GetUserFromToken(tokenString string) user.User {
 	_, claims, _, _ := service.GetClaims(tokenString)
 	email := claims.Email
@@ -402,7 +403,7 @@ func (service *DefaultAuthService) validateRegistrationData(u *user.User) (bool,
 		return false, ErrWrongPasswordFormat
 	}
 	match, err = regexp.Match("^[0-9]*$", []byte(u.Phone))
-	if err != nil || !match || u.Phone == "" || (len(u.Phone) != 9 && len(u.Phone) != 10) {
+	if err != nil || !match || u.Phone == "" {
 		return false, ErrWrongPhoneFormat
 	}
 	return true, nil

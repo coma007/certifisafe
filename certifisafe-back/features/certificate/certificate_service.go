@@ -217,7 +217,7 @@ func (service *DefaultCertificateService) WithdrawCertificate(id uint64, user us
 func (service *DefaultCertificateService) IsValidById(id uint64) (bool, error) {
 	certificate, err := service.certificateFileStoreRepo.GetCertificate(uint(id))
 	if err != nil {
-		return false, nil
+		return false, err
 	}
 	return service.IsValid(certificate)
 }
