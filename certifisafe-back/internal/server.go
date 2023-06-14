@@ -58,7 +58,10 @@ func (server *DefaultServer) initRoutes() *mux.Router {
 	router.HandleFunc("/api/certificate/generate", server.middleware(server.app.Controllers.RequestController.GenerateCertificates)).Methods("PATCH")
 
 	router.HandleFunc("/api/login", server.app.Controllers.AuthController.Login).Methods("POST")
+	router.HandleFunc("/api/login/oauth", server.app.Controllers.AuthController.OauthLogin).Methods("GET")
+	router.HandleFunc("/api/login/oauth/callback", server.app.Controllers.AuthController.OauthCallback).Methods("GET")
 	router.HandleFunc("/api/register", server.app.Controllers.AuthController.Register).Methods("POST")
+	router.HandleFunc("/api/register/oauth", server.app.Controllers.AuthController.OauthRegister).Methods("GET")
 	router.HandleFunc("/api/verify-email/{verificationCode}", server.app.Controllers.AuthController.VerifyEmail).Methods("GET")
 	router.HandleFunc("/api/password-recovery-request", server.app.Controllers.AuthController.PasswordRecoveryRequest).Methods("POST")
 	router.HandleFunc("/api/password-recovery", server.app.Controllers.AuthController.PasswordRecovery).Methods("POST")
