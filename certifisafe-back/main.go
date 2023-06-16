@@ -31,7 +31,7 @@ func main() {
 	dbuser := config["user"]
 
 	//require& sslrootcert=%s& sslcert=%s& sslkey=%s
-	dbString := fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=require& sslrootcert=%s& sslcert=%s& sslkey=%s",
+	dbString := fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disabled",
 		dbuser, password, "root.crt", "srv.crt", "srv.key")
 
 	dbPostgree := postgres.Open(dbString)
