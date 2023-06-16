@@ -41,6 +41,23 @@ func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	utils.ReturnResponse(w, err, token, http.StatusNoContent)
+}
+
+func (controller *AuthController) TwoFactorAuth(w http.ResponseWriter, r *http.Request) {
+	var code CodeDTO
+	err := utils.ReadRequestBody(w, r, &code)
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		return
+	}
+
+	token, err := controller.authService.TwoFactorAuth(code.VerificationCode)
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		return
+	}
+
 	utils.ReturnResponse(w, err, token, http.StatusOK)
 }
 
@@ -80,7 +97,7 @@ func (controller *AuthController) PasswordRecoveryRequest(w http.ResponseWriter,
 		return
 	}
 
-	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type)
+	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type, 0)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -147,6 +164,8 @@ func getAuthErrorStatus(err error) int {
 		errors.Is(err, ErrNotActivated) ||
 		errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest
+	} else if errors.Is(err, ErrPasswordChange) {
+		return http.StatusForbidden
 	}
 	return http.StatusInternalServerError
 }
