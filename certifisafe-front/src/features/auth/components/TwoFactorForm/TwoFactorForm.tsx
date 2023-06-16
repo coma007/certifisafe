@@ -13,7 +13,6 @@ const TwoFactorForm = () => {
     const onClick = () => {
         (async function () {
             try {
-                console.log(code)
                 const jwt = await AuthService.tfactorauth({ VerificationCode: code });
                 localStorage.setItem("token", jwt)
                 navigate("/")

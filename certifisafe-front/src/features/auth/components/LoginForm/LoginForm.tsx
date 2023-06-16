@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 
-const LoginForm = (props: { twoFactor: any }) => {
+const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
 
   const navigate = useNavigate();
 
@@ -19,10 +19,15 @@ const LoginForm = (props: { twoFactor: any }) => {
       try {
           const jwt = await AuthService.login({ Email: email, Password: password });
           props.twoFactor();
+          
           // TODO change flow bellow
           
       } catch (error: any) {
-        alert(error.response.data);
+        if (error.response.status == 403) {
+          props.resetPassword();
+        } else {
+          alert(error.response.data);
+        }
     }
     })()
   }

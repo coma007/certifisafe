@@ -37,7 +37,7 @@ const PasswordRecoveryPage = () => {
               Please enter the code below and a new password.
             </span>
           </div>
-          <PasswordRecoveryForm />
+          <PasswordRecoveryForm resetPage={null}/>
         </div>
       )}
     </div>

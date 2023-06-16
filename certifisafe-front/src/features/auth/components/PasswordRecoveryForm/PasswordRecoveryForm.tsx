@@ -10,7 +10,7 @@ import { AuthService } from 'features/auth/services/AuthService'
 import { useNavigate } from 'react-router-dom'
 
 
-const PasswordRecoveryForm = () => {
+const PasswordRecoveryForm = (props : {resetPage : any}) => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [code, setCode] = useState('');
@@ -21,7 +21,11 @@ const PasswordRecoveryForm = () => {
             (async function () {
                 try {
                     await AuthService.passwordReset({ VerificationCode: code, newPassword: newPassword });
+                    if (props.resetPage === null) {
                     navigate("/login")
+                    } else {
+                        props.resetPage();
+                    }
                 } catch (error: any) {
                 alert(error.response.data);
             }
