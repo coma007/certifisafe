@@ -25,7 +25,7 @@ func NewDefaultRouter(app *DefaultAppFactory) *DefaultServer {
 }
 
 func (server DefaultServer) ListenAndServe() {
-	fmt.Println("http server runs on :8443")
+	fmt.Println("https server runs on :8443")
 	router := server.initRoutes()
 	handler := server.handleCORS(router)
 	//cert, err := tls.LoadX509KeyPair(filepath.Join("public", "server.crt"), filepath.Join("private", "server.key"))
@@ -72,7 +72,7 @@ func (server *DefaultServer) initRoutes() *mux.Router {
 
 	router.HandleFunc("/api/oauth", server.LoggingMiddleware(server.app.Controllers.OauthController.Oauth)).Methods("GET")
 	router.HandleFunc("/api/oauth/callback", server.LoggingMiddleware(server.app.Controllers.OauthController.OauthCallback)).Methods("GET")
-  
+
 	router.HandleFunc("/api/user-info", server.LoggingMiddleware(server.middleware(server.app.Controllers.AuthController.GetUserInfo))).Methods("GET")
 
 	return router
