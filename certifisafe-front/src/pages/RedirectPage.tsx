@@ -1,28 +1,16 @@
+import Cookies from 'js-cookie';
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 function RedirectPage() {
     useEffect(() => {
-        const token = getCookieValue('token');
-
-        if (typeof window !== 'undefined') {
+        const searchParams = new URLSearchParams(window.location.search);
+        const token = searchParams.get('token');
+        if (token) {
             localStorage.setItem('token', token);
         }
-
         window.location.href = "/";
     }, []);
-
-    const getCookieValue = (name: any) => {
-        if (typeof document !== 'undefined') {
-            const cookies = document.cookie.split('; ');
-            for (const element of cookies) {
-                const cookie = element.split('=');
-                if (cookie[0] === name) {
-                    return cookie[1];
-                }
-            }
-        }
-        return '';
-    };
 
     return (
         <div>
