@@ -19,6 +19,14 @@ input[type=file] {
     font-size: 14px;
 }
 
+.inline {
+    display: flex;
+}
+
+.button {
+    margin-left: 10px;
+}
+
 .section label {
     display: flex;
     height: 2.2rem;
