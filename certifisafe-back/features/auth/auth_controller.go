@@ -49,6 +49,12 @@ func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	err = controller.authService.CheckRecaptcha(credentials.Token)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	token, err := controller.authService.Login(credentials.Email, credentials.Password)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
@@ -89,6 +95,12 @@ func (controller *AuthController) Register(w http.ResponseWriter, r *http.Reques
 	}
 
 	err = u.Validate()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = controller.authService.CheckRecaptcha(u.Token)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

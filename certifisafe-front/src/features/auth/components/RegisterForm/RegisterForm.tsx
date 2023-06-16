@@ -1,11 +1,12 @@
 import Button from 'components/forms/Button/Button'
 import InputField from 'components/forms/InputField/InputField'
 import RegisterFormCSS from './RegisterForm.module.scss'
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { AuthService } from 'features/auth/services/AuthService';
 import { useNavigate } from "react-router-dom";
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const RegisterForm = () => {
 
@@ -41,13 +42,21 @@ const RegisterForm = () => {
   const onClick = () => {
     (async function () {
       try {
-        await AuthService.register({ Email: email, Password: password, Phone: phoneNumber, FirstName: firstName, LastName: lastName })
+        await AuthService.register({ Email: email, Password: password, Phone: phoneNumber, FirstName: firstName, LastName: lastName,  Token:  captchaRef.current?.getValue() })
         navigate("/login")
       } catch (error: any) {
        // alert(error.response.data);
       }
     })()
 
+  }
+
+  const captchaRef: any = useRef(null)
+
+  const handleSubmit = (e: any) =>{
+    e.preventDefault();
+    const token = captchaRef.current?.getValue();
+    captchaRef.current.reset();
   }
 
   return (
@@ -59,6 +68,7 @@ const RegisterForm = () => {
       email: "",
       password: "",
       "confirm password": "",
+      token: "",
     }}
     validationSchema={schema}
     onSubmit={values => {
@@ -66,7 +76,7 @@ const RegisterForm = () => {
     }}
   >
     {({ errors, touched, setFieldValue }) => (
-      <Form>
+      <Form onSubmit={handleSubmit}>
         <Field name="first name" component={ InputField} className={RegisterFormCSS.inlineInput} usage="First name" value={firstName} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setFirstName(e.target.value);
                     setFieldValue("first name", e.target.value);
@@ -109,6 +119,7 @@ const RegisterForm = () => {
             <Button submit="submit" onClick={onClick} text="Get started" />
           </span>
         </div>
+        <ReCAPTCHA className='center' sitekey={process.env.REACT_APP_SITE_KEY as string}  ref={captchaRef}/>
       </Form>
   )}
   </Formik >

@@ -6,6 +6,7 @@ import (
 	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"
@@ -14,6 +15,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"math/big"
+	"net/http"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -48,6 +50,7 @@ type AuthService interface {
 	GetUserByEmail(email string) (user.User, error)
 	RequestPasswordRecoveryToken(email string, t int, templateType int) error
 	PasswordRecovery(request *password_recovery.PasswordRecovery) error
+	CheckRecaptcha(token string) error
 }
 
 type DefaultAuthService struct {
@@ -528,4 +531,61 @@ func (service *DefaultAuthService) isPasswordUsed(email string, password string)
 		return true
 	}
 	return false
+}
+
+type siteVerifyResponse struct {
+	Success     bool      `json:"success"`
+	Score       float64   `json:"score"`
+	Action      string    `json:"action"`
+	ChallengeTS time.Time `json:"challenge_ts"`
+	Hostname    string    `json:"hostname"`
+	ErrorCodes  []string  `json:"error-codes"`
+}
+
+func (service *DefaultAuthService) CheckRecaptcha(token string) error {
+	config := utils.Config()
+	secret := config["recaptcha_secret"]
+	const siteVerifyURL = "https://www.google.com/recaptcha/api/siteverify"
+	//siteVerifyURL := fmt.Sprintf("https://www.google.com/recaptcha/api/siteverify?secret=%s&response=%s",
+	//	secret, token)
+	req, err := http.NewRequest(http.MethodPost, siteVerifyURL, nil)
+	if err != nil {
+		return err
+	}
+
+	// Add necessary request parameters.
+	q := req.URL.Query()
+	q.Add("secret", secret)
+	q.Add("response", token)
+	req.URL.RawQuery = q.Encode()
+
+	// Make request
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Decode response.
+	var body siteVerifyResponse
+	if err = json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		return err
+	}
+
+	// Check recaptcha verification success.
+	if !body.Success {
+		return errors.New("unsuccessful recaptcha verify request")
+	}
+
+	// Check response score.
+	//if body.Score < 0.5 {
+	//	return errors.New("lower received score than expected")
+	//}
+
+	// Check response action.
+	//if body.Action != "validation" {
+	//	return errors.New("mismatched recaptcha action")
+	//}
+
+	return nil
 }

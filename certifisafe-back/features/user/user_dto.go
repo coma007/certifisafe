@@ -17,11 +17,13 @@ type UserRegisterDTO struct {
 	FirstName string
 	LastName  string
 	Phone     string
+	Token     string
 }
 
 type Credentials struct {
 	Email    string
 	Password string
+	Token    string
 }
 
 func UserRegisterDTOtoModel(u *UserRegisterDTO) *User {
