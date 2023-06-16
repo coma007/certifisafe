@@ -35,13 +35,12 @@ const ProfilePage = () => {
                         <div className={ProfilePageCSS.mainInfo}>
                             <img src={Profile} />
                             <div className={ProfilePageCSS.input}>
-                                <InputField value={firstName} onChange={setFirstName} usage='First Name' className={ProfilePageCSS.input} />
-                                <InputField value={lastName} onChange={setLastName} usage='Last Name' className={ProfilePageCSS.input} />
+                                <InputField disabled={true} value={firstName} onChange={setFirstName} usage='First Name' className={ProfilePageCSS.input} />
+                                <InputField disabled={true} value={lastName} onChange={setLastName} usage='Last Name' className={ProfilePageCSS.input} />
                             </div>
                         </div>
-                        <InputField value={email} onChange={setEmail} usage='Email' className={ProfilePageCSS.input} />
-                        <InputField value={phone} onChange={setPhone} usage='Phone' className={ProfilePageCSS.input} />
-                        <Button submit={undefined} text='SAVE' onClick={undefined}/>
+                        <InputField disabled={true} value={email} onChange={setEmail} usage='Email' className={ProfilePageCSS.input} />
+                        <InputField disabled={true} value={phone} onChange={setPhone} usage='Phone' className={ProfilePageCSS.input} /> 
                     </div>
                 </div>
             </div>
