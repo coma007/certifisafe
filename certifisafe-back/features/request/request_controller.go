@@ -154,7 +154,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 	// dummy data
 	rootDTO := &NewRequestDTO{
 		ParentSerial:    nil,
-		CertificateName: "root",
+		CertificateName: "some root name",
 		CertificateType: "ROOT",
 		SubjectId:       1,
 	}
@@ -173,7 +173,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 	parentSerial := uint(*root.Serial)
 	intermediateDTO := &NewRequestDTO{
 		ParentSerial:    &parentSerial,
-		CertificateName: "intermediate",
+		CertificateName: "localhost",
 		CertificateType: "INTERMEDIATE",
 		SubjectId:       1,
 	}

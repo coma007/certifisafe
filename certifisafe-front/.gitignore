@@ -146,6 +146,8 @@ dist
 **/*.backup.*
 **/*.back.*
 
+**/api_keys.go
+
 node_modules
 
 *.sublime*
