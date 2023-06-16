@@ -9,7 +9,7 @@ import InputField from 'components/forms/InputField/InputField'
 const RequestCreatePage = (props: { createIsOpen: boolean, closeCreateModal: any }) => {
     return (
         <ModalWindow
-            height="87%"
+            height="82%"
             isOpen={props.createIsOpen}
             closeWithdrawalModal={props.closeCreateModal}
             title="Create new certificate"
