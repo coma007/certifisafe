@@ -60,6 +60,7 @@ func (server *DefaultServer) initRoutes() *mux.Router {
 	router.HandleFunc("/api/login", server.app.Controllers.AuthController.Login).Methods("POST")
 	router.HandleFunc("/api/login/oauth", server.app.Controllers.AuthController.OauthLogin).Methods("GET")
 	router.HandleFunc("/api/login/oauth/callback", server.app.Controllers.AuthController.OauthCallback).Methods("GET")
+	router.HandleFunc("/api/two-factor-auth", server.app.Controllers.AuthController.TwoFactorAuth).Methods("POST")
 	router.HandleFunc("/api/register", server.app.Controllers.AuthController.Register).Methods("POST")
 	router.HandleFunc("/api/register/oauth", server.app.Controllers.AuthController.OauthRegister).Methods("GET")
 	router.HandleFunc("/api/verify-email/{verificationCode}", server.app.Controllers.AuthController.VerifyEmail).Methods("GET")

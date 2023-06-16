@@ -15,6 +15,7 @@ type DefaultServiceFactory struct {
 	AuthService        auth.AuthService
 	CertificateService certificate.CertificateService
 	RequestService     request.RequestService
+	MailService        auth.MailService
 }
 
 func NewDefaultServiceFactory(repoFactory DefaultRepositoryFactory) *DefaultServiceFactory {
@@ -24,7 +25,8 @@ func NewDefaultServiceFactory(repoFactory DefaultRepositoryFactory) *DefaultServ
 }
 
 func (serviceFactory *DefaultServiceFactory) InitServices() {
-	serviceFactory.AuthService = auth.NewDefaultAuthService(serviceFactory.repoFactory.UserRepository, serviceFactory.repoFactory.PasswordRecoveryRepository, serviceFactory.repoFactory.VerificationRepository)
+	serviceFactory.MailService = auth.NewDefaultMailService()
+	serviceFactory.AuthService = auth.NewDefaultAuthService(serviceFactory.MailService, serviceFactory.repoFactory.UserRepository, serviceFactory.repoFactory.PasswordRecoveryRepository, serviceFactory.repoFactory.PasswordHistoryRepository, serviceFactory.repoFactory.VerificationRepository)
 	serviceFactory.CertificateService = certificate.NewDefaultCertificateService(serviceFactory.repoFactory.CertificateDBRepository, serviceFactory.repoFactory.CertificateFileStoreRepository, serviceFactory.repoFactory.UserRepository)
 	serviceFactory.RequestService = request.NewDefaultRequestService(serviceFactory.repoFactory.RequestRepository, serviceFactory.CertificateService, serviceFactory.repoFactory.UserRepository)
 }
