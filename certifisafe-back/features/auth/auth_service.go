@@ -40,6 +40,7 @@ var (
 type AuthService interface {
 	Login(email string, password string) (string, error)
 	Register(user *user.User) (*user.User, error)
+	GenerateJWT(user user.User, err error) (string, error)
 	TwoFactorAuth(code string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
 	HashToken(password string) ([]byte, error)
@@ -157,6 +158,15 @@ func (service *DefaultAuthService) TwoFactorAuth(code string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	tokenString, err := service.GenerateJWT(user, err)
+
+	utils.CheckError(err)
+
+	return tokenString, nil
+
+}
+
+func (service *DefaultAuthService) GenerateJWT(user user.User, err error) (string, error) {
 	expirationTime := time.Now().Add(time.Minute * 60)
 
 	claims := &Claims{
@@ -167,11 +177,7 @@ func (service *DefaultAuthService) TwoFactorAuth(code string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(jwtKey)
-
-	utils.CheckError(err)
-
-	return tokenString, nil
-
+	return tokenString, err
 }
 
 func (service *DefaultAuthService) GetUserByEmail(email string) (user.User, error) {

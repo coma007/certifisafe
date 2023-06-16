@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -60,13 +61,10 @@ func (controller *OauthController) OauthCallback(w http.ResponseWriter, r *http.
 	}
 
 	token, err := controller.oauthService.AuthenticateUser(data)
-
-	cookie := http.Cookie{
-		Name:  "token",
-		Value: token,
-	}
-	http.SetCookie(w, &cookie)
-	http.Redirect(w, r, controller.clientURL, http.StatusSeeOther)
+	query := url.Values{}
+	query.Add("token", token)
+	controller.clientURL += "?" + query.Encode()
+	http.Redirect(w, r, controller.clientURL, http.StatusMovedPermanently)
 }
 
 func (controller *OauthController) generateStateOauthCookie(w http.ResponseWriter) string {

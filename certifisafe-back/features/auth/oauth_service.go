@@ -43,7 +43,7 @@ func (service *DefaultOauthService) AuthenticateUser(data []byte) (string, error
 			return "", err
 		}
 	}
-	return service.authService.Login(oauthUserMap["email"], oauthUserMap["id"])
+	return service.authService.GenerateJWT(*oauthUser, err)
 }
 
 func (service *DefaultOauthService) createUser(oauthUser *user.User) error {
