@@ -7,14 +7,12 @@ import (
 	"certifisafe-back/utils"
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/twilio/twilio-go"
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"math/big"
-	"net/smtp"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -24,44 +22,53 @@ import (
 )
 
 var (
-	ErrNoUserWithEmail     = errors.New("no user for given email")
-	ErrBadCredentials      = errors.New("bad username or password")
-	ErrNotActivated        = errors.New("account is not activated")
-	ErrTakenEmail          = errors.New("email already taken")
-	ErrWrongEmailFormat    = errors.New("not valid email")
-	ErrEmptyName           = errors.New("name cannot be empty")
-	ErrWrongPhoneFormat    = errors.New("not valid phone")
-	ErrWrongPasswordFormat = errors.New("not valid password")
-	ErrCodeUsed            = errors.New("verification code is used")
-	ErrCodeNotFound        = errors.New("verification code cannot be found")
+	ErrNoUserWithEmail      = errors.New("no user for given email")
+	ErrBadCredentials       = errors.New("bad username or password")
+	ErrNotActivated         = errors.New("account is not activated")
+	ErrPasswordChange       = errors.New("password needs to be changed, email has been sent")
+	ErrPasswordNotAvailable = errors.New("cannot use old password")
+	ErrTakenEmail           = errors.New("email already taken")
+	ErrWrongEmailFormat     = errors.New("not valid email")
+	ErrEmptyName            = errors.New("name cannot be empty")
+	ErrWrongPhoneFormat     = errors.New("not valid phone")
+	ErrWrongPasswordFormat  = errors.New("not valid password")
+	ErrCodeUsed             = errors.New("verification code is used")
+	ErrCodeNotFound         = errors.New("verification code cannot be found")
 )
 
 type AuthService interface {
 	Login(email string, password string) (string, error)
-	ValidateToken(tokenString string) (bool, error)
 	Register(user *user.User) (*user.User, error)
+	GenerateJWT(user user.User, err error) (string, error)
+	TwoFactorAuth(code string) (string, error)
+	ValidateToken(tokenString string) (bool, error)
+	HashToken(password string) ([]byte, error)
 	VerifyEmail(verificationCode string) error
 	GetUserFromToken(tokenString string) user.User
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
 	GetUserByEmail(email string) (user.User, error)
-	RequestPasswordRecoveryToken(email string, t int) error
+	RequestPasswordRecoveryToken(email string, t int, templateType int) error
 	PasswordRecovery(request *password_recovery.PasswordRecovery) error
 }
 
-// TODO check if everything works - Duti (Bobi made changes)
 // TODO separate mails to email_service.go
 type DefaultAuthService struct {
+	mailService                 MailService
 	userRepository              user.UserRepository
 	passwordRecoveryRepository  password_recovery.PasswordRecoveryRepository
+	passwordHistoryRepository   password_recovery.PasswordHistoryRepository
 	verificationRepository      VerificationRepository
 	verificationTokenCharacters string
 }
 
-func NewDefaultAuthService(userRepo user.UserRepository, passwordRecoveryRepo password_recovery.PasswordRecoveryRepository,
+func NewDefaultAuthService(mailService MailService, userRepo user.UserRepository, passwordRecoveryRepo password_recovery.PasswordRecoveryRepository,
+	passwordHistoryRepo password_recovery.PasswordHistoryRepository,
 	verificationRepo VerificationRepository) *DefaultAuthService {
-	return &DefaultAuthService{userRepository: userRepo,
+	return &DefaultAuthService{mailService: mailService,
+		userRepository:              userRepo,
 		passwordRecoveryRepository:  passwordRecoveryRepo,
 		verificationRepository:      verificationRepo,
+		passwordHistoryRepository:   passwordHistoryRepo,
 		verificationTokenCharacters: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"}
 }
 
@@ -86,23 +93,92 @@ func (service *DefaultAuthService) Login(email string, password string) (string,
 		if !user.IsActive {
 			return "", ErrNotActivated
 		}
-		expirationTime := time.Now().Add(time.Minute * 60)
+		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60*24 {
+			err := service.RequestPasswordRecoveryToken(user.Email, 0, 1)
+			if err != nil {
+				return "", err
+			}
+			return "", ErrPasswordChange
+		} else {
+			to := []string{user.Email}
+			code, err := service.getVerificationToken(4, true)
 
-		claims := &Claims{
-			Email:          email,
-			StandardClaims: jwt.StandardClaims{ExpiresAt: expirationTime.Unix()},
+			if err != nil {
+				return "", err
+			}
+
+			templateFile, _ := filepath.Abs("resources/templates/twofactorAuth.html")
+			temp, err := template.ParseFiles(templateFile)
+
+			if err != nil {
+				return "", err
+			}
+
+			var body bytes.Buffer
+
+			if err != nil {
+				return "", err
+			}
+
+			temp.Execute(&body, struct {
+				Name string
+				Code string
+			}{
+				Name: user.FirstName + " " + user.LastName,
+				Code: code,
+			})
+
+			_, err = service.verificationRepository.CreateVerification(0, Verification{
+				Email: user.Email,
+				Code:  code,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			_ = service.sendSMS(code)
+			err = service.mailService.SendMail(to, body)
+			if err != nil {
+				return "", err
+			}
+			return "", nil
 		}
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-		tokenString, err := token.SignedString(jwtKey)
-
-		utils.CheckError(err)
-
-		return tokenString, nil
 	}
 
 	return "", ErrBadCredentials
+}
+
+func (service *DefaultAuthService) TwoFactorAuth(code string) (string, error) {
+	verification, err := service.verificationRepository.GetVerificationByCode(code)
+	if err != nil {
+		return "", ErrCodeNotFound
+	}
+	user, err := service.userRepository.GetUserByEmail(verification.Email)
+	if err != nil {
+		return "", err
+	}
+	tokenString, err := service.GenerateJWT(user, err)
+	
+	utils.CheckError(err)
+
+	service.verificationRepository.DeleteVerification(int32(verification.ID))
+
+	return tokenString, nil
+
+}
+
+func (service *DefaultAuthService) GenerateJWT(user user.User, err error) (string, error) {
+	expirationTime := time.Now().Add(time.Minute * 60)
+
+	claims := &Claims{
+		Email:          user.Email,
+		StandardClaims: jwt.StandardClaims{ExpiresAt: expirationTime.Unix()},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString(jwtKey)
+	return tokenString, err
 }
 
 func (service *DefaultAuthService) GetUserByEmail(email string) (user.User, error) {
@@ -117,15 +193,16 @@ func (service *DefaultAuthService) Register(u *user.User) (*user.User, error) {
 	}
 	_, err = service.userRepository.GetUserByEmail(u.Email)
 	if err == gorm.ErrRecordNotFound {
-		passwordBytes, err := service.hashToken(u.Password)
+		passwordBytes, err := service.HashToken(u.Password)
 		utils.CheckError(err)
 		u.Password = string(passwordBytes)
+		u.LastPasswordSet = time.Now()
 		createdUser, err := service.userRepository.CreateUser(*u)
 		if err != nil {
 			return &user.User{}, err
 		}
 
-		//add phone option
+		//TODO add phone option
 		service.sendVerification(u)
 
 		return &createdUser, nil
@@ -181,7 +258,7 @@ func (service *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *C
 }
 
 // 0 - email, 1 - phone
-func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int) error {
+func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int, templateType int) error {
 	var user user.User
 	var err error
 	if t == 0 {
@@ -195,7 +272,13 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 
 	to := []string{user.Email}
 
-	templateFile, _ := filepath.Abs("resources/templates/passwordRecovery.html")
+	var templateFile string
+
+	if templateType == 0 {
+		templateFile, _ = filepath.Abs("resources/templates/passwordRecovery.html")
+	} else {
+		templateFile, _ = filepath.Abs("resources/templates/passwordRotation.html")
+	}
 	temp, err := template.ParseFiles(templateFile)
 
 	if err != nil {
@@ -203,8 +286,6 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 	}
 
 	var body bytes.Buffer
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%service\n\n", mimeHeaders)))
 
 	verificationToken, err := service.getVerificationToken(4, false)
 
@@ -233,7 +314,7 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 		return nil
 	}
 
-	err = service.sendMail(to, body)
+	err = service.mailService.SendMail(to, body)
 	if err != nil {
 		return err
 	}
@@ -242,8 +323,8 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 
 func (service *DefaultAuthService) sendSMS(verificationToken string) error {
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
-		Username: "ACfa3e5d6f88377babb803e52047931303",
-		Password: "b94ed9430a56e4b7f04cb578b30ddb7c",
+		Username: TwillioApiUsername,
+		Password: TwillioApiPassword,
 	})
 
 	params := &openapi.CreateMessageParams{}
@@ -252,11 +333,6 @@ func (service *DefaultAuthService) sendSMS(verificationToken string) error {
 	params.SetBody("Here is your one time recovery code: " + verificationToken)
 
 	_, err := client.Api.CreateMessage(params)
-	if err != nil {
-		fmt.Println(err.Error())
-	} else {
-		fmt.Println("SMS sent successfully!")
-	}
 	return err
 }
 
@@ -280,11 +356,15 @@ func (service *DefaultAuthService) PasswordRecovery(request *password_recovery.P
 		return ErrWrongPasswordFormat
 	}
 
-	hashedPassword, err := service.hashToken(request.NewPassword)
+	if service.isPasswordUsed(user.Email, request.NewPassword) {
+		return ErrPasswordNotAvailable
+	}
+	hashedPassword, err := service.HashToken(request.NewPassword)
 	if err != nil {
 		return err
 	}
 	user.Password = string(hashedPassword)
+	user.LastPasswordSet = time.Now()
 	service.userRepository.UpdateUser(user.ID, user)
 	service.passwordRecoveryRepository.UseRequestsForEmail(user.Email)
 	return nil
@@ -307,19 +387,6 @@ func (service *DefaultAuthService) VerifyEmail(verificationCode string) error {
 	return nil
 }
 
-func (service *DefaultAuthService) sendMail(to []string, body bytes.Buffer) error {
-	from := "ftn.project.usertest@gmail.com"
-	password := "zmiwmhfweojejlqy"
-
-	smtpHost := "smtp.gmail.com"
-	smtpPort := "587"
-
-	auth := smtp.PlainAuth("", from, password, smtpHost)
-
-	go smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, body.Bytes())
-	return nil
-}
-
 func (service *DefaultAuthService) sendVerification(user *user.User) error {
 	to := []string{user.Email}
 
@@ -331,8 +398,6 @@ func (service *DefaultAuthService) sendVerification(user *user.User) error {
 	}
 
 	var body bytes.Buffer
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%service\n\n", mimeHeaders)))
 
 	verificationToken, err := service.getVerificationToken(10, true)
 	if err != nil {
@@ -356,7 +421,7 @@ func (service *DefaultAuthService) sendVerification(user *user.User) error {
 		Code: verificationToken,
 	})
 
-	service.sendMail(to, body)
+	service.mailService.SendMail(to, body)
 	return nil
 }
 
@@ -386,7 +451,7 @@ func (service *DefaultAuthService) getVerificationToken(length int, verification
 	return verificationString, nil
 }
 
-func (service *DefaultAuthService) hashToken(password string) ([]byte, error) {
+func (service *DefaultAuthService) HashToken(password string) ([]byte, error) {
 	passwordBytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	return passwordBytes, err
 }
@@ -425,4 +490,43 @@ func (service *DefaultAuthService) verifyPassword(password string) bool {
 		}
 	}
 	return number && upper && lower && len(password) >= 8
+}
+
+func (service *DefaultAuthService) isPasswordUsed(email string, password string) bool {
+
+	history, err := service.passwordHistoryRepository.GetHistoryByEmail(email)
+	if err != nil {
+		return true
+	}
+
+	for _, element := range history {
+		if bcrypt.CompareHashAndPassword([]byte(element.ForbiddenPassword), []byte(password)) == nil {
+			return true
+		}
+	}
+
+	numberOfPasswords := len(history)
+	if numberOfPasswords == 2 {
+		firstPassword := history[0]
+		for _, element := range history {
+			if element.ID < firstPassword.ID {
+				firstPassword = element
+			}
+		}
+		service.passwordHistoryRepository.DeleteHistory(int32(firstPassword.ID))
+	}
+	hashedPassword, err := service.HashToken(password)
+	if err != nil {
+		return true
+	}
+	_, err = service.passwordHistoryRepository.CreateHistory(0, password_recovery.PasswordHistory{
+		Model:             gorm.Model{},
+		Deleted:           gorm.DeletedAt{},
+		UserEmail:         email,
+		ForbiddenPassword: string(hashedPassword),
+	})
+	if err != nil {
+		return true
+	}
+	return false
 }

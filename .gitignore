@@ -260,3 +260,4 @@ sketch
 
 # End of https://www.toptal.com/developers/gitignore/api/go,goland,react,visualstudiocode
 
+certifisafe-back/features/auth/api_keys.go

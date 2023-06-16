@@ -15,25 +15,48 @@ type AuthController struct {
 }
 
 func NewAuthController(authService AuthService) *AuthController {
-	return &AuthController{authService: authService}
+	return &AuthController{
+		authService: authService,
+	}
 }
 
 func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	var credentials user.Credentials
 	err := utils.ReadRequestBody(w, r, &credentials)
 	if err != nil {
+		//utils.LogError()
 		return
 	}
 
-	// template for validation
 	err = credentials.Validate()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		//utils.LogError("LOGIN error - " + err.Error())
 		return
 	}
 
 	token, err := controller.authService.Login(credentials.Email, credentials.Password)
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		//utils.LogError("LOGIN error - " + err.Error())
+		return
+	}
+
+	//utils.LogInfo("LOGIN success")
+	utils.ReturnResponse(w, err, token, http.StatusNoContent)
+}
+
+func (controller *AuthController) TwoFactorAuth(w http.ResponseWriter, r *http.Request) {
+
+	var code CodeDTO
+	err := utils.ReadRequestBody(w, r, &code)
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		return
+	}
+
+	token, err := controller.authService.TwoFactorAuth(code.VerificationCode)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -78,7 +101,7 @@ func (controller *AuthController) PasswordRecoveryRequest(w http.ResponseWriter,
 		return
 	}
 
-	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type)
+	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type, 0)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -133,6 +156,19 @@ func (controller *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Req
 	w.Write([]byte("Email successfully verified"))
 }
 
+func (controller *AuthController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("Authorization")
+	u := controller.authService.GetUserFromToken(token)
+	info := user.UserBaseDTO{
+		Email:     u.Email,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Phone:     u.Phone,
+	}
+
+	utils.ReturnResponse(w, nil, info, http.StatusOK)
+}
+
 func getAuthErrorStatus(err error) int {
 	if errors.Is(err, ErrBadCredentials) ||
 		errors.Is(err, ErrTakenEmail) ||
@@ -145,6 +181,8 @@ func getAuthErrorStatus(err error) int {
 		errors.Is(err, ErrNotActivated) ||
 		errors.Is(err, gorm.ErrRecordNotFound) {
 		return http.StatusBadRequest
+	} else if errors.Is(err, ErrPasswordChange) {
+		return http.StatusForbidden
 	}
 	return http.StatusInternalServerError
 }

@@ -44,7 +44,7 @@ const RegisterForm = () => {
         await AuthService.register({ Email: email, Password: password, Phone: phoneNumber, FirstName: firstName, LastName: lastName })
         navigate("/login")
       } catch (error: any) {
-       // alert(error.response.data);
+       alert(error.response.data);
       }
     })()
 
