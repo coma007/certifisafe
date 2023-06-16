@@ -152,6 +152,19 @@ func (controller *AuthController) VerifyEmail(w http.ResponseWriter, r *http.Req
 	w.Write([]byte("Email successfully verified"))
 }
 
+func (controller *AuthController) GetUserInfo(w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("Authorization")
+	u := controller.authService.GetUserFromToken(token)
+	info := user.UserBaseDTO{
+		Email:     u.Email,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Phone:     u.Phone,
+	}
+
+	utils.ReturnResponse(w, nil, info, http.StatusOK)
+}
+
 func getAuthErrorStatus(err error) int {
 	if errors.Is(err, ErrBadCredentials) ||
 		errors.Is(err, ErrTakenEmail) ||

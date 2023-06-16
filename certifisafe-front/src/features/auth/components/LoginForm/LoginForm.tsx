@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 
-const LoginForm = (props: { twoFactor: any }) => {
+const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
 
   const navigate = useNavigate();
 
@@ -19,11 +19,15 @@ const LoginForm = (props: { twoFactor: any }) => {
       try {
           const jwt = await AuthService.login({ Email: email, Password: password });
           props.twoFactor();
+          
           // TODO change flow bellow
-          localStorage.setItem("token", jwt)
-          // navigate("/")
+          
       } catch (error: any) {
-        alert(error.response.data);
+        if (error.response.status == 403) {
+          props.resetPassword();
+        } else {
+          alert(error.response.data);
+        }
     }
     })()
   }
@@ -63,7 +67,7 @@ const LoginForm = (props: { twoFactor: any }) => {
                   }} />
             <ErrorMessage name="password" />
             <div className={LoginFormCSS.button}>
-              <a href="#" className={LoginFormCSS.forgotPassword}>
+              <a href="/passwordRecovery" className={LoginFormCSS.forgotPassword}>
                 Forgot password ?
               </a>
               <span className="alignRight">
