@@ -16,3 +16,5 @@ export const TWO_FACTOR_AUTH_URL = () => API_URL + "two-factor-auth";
 export const PASSWORD_RESET_REQUEST_URL = () => API_URL + "password-recovery-request";
 export const PASSWORD_RESET_URL = () => API_URL + "password-recovery";
 export const REGISTER_URL = () => API_URL + "register";
+
+export const GET_USER_URL = () => API_URL + "user-info";

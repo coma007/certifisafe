@@ -41,6 +41,7 @@ func (server *DefaultServer) initRoutes() *mux.Router {
 
 	router := mux.NewRouter()
 
+	router.HandleFunc("/api/user-info", server.middleware(server.app.Controllers.AuthController.GetUserInfo)).Methods("GET")
 	router.HandleFunc("/api/certificate/{id}", server.middleware(server.app.Controllers.CertificateController.GetCertificate)).Methods("GET")
 	router.HandleFunc("/api/certificate", server.middleware(server.app.Controllers.CertificateController.GetCertificates)).Methods("GET")
 	router.HandleFunc("/api/certificate/{id}/download", server.middleware(server.app.Controllers.CertificateController.DownloadCertificate)).Methods("GET")

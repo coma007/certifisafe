@@ -91,7 +91,7 @@ func (service *DefaultAuthService) Login(email string, password string) (string,
 		if !user.IsActive {
 			return "", ErrNotActivated
 		}
-		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60 {
+		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60*24 {
 			err := service.RequestPasswordRecoveryToken(user.Email, 0, 1)
 			if err != nil {
 				return "", err
