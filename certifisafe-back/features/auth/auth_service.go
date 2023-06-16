@@ -38,8 +38,9 @@ var (
 
 type AuthService interface {
 	Login(email string, password string) (string, error)
-	ValidateToken(tokenString string) (bool, error)
 	Register(user *user.User) (*user.User, error)
+	ValidateToken(tokenString string) (bool, error)
+	HashToken(password string) ([]byte, error)
 	VerifyEmail(verificationCode string) error
 	GetUserFromToken(tokenString string) user.User
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
@@ -48,7 +49,6 @@ type AuthService interface {
 	PasswordRecovery(request *password_recovery.PasswordRecovery) error
 }
 
-// TODO check if everything works - Duti (Bobi made changes)
 // TODO separate mails to email_service.go
 type DefaultAuthService struct {
 	userRepository              user.UserRepository
@@ -117,7 +117,7 @@ func (service *DefaultAuthService) Register(u *user.User) (*user.User, error) {
 	}
 	_, err = service.userRepository.GetUserByEmail(u.Email)
 	if err == gorm.ErrRecordNotFound {
-		passwordBytes, err := service.hashToken(u.Password)
+		passwordBytes, err := service.HashToken(u.Password)
 		utils.CheckError(err)
 		u.Password = string(passwordBytes)
 		createdUser, err := service.userRepository.CreateUser(*u)
@@ -125,7 +125,7 @@ func (service *DefaultAuthService) Register(u *user.User) (*user.User, error) {
 			return &user.User{}, err
 		}
 
-		//add phone option
+		//TODO add phone option
 		service.sendVerification(u)
 
 		return &createdUser, nil
@@ -280,7 +280,7 @@ func (service *DefaultAuthService) PasswordRecovery(request *password_recovery.P
 		return ErrWrongPasswordFormat
 	}
 
-	hashedPassword, err := service.hashToken(request.NewPassword)
+	hashedPassword, err := service.HashToken(request.NewPassword)
 	if err != nil {
 		return err
 	}
@@ -386,7 +386,7 @@ func (service *DefaultAuthService) getVerificationToken(length int, verification
 	return verificationString, nil
 }
 
-func (service *DefaultAuthService) hashToken(password string) ([]byte, error) {
+func (service *DefaultAuthService) HashToken(password string) ([]byte, error) {
 	passwordBytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	return passwordBytes, err
 }

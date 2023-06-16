@@ -13,6 +13,7 @@ type ControllerFactory interface {
 type DefaultControllerFactory struct {
 	serviceFactory        *DefaultServiceFactory
 	AuthController        auth.AuthController
+	OauthController       auth.OauthController
 	CertificateController certificate.CertificateController
 	RequestController     request.RequestController
 }
@@ -24,7 +25,8 @@ func NewDefaultControllerFactory(serviceFactory DefaultServiceFactory) *DefaultC
 }
 
 func (controllerFactory *DefaultControllerFactory) InitControllers() {
-	controllerFactory.AuthController = *auth.NewAuthController((controllerFactory.serviceFactory.AuthService))
+	controllerFactory.AuthController = *auth.NewAuthController(controllerFactory.serviceFactory.AuthService)
+	controllerFactory.OauthController = *auth.NewOauthController(controllerFactory.serviceFactory.OAuthService)
 	controllerFactory.CertificateController = *certificate.NewCertificateController(controllerFactory.serviceFactory.CertificateService, controllerFactory.serviceFactory.AuthService)
 	controllerFactory.RequestController = *request.NewRequestController(controllerFactory.serviceFactory.RequestService, controllerFactory.serviceFactory.CertificateService, controllerFactory.serviceFactory.AuthService)
 }

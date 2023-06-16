@@ -70,7 +70,7 @@ export default LoginPage
 export const Logout = () => {
 
     AuthService.logout()
-    window.location.href = "/";
+    window.location.href = "/login";
 
     return (
         <></>

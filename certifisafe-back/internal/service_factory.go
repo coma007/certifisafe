@@ -13,6 +13,7 @@ type ServiceFactory interface {
 type DefaultServiceFactory struct {
 	repoFactory        *DefaultRepositoryFactory
 	AuthService        auth.AuthService
+	OAuthService       auth.OauthService
 	CertificateService certificate.CertificateService
 	RequestService     request.RequestService
 }
@@ -25,6 +26,7 @@ func NewDefaultServiceFactory(repoFactory DefaultRepositoryFactory) *DefaultServ
 
 func (serviceFactory *DefaultServiceFactory) InitServices() {
 	serviceFactory.AuthService = auth.NewDefaultAuthService(serviceFactory.repoFactory.UserRepository, serviceFactory.repoFactory.PasswordRecoveryRepository, serviceFactory.repoFactory.VerificationRepository)
+	serviceFactory.OAuthService = auth.NewDefaultOauthService(serviceFactory.AuthService, serviceFactory.repoFactory.UserRepository)
 	serviceFactory.CertificateService = certificate.NewDefaultCertificateService(serviceFactory.repoFactory.CertificateDBRepository, serviceFactory.repoFactory.CertificateFileStoreRepository, serviceFactory.repoFactory.UserRepository)
 	serviceFactory.RequestService = request.NewDefaultRequestService(serviceFactory.repoFactory.RequestRepository, serviceFactory.CertificateService, serviceFactory.repoFactory.UserRepository)
 }

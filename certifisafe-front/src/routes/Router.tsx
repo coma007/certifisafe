@@ -14,13 +14,13 @@ const Router = () => {
     return (
         <BrowserRouter>
             <Routes>
-                <Route index element={<HomePage />} />
                 <Route element={<NonAuthGuard />}>
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/passwordRecovery" element={<PasswordRecoveryPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                 </Route>
                 <Route element={<AuthGuard />}>
+                    <Route index element={<HomePage />} />
                     <Route path="/certificates" element={<CertificateOreviewPage />} />
                     <Route path="/verify" element={<CertificateVerifyPage />} />
                     <Route path="/requests" element={<RequestOreviewPage />} />
