@@ -20,8 +20,7 @@ const LoginForm = (props: { twoFactor: any }) => {
           const jwt = await AuthService.login({ Email: email, Password: password });
           props.twoFactor();
           // TODO change flow bellow
-          localStorage.setItem("token", jwt)
-          // navigate("/")
+          
       } catch (error: any) {
         alert(error.response.data);
     }

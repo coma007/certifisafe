@@ -1,6 +1,7 @@
-import { LOGIN_URL, REGISTER_URL } from "api";
+import { LOGIN_URL, REGISTER_URL, TWO_FACTOR_AUTH_URL } from "api";
 import axios from "axios";
 import { Credentials, UserRegister } from "../types/User";
+import { Code } from "../types/Verification";
 
 export const AuthService = {
 
@@ -18,9 +19,13 @@ export const AuthService = {
 
   logout: () => {
     localStorage.removeItem("token")
-  }
+  },
 
-
+  tfactorauth: async (code: Code): Promise<string> => {
+    let url = TWO_FACTOR_AUTH_URL();
+    let response = await axios.post(url, code);
+    return response.data;
+  },
 }
 
 axios.interceptors.request.use(
