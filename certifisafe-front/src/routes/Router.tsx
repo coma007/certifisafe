@@ -8,19 +8,21 @@ import RequestOreviewPage from 'features/request/pages/Overview/RequestOverviewP
 import HomePage from 'pages/home/HomePage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthGuard, NonAuthGuard } from './GuardedRoute';
+import RedirectPage from 'pages/RedirectPage';
 
 const Router = () => {
 
     return (
         <BrowserRouter>
             <Routes>
-                <Route index element={<HomePage />} />
                 <Route element={<NonAuthGuard />}>
+                    <Route path="/redirect" element={<RedirectPage />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/passwordRecovery" element={<PasswordRecoveryPage />} />
                     <Route path="/register" element={<RegisterPage />} />
                 </Route>
                 <Route element={<AuthGuard />}>
+                    <Route index element={<HomePage />} />
                     <Route path="/certificates" element={<CertificateOreviewPage />} />
                     <Route path="/verify" element={<CertificateVerifyPage />} />
                     <Route path="/requests" element={<RequestOreviewPage />} />
