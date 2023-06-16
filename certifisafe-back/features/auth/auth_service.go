@@ -213,8 +213,8 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 	}
 
 	var body bytes.Buffer
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%service\n\n", mimeHeaders)))
+	//mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	//body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%service\n\n", mimeHeaders)))
 
 	verificationToken, err := service.getVerificationToken(4, false)
 
@@ -252,8 +252,8 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 
 func (service *DefaultAuthService) sendSMS(verificationToken string) error {
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
-		Username: "ACfa3e5d6f88377babb803e52047931303",
-		Password: "b94ed9430a56e4b7f04cb578b30ddb7c",
+		Username: TwillioApiUsername,
+		Password: TwillioApiPassword,
 	})
 
 	params := &openapi.CreateMessageParams{}
@@ -332,8 +332,8 @@ func (service *DefaultAuthService) sendVerification(user *user.User) error {
 	}
 
 	var body bytes.Buffer
-	mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%service\n\n", mimeHeaders)))
+	//mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
+	//body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%service\n\n", mimeHeaders)))
 
 	verificationToken, err := service.getVerificationToken(10, true)
 	if err != nil {

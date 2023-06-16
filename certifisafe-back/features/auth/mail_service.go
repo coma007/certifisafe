@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"github.com/mailgun/mailgun-go"
 	"net/smtp"
 )
 
@@ -16,7 +17,7 @@ func NewDefaultMailService() *DefaultMailService {
 	return &DefaultMailService{}
 }
 
-func (service *DefaultMailService) SendMail(to []string, body bytes.Buffer) error {
+func (service *DefaultMailService) SendMail1(to []string, body bytes.Buffer) error {
 	from := "ftn.project.usertest@gmail.com"
 	password := "zmiwmhfweojejlqy"
 
@@ -29,29 +30,17 @@ func (service *DefaultMailService) SendMail(to []string, body bytes.Buffer) erro
 	return nil
 }
 
-//func (service *DefaultMailService) SendMail(to []string, body bytes.Buffer) error {
-//	client := mailjet.NewMailjetClient("a4a2e88fbc90aec7ded74673efb3962e", "53f100a8e24c374d5fd9b453d7f88f73")
-//	messagesInfo := []mailjet.InfoMessagesV31{
-//		{
-//			From: &mailjet.RecipientV31{
-//				Email: "ftn.project.usertest@gmail.com",
-//				Name:  "Mailjet Pilot",
-//			},
-//			To: &mailjet.RecipientsV31{
-//				mailjet.RecipientV31{
-//					Email: to[0],
-//					Name:  to[0],
-//				},
-//			},
-//			Subject:  "Your email flight plan!",
-//			TextPart: "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!",
-//			HTMLPart: "<h3>Dear passenger 1, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!</h3><br />May the delivery force be with you!",
-//		},
-//	}
-//	messages := mailjet.MessagesV31{Info: messagesInfo}
-//	_, err := client.SendMailV31(&messages)
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	return err
-//}
+func (service *DefaultMailService) SendMail(to []string, body bytes.Buffer) error {
+	mg := mailgun.NewMailgun(MailgunApiDomain, MailgunApiKey)
+	mg.SetAPIBase(MailgunApiBase)
+	m := mg.NewMessage(
+		"Certifisafe <certifisafe@mailgun.org>",
+		"Hello",
+		"",
+		to[0],
+	)
+
+	m.SetHtml(body.String())
+	go mg.Send(m)
+	return nil
+}
