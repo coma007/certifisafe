@@ -6,11 +6,31 @@ import PasswordRecoveryFormCSS from "./PasswordRecoveryForm.module.scss"
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { useState } from 'react';
+import { AuthService } from 'features/auth/services/AuthService'
+import { useNavigate } from 'react-router-dom'
 
 
 const PasswordRecoveryForm = () => {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [code, setCode] = useState('');
+    const navigate = useNavigate();
+
+    const onClick = () => {
+        if(newPassword === confirmPassword) {
+            (async function () {
+                try {
+                    await AuthService.passwordReset({ VerificationCode: code, newPassword: newPassword });
+                    navigate("/login")
+                } catch (error: any) {
+                alert(error.response.data);
+            }
+            })()
+        } else {
+            alert("Passwords do not match")
+        }
+    }
+
     
     const passwordValidator =  yup.string().min(8, "password is too short")
     .matches( /[a-z]+/, "needs to contain lowercase letter")
@@ -37,7 +57,9 @@ const PasswordRecoveryForm = () => {
       >
         {({ errors, touched, setFieldValue }) => (
             <Form>
-                <VerificationInput length={4} placeholder={""} autoFocus={true} classNames={{
+                <VerificationInput length={4} value={code} onChange={(e:string) => {
+                    setCode(e);
+                  }} placeholder={""} autoFocus={true} classNames={{
                     character: "codeField",
                     characterInactive: "codeFieldInactive",
                     characterSelected: "codeFieldActive",
@@ -60,7 +82,7 @@ const PasswordRecoveryForm = () => {
                         }}/>
                 <ErrorMessage name="confirm password" />
                 <span className="alignRight">
-                    <Button submit={undefined} onClick={undefined} text="Reset" />
+                    <Button submit={undefined} onClick={onClick} text="Reset" />
                 </span>
             </Form>
     )}

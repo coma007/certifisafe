@@ -1,7 +1,7 @@
-import { LOGIN_URL, REGISTER_URL, TWO_FACTOR_AUTH_URL } from "api";
+import { LOGIN_URL, PASSWORD_RESET_REQUEST_URL, PASSWORD_RESET_URL, REGISTER_URL, TWO_FACTOR_AUTH_URL } from "api";
 import axios from "axios";
 import { Credentials, UserRegister } from "../types/User";
-import { Code } from "../types/Verification";
+import { Code, PasswordReset, PasswordResetRequest } from "../types/Verification";
 
 export const AuthService = {
 
@@ -14,6 +14,18 @@ export const AuthService = {
   register: async (user: UserRegister): Promise<string> => {
     let url = REGISTER_URL();
     let response = await axios.post(url, user);
+    return response.data;
+  },
+
+  requestPasswordReset: async (request: PasswordResetRequest): Promise<string> => {
+    let url = PASSWORD_RESET_REQUEST_URL();
+    let response = await axios.post(url, request);
+    return response.data;
+  },
+
+  passwordReset: async (request: PasswordReset): Promise<string> => {
+    let url = PASSWORD_RESET_URL();
+    let response = await axios.post(url, request);
     return response.data;
   },
 

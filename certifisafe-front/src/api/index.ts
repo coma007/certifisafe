@@ -13,4 +13,6 @@ export const REQUESTS_BY_USER_SIGNING_URL = API_URL + "request/signing";
 
 export const LOGIN_URL = () => API_URL + "login";
 export const TWO_FACTOR_AUTH_URL = () => API_URL + "two-factor-auth";
+export const PASSWORD_RESET_REQUEST_URL = () => API_URL + "password-recovery-request";
+export const PASSWORD_RESET_URL = () => API_URL + "password-recovery";
 export const REGISTER_URL = () => API_URL + "register";

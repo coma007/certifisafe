@@ -62,7 +62,7 @@ const LoginForm = (props: { twoFactor: any }) => {
                   }} />
             <ErrorMessage name="password" />
             <div className={LoginFormCSS.button}>
-              <a href="#" className={LoginFormCSS.forgotPassword}>
+              <a href="/passwordRecovery" className={LoginFormCSS.forgotPassword}>
                 Forgot password ?
               </a>
               <span className="alignRight">
