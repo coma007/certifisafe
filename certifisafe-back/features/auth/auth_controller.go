@@ -24,27 +24,31 @@ func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) 
 	var credentials user.Credentials
 	err := utils.ReadRequestBody(w, r, &credentials)
 	if err != nil {
+		//utils.LogError()
 		return
 	}
 
-	// template for validation
 	err = credentials.Validate()
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		//utils.LogError("LOGIN error - " + err.Error())
 		return
 	}
 
 	token, err := controller.authService.Login(credentials.Email, credentials.Password)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		//utils.LogError("LOGIN error - " + err.Error())
 		return
 	}
 
+	//utils.LogInfo("LOGIN success")
 	utils.ReturnResponse(w, err, token, http.StatusNoContent)
 }
 
 func (controller *AuthController) TwoFactorAuth(w http.ResponseWriter, r *http.Request) {
+
 	var code CodeDTO
 	err := utils.ReadRequestBody(w, r, &code)
 	if err != nil {

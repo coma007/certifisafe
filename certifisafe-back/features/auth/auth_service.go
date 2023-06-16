@@ -7,7 +7,6 @@ import (
 	"certifisafe-back/utils"
 	"crypto/rand"
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt"
 	"github.com/twilio/twilio-go"
 	openapi "github.com/twilio/twilio-go/rest/api/v2010"
@@ -287,8 +286,6 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 	}
 
 	var body bytes.Buffer
-	//mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	//body.Write([]byte(fmt.Sprintf("Subject: Password recovery \n%service\n\n", mimeHeaders)))
 
 	verificationToken, err := service.getVerificationToken(4, false)
 
@@ -336,11 +333,6 @@ func (service *DefaultAuthService) sendSMS(verificationToken string) error {
 	params.SetBody("Here is your one time recovery code: " + verificationToken)
 
 	_, err := client.Api.CreateMessage(params)
-	if err != nil {
-		fmt.Println(err.Error())
-	} else {
-		fmt.Println("SMS sent successfully!")
-	}
 	return err
 }
 
@@ -406,8 +398,6 @@ func (service *DefaultAuthService) sendVerification(user *user.User) error {
 	}
 
 	var body bytes.Buffer
-	//mimeHeaders := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";\n\n"
-	//body.Write([]byte(fmt.Sprintf("Subject: Email verification \n%service\n\n", mimeHeaders)))
 
 	verificationToken, err := service.getVerificationToken(10, true)
 	if err != nil {

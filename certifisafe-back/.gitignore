@@ -16,6 +16,7 @@ public/*
 !public/.gitkeep
 private/*
 !private/.gitkeep
+logfile.txt
 
 # Test binary, built with `go test -c`
 *.test

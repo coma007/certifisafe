@@ -9,7 +9,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -48,15 +47,15 @@ func (controller *OauthController) OauthCallback(w http.ResponseWriter, r *http.
 	oauthState, _ := r.Cookie("oauthstate")
 
 	if r.FormValue("state") != oauthState.Value {
-		log.Println("invalid oauth google state")
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Error(w, "invalid oauth google state", http.StatusBadRequest)
+		http.Redirect(w, r, controller.clientURL, http.StatusTemporaryRedirect)
 		return
 	}
 
 	data, err := controller.getUserDataFromOauthService(r.FormValue("code"))
 	if err != nil {
-		log.Println(err.Error())
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Error(w, "data parsing error", http.StatusBadRequest)
+		http.Redirect(w, r, controller.clientURL, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -64,7 +63,7 @@ func (controller *OauthController) OauthCallback(w http.ResponseWriter, r *http.
 	query := url.Values{}
 	query.Add("token", token)
 	controller.clientURL += "?" + query.Encode()
-	http.Redirect(w, r, controller.clientURL, http.StatusMovedPermanently)
+	http.Redirect(w, r, controller.clientURL, http.StatusTemporaryRedirect)
 }
 
 func (controller *OauthController) generateStateOauthCookie(w http.ResponseWriter) string {
