@@ -39,6 +39,7 @@ var (
 type AuthService interface {
 	Login(email string, password string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
+	TwoFactorAuth(code string) (string, error)
 	Register(user *user.User) (*user.User, error)
 	VerifyEmail(verificationCode string) error
 	GetUserFromToken(tokenString string) user.User
@@ -425,4 +426,43 @@ func (service *DefaultAuthService) verifyPassword(password string) bool {
 		}
 	}
 	return number && upper && lower && len(password) >= 8
+}
+
+func (service *DefaultAuthService) isPasswordUsed(email string, password string) bool {
+
+	history, err := service.passwordHistoryRepository.GetHistoryByEmail(email)
+	if err != nil {
+		return true
+	}
+
+	for _, element := range history {
+		if bcrypt.CompareHashAndPassword([]byte(element.ForbiddenPassword), []byte(password)) == nil {
+			return true
+		}
+	}
+
+	numberOfPasswords := len(history)
+	if numberOfPasswords == 2 {
+		firstPassword := history[0]
+		for _, element := range history {
+			if element.ID < firstPassword.ID {
+				firstPassword = element
+			}
+		}
+		service.passwordHistoryRepository.DeleteHistory(int32(firstPassword.ID))
+	}
+	hashedPassword, err := service.HashToken(password)
+	if err != nil {
+		return true
+	}
+	_, err = service.passwordHistoryRepository.CreateHistory(0, password_recovery.PasswordHistory{
+		Model:             gorm.Model{},
+		Deleted:           gorm.DeletedAt{},
+		UserEmail:         email,
+		ForbiddenPassword: string(hashedPassword),
+	})
+	if err != nil {
+		return true
+	}
+	return false
 }
