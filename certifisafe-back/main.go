@@ -26,9 +26,6 @@ import (
 )
 
 func main() {
-	fmt.Println("\033[33mThis is yellow text\033[0m")
-	fmt.Println("\033[32mThis is green text\033[0m")
-	fmt.Println("\033[31mThis is red text\033[0m")
 	config := utils.Config()
 	password := config["password"]
 	dbuser := config["user"]
