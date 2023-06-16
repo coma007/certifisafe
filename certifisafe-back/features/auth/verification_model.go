@@ -8,3 +8,7 @@ type Verification struct {
 	Email   string
 	Code    string
 }
+
+type CodeDTO struct {
+	VerificationCode string
+}

@@ -5,7 +5,6 @@ import (
 	"certifisafe-back/features/user"
 	"certifisafe-back/utils"
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -19,7 +18,6 @@ func NewAuthController(authService AuthService) *AuthController {
 }
 
 func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Usao")
 	var credentials user.Credentials
 	err := utils.ReadRequestBody(w, r, &credentials)
 	if err != nil {
@@ -27,6 +25,23 @@ func (controller *AuthController) Login(w http.ResponseWriter, r *http.Request) 
 	}
 
 	token, err := controller.authService.Login(credentials.Email, credentials.Password)
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		return
+	}
+
+	utils.ReturnResponse(w, err, token, http.StatusNoContent)
+}
+
+func (controller *AuthController) TwoFactorAuth(w http.ResponseWriter, r *http.Request) {
+	var code CodeDTO
+	err := utils.ReadRequestBody(w, r, &code)
+	if err != nil {
+		http.Error(w, err.Error(), getAuthErrorStatus(err))
+		return
+	}
+
+	token, err := controller.authService.TwoFactorAuth(code.VerificationCode)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return
@@ -59,7 +74,7 @@ func (controller *AuthController) PasswordRecoveryRequest(w http.ResponseWriter,
 		return
 	}
 
-	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type)
+	err = controller.authService.RequestPasswordRecoveryToken(request.Email, request.Type, 0)
 	if err != nil {
 		http.Error(w, err.Error(), getAuthErrorStatus(err))
 		return

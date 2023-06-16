@@ -39,13 +39,14 @@ var (
 
 type AuthService interface {
 	Login(email string, password string) (string, error)
+	TwoFactorAuth(code string) (string, error)
 	ValidateToken(tokenString string) (bool, error)
 	Register(user *user.User) (*user.User, error)
 	VerifyEmail(verificationCode string) error
 	GetUserFromToken(tokenString string) user.User
 	GetClaims(tokenString string) (*jwt.Token, *Claims, bool, error)
 	GetUserByEmail(email string) (user.User, error)
-	RequestPasswordRecoveryToken(email string, t int) error
+	RequestPasswordRecoveryToken(email string, t int, templateType int) error
 	PasswordRecovery(request *password_recovery.PasswordRecovery) error
 }
 
@@ -90,30 +91,85 @@ func (service *DefaultAuthService) Login(email string, password string) (string,
 		if !user.IsActive {
 			return "", ErrNotActivated
 		}
-		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60 {
-			err := service.RequestPasswordRecoveryToken(user.Email, 0)
+		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60*24*30 {
+			err := service.RequestPasswordRecoveryToken(user.Email, 0, 1)
 			if err != nil {
 				return "", err
 			}
 			return "", ErrPasswordChange
+		} else {
+			to := []string{user.Email}
+			code, err := service.getVerificationToken(7, true)
+
+			if err != nil {
+				return "", err
+			}
+
+			templateFile, _ := filepath.Abs("resources/templates/twofactorAuth.html")
+			temp, err := template.ParseFiles(templateFile)
+
+			if err != nil {
+				return "", err
+			}
+
+			var body bytes.Buffer
+
+			if err != nil {
+				return "", err
+			}
+
+			temp.Execute(&body, struct {
+				Name string
+				Code string
+			}{
+				Name: user.FirstName + " " + user.LastName,
+				Code: code,
+			})
+
+			_, err = service.verificationRepository.CreateVerification(0, Verification{
+				Email: user.Email,
+				Code:  code,
+			})
+			if err != nil {
+				return "", err
+			}
+
+			_ = service.sendSMS(code)
+			err = service.mailService.SendMail(to, body)
+			if err != nil {
+				return "", err
+			}
+			return "", nil
 		}
-		expirationTime := time.Now().Add(time.Minute * 60)
-
-		claims := &Claims{
-			Email:          email,
-			StandardClaims: jwt.StandardClaims{ExpiresAt: expirationTime.Unix()},
-		}
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-		tokenString, err := token.SignedString(jwtKey)
-
-		utils.CheckError(err)
-
-		return tokenString, nil
 	}
 
 	return "", ErrBadCredentials
+}
+
+func (service *DefaultAuthService) TwoFactorAuth(code string) (string, error) {
+	verification, err := service.verificationRepository.GetVerificationByCode(code)
+	if err != nil {
+		return "", ErrCodeNotFound
+	}
+	user, err := service.userRepository.GetUserByEmail(verification.Email)
+	if err != nil {
+		return "", err
+	}
+	expirationTime := time.Now().Add(time.Minute * 60)
+
+	claims := &Claims{
+		Email:          user.Email,
+		StandardClaims: jwt.StandardClaims{ExpiresAt: expirationTime.Unix()},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString(jwtKey)
+
+	utils.CheckError(err)
+
+	return tokenString, nil
+
 }
 
 func (service *DefaultAuthService) GetUserByEmail(email string) (user.User, error) {
@@ -191,7 +247,7 @@ func (service *DefaultAuthService) GetClaims(tokenString string) (*jwt.Token, *C
 }
 
 // 0 - email, 1 - phone
-func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int) error {
+func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t int, templateType int) error {
 	var user user.User
 	var err error
 	if t == 0 {
@@ -205,7 +261,13 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 
 	to := []string{user.Email}
 
-	templateFile, _ := filepath.Abs("resources/templates/passwordRecovery.html")
+	var templateFile string
+
+	if templateType == 0 {
+		templateFile, _ = filepath.Abs("resources/templates/passwordRecovery.html")
+	} else {
+		templateFile, _ = filepath.Abs("resources/templates/passwordRotation.html")
+	}
 	temp, err := template.ParseFiles(templateFile)
 
 	if err != nil {
