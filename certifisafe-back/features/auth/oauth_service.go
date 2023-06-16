@@ -38,13 +38,21 @@ func (service *DefaultOauthService) AuthenticateUser(data []byte) (string, error
 
 	_, err := service.authService.GetUserByEmail(oauthUser.Email)
 	if err == gorm.ErrRecordNotFound {
-		passwordBytes, err := service.authService.HashToken(oauthUser.Password)
-		utils.CheckError(err)
-		oauthUser.Password = string(passwordBytes)
-		_, err = service.userRepository.CreateUser(*oauthUser)
+		err = service.createUser(oauthUser)
 		if err != nil {
 			return "", err
 		}
 	}
 	return service.authService.Login(oauthUserMap["email"], oauthUserMap["id"])
+}
+
+func (service *DefaultOauthService) createUser(oauthUser *user.User) error {
+	passwordBytes, err := service.authService.HashToken(oauthUser.Password)
+	utils.CheckError(err)
+	oauthUser.Password = string(passwordBytes)
+	_, err = service.userRepository.CreateUser(*oauthUser)
+	if err != nil {
+		return err
+	}
+	return nil
 }

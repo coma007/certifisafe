@@ -18,6 +18,7 @@ type OauthController struct {
 	oauthService OauthService
 	oauthConfig  *oauth2.Config
 	oauthUrlAPI  string
+	clientURL    string
 }
 
 func NewOauthController(oauthService OauthService) *OauthController {
@@ -32,17 +33,14 @@ func NewOauthController(oauthService OauthService) *OauthController {
 			Endpoint:     google.Endpoint,
 		},
 		oauthUrlAPI: config["oauth-api-url"],
+		clientURL:   config["client-url"],
 	}
 }
 
-func (controller *OauthController) OauthLogin(w http.ResponseWriter, r *http.Request) {
+func (controller *OauthController) Oauth(w http.ResponseWriter, r *http.Request) {
 	oauthState := controller.generateStateOauthCookie(w)
 	u := controller.oauthConfig.AuthCodeURL(oauthState)
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
-}
-
-func (controller *OauthController) OauthRegister(writer http.ResponseWriter, request *http.Request) {
-
 }
 
 func (controller *OauthController) OauthCallback(w http.ResponseWriter, r *http.Request) {
@@ -62,7 +60,13 @@ func (controller *OauthController) OauthCallback(w http.ResponseWriter, r *http.
 	}
 
 	token, err := controller.oauthService.AuthenticateUser(data)
-	utils.ReturnResponse(w, err, token, http.StatusOK)
+
+	cookie := http.Cookie{
+		Name:  "token",
+		Value: token,
+	}
+	http.SetCookie(w, &cookie)
+	http.Redirect(w, r, controller.clientURL, http.StatusSeeOther)
 }
 
 func (controller *OauthController) generateStateOauthCookie(w http.ResponseWriter) string {
