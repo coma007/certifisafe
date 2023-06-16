@@ -33,7 +33,7 @@ const HomePage = () => {
                         <img src={Verify} />
                         <p>Verify any certificate by unique identificator or copy of the certificate.</p>
                     </Card>
-                    <Card>
+                    <Card link='/request-create'>
                         <h3>Create new certificate</h3>
                         <img src={Create} />
                         <p>Create request for intermediate or end certificate.</p>

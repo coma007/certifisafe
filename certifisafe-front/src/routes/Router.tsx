@@ -8,6 +8,7 @@ import RequestOreviewPage from 'features/request/pages/Overview/RequestOverviewP
 import HomePage from 'pages/home/HomePage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthGuard, NonAuthGuard } from './GuardedRoute';
+import RequestCreatePage from 'features/request/pages/Create/RequestCreatePage';
 
 const Router = () => {
 
@@ -21,6 +22,7 @@ const Router = () => {
                     <Route path="/register" element={<RegisterPage />} />
                 </Route>
                 <Route element={<AuthGuard />}>
+                    {/* <Route path="/request-create" element={<RequestCreatePage createIsOpen={false} closeCreateModal={undefined} />} /> */}
                     <Route path="/certificates" element={<CertificateOreviewPage />} />
                     <Route path="/verify" element={<CertificateVerifyPage />} />
                     <Route path="/requests" element={<RequestOreviewPage />} />

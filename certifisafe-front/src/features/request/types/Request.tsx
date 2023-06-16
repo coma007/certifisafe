@@ -7,3 +7,10 @@ export interface Request {
     Status: string
     CertificateType: string
 }
+
+export interface CreateRequestDTO {
+    Name: string
+    Type: string
+    Token: string
+    SignerSerial: string
+}

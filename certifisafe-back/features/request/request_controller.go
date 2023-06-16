@@ -18,7 +18,7 @@ func NewRequestController(service RequestService, certificateService certificate
 	return &RequestController{service: service, certificateService: certificateService, authService: authService}
 }
 
-func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request) {
+func (controller *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request) {
 	var req NewRequestDTO
 	err := utils.ReadRequestBody(w, r, &req)
 	if err != nil {
@@ -31,7 +31,7 @@ func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	request, err := c.service.CreateRequest(&req)
+	request, err := controller.service.CreateRequest(&req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -40,13 +40,13 @@ func (c *RequestController) CreateRequest(w http.ResponseWriter, r *http.Request
 	utils.ReturnResponse(w, err, request, http.StatusCreated)
 }
 
-func (c *RequestController) GetRequest(w http.ResponseWriter, r *http.Request) {
+func (controller *RequestController) GetRequest(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
 	}
 
-	request, err := c.service.GetRequest(id)
+	request, err := controller.service.GetRequest(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -87,13 +87,13 @@ func (controller *RequestController) GetAllRequestsByUser(w http.ResponseWriter,
 	utils.ReturnResponse(w, err, requests, http.StatusOK)
 }
 
-func (c *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request) {
+func (controller *RequestController) DeleteRequest(w http.ResponseWriter, r *http.Request) {
 	id, err := utils.ReadIDfromUrl(w, r)
 	if err != nil {
 		return
 	}
 
-	err = c.service.DeleteRequest(id)
+	err = controller.service.DeleteRequest(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

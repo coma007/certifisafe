@@ -94,56 +94,56 @@ func (service *DefaultAuthService) Login(email string, password string) (string,
 		if !user.IsActive {
 			return "", ErrNotActivated
 		}
-		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60*24*30 {
-			err := service.RequestPasswordRecoveryToken(user.Email, 0, 1)
-			if err != nil {
-				return "", err
-			}
-			return "", ErrPasswordChange
-		} else {
-			to := []string{user.Email}
-			code, err := service.getVerificationToken(7, true)
+		//if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60*24*30 {
+		//	err := service.RequestPasswordRecoveryToken(user.Email, 0, 1)
+		//	if err != nil {
+		//		return "", err
+		//	}
+		//	return "", ErrPasswordChange
+		//} else {
+		to := []string{user.Email}
+		code, err := service.getVerificationToken(4, true)
 
-			if err != nil {
-				return "", err
-			}
-
-			templateFile, _ := filepath.Abs("resources/templates/twofactorAuth.html")
-			temp, err := template.ParseFiles(templateFile)
-
-			if err != nil {
-				return "", err
-			}
-
-			var body bytes.Buffer
-
-			if err != nil {
-				return "", err
-			}
-
-			temp.Execute(&body, struct {
-				Name string
-				Code string
-			}{
-				Name: user.FirstName + " " + user.LastName,
-				Code: code,
-			})
-
-			_, err = service.verificationRepository.CreateVerification(0, Verification{
-				Email: user.Email,
-				Code:  code,
-			})
-			if err != nil {
-				return "", err
-			}
-
-			_ = service.sendSMS(code)
-			err = service.mailService.SendMail(to, body)
-			if err != nil {
-				return "", err
-			}
-			return "", nil
+		if err != nil {
+			return "", err
 		}
+
+		templateFile, _ := filepath.Abs("resources/templates/twofactorAuth.html")
+		temp, err := template.ParseFiles(templateFile)
+
+		if err != nil {
+			return "", err
+		}
+
+		var body bytes.Buffer
+
+		if err != nil {
+			return "", err
+		}
+
+		temp.Execute(&body, struct {
+			Name string
+			Code string
+		}{
+			Name: user.FirstName + " " + user.LastName,
+			Code: code,
+		})
+
+		_, err = service.verificationRepository.CreateVerification(0, Verification{
+			Email: user.Email,
+			Code:  code,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		_ = service.sendSMS(code)
+		err = service.mailService.SendMail(to, body)
+		if err != nil {
+			return "", err
+		}
+		return "", nil
+		//}
 	}
 
 	return "", ErrBadCredentials
