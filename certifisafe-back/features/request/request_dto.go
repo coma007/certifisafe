@@ -19,7 +19,7 @@ type NewRequestDTO struct {
 	ParentSerial    *uint
 	CertificateName string
 	CertificateType string
-	SubjectId       uint
+	Token           string
 }
 
 func RequestToDTO(req *Request) *RequestDTO {

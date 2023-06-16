@@ -2,6 +2,7 @@ package certificate
 
 import (
 	"certifisafe-back/features/user"
+	"strings"
 	"time"
 )
 
@@ -58,7 +59,7 @@ func TypeToString(certType CertificateType) string {
 }
 
 func StringToType(certType string) CertificateType {
-	switch certType {
+	switch strings.ToUpper(certType) {
 	case "ROOT":
 		return ROOT
 	case "INTERMEDIATE":

@@ -26,14 +26,14 @@ const RequestCreatePage = (props: { createIsOpen: boolean, closeCreateModal: any
 
     const captchaRef: any = useRef(null)
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (values: any) => {
         try {
             const token = captchaRef.current?.getValue();
             captchaRef.current.reset();
-            await RequestService.createRequest({ SignerSerial: signerSerial, Type: type, Name: name, Token:  token })
+            await RequestService.createRequest({ ParentSerial: parseInt(signerSerial), CertificateType: values.type, CertificateName: name, Token:  token })
             navigate("/login")
           } catch (error: any) {
-        //    alert(error.response.data);
+           alert(error.response.data);
           }
     }
     const navigate = useNavigate();
@@ -58,7 +58,7 @@ const RequestCreatePage = (props: { createIsOpen: boolean, closeCreateModal: any
                 }}
                 validationSchema={schema}
                 validateOnChange
-                onSubmit={handleSubmit}
+                onSubmit={values => handleSubmit(values)}
             >
                 {({ errors, touched, setFieldValue, validateForm }) => (
                 <Form id="request-create-form">

@@ -9,8 +9,8 @@ export interface Request {
 }
 
 export interface CreateRequestDTO {
-    Name: string
-    Type: string
+    CertificateName: string
+    CertificateType: string
     Token: string
-    SignerSerial: string
+    ParentSerial: number
 }

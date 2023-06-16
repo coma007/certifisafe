@@ -9,6 +9,5 @@ func (req NewRequestDTO) Validate() error {
 		validation.Field(&req.CertificateName, validation.Required, validation.Length(3, 50)),
 		validation.Field(&req.ParentSerial, validation.Required),
 		validation.Field(&req.CertificateType, validation.Required),
-		validation.Field(&req.SubjectId, validation.Required),
 	)
 }

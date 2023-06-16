@@ -31,7 +31,15 @@ func (controller *RequestController) CreateRequest(w http.ResponseWriter, r *htt
 		return
 	}
 
-	request, err := controller.service.CreateRequest(&req)
+	err = controller.authService.CheckRecaptcha(req.Token)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	token := r.Header.Get("Authorization")
+	user := controller.authService.GetUserFromToken(token)
+	request, err := controller.service.CreateRequest(&req, &user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -152,14 +160,14 @@ func (controller *RequestController) DeclineRequest(w http.ResponseWriter, r *ht
 
 func (controller *RequestController) GenerateCertificates(w http.ResponseWriter, r *http.Request) {
 	// dummy data
+	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 	rootDTO := &NewRequestDTO{
 		ParentSerial:    nil,
 		CertificateName: "root",
 		CertificateType: "ROOT",
-		SubjectId:       1,
 	}
 
-	root, err := controller.certificateService.CreateCertificate(rootDTO.ParentSerial, rootDTO.CertificateName, certificate2.StringToType(rootDTO.CertificateType), rootDTO.SubjectId)
+	root, err := controller.certificateService.CreateCertificate(rootDTO.ParentSerial, rootDTO.CertificateName, certificate2.StringToType(rootDTO.CertificateType), user.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -175,19 +183,17 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 		ParentSerial:    &parentSerial,
 		CertificateName: "intermediate",
 		CertificateType: "INTERMEDIATE",
-		SubjectId:       1,
 	}
-	intermidiate, err := controller.certificateService.CreateCertificate(intermediateDTO.ParentSerial, intermediateDTO.CertificateName, certificate2.StringToType(intermediateDTO.CertificateType), intermediateDTO.SubjectId)
+	intermidiate, err := controller.certificateService.CreateCertificate(intermediateDTO.ParentSerial, intermediateDTO.CertificateName, certificate2.StringToType(intermediateDTO.CertificateType), user.ID)
 
 	intermediateSerial := uint(*intermidiate.Serial)
 	leafDTO := &NewRequestDTO{
 		ParentSerial:    &intermediateSerial,
 		CertificateName: "end",
 		CertificateType: "END",
-		SubjectId:       1,
 	}
 
-	leaf, err := controller.certificateService.CreateCertificate(leafDTO.ParentSerial, leafDTO.CertificateName, certificate2.StringToType(leafDTO.CertificateType), leafDTO.SubjectId)
+	leaf, err := controller.certificateService.CreateCertificate(leafDTO.ParentSerial, leafDTO.CertificateName, certificate2.StringToType(leafDTO.CertificateType), user.ID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
