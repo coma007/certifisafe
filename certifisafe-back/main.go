@@ -26,6 +26,9 @@ import (
 )
 
 func main() {
+	fmt.Println("\033[33mThis is yellow text\033[0m")
+	fmt.Println("\033[32mThis is green text\033[0m")
+	fmt.Println("\033[31mThis is red text\033[0m")
 	config := utils.Config()
 	password := config["password"]
 	dbuser := config["user"]
@@ -61,6 +64,8 @@ func automigrate(db *gorm.DB) {
 	err = db.AutoMigrate(&password_recovery.PasswordRecoveryRequest{})
 	utils.CheckError(err)
 	err = db.AutoMigrate(&auth.Verification{})
+	utils.CheckError(err)
+	err = db.AutoMigrate(&password_recovery.PasswordHistory{})
 	utils.CheckError(err)
 }
 

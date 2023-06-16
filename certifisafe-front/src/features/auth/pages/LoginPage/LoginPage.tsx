@@ -9,12 +9,23 @@ import Facebook from 'assets/oauth/facebook.png'
 import Tooltip from 'components/view/Tooltip/Tooltip'
 import { useState } from 'react'
 import TwoFactorForm from 'features/auth/components/TwoFactorForm/TwoFactorForm'
+import { useLocation } from 'react-router-dom'
 
 const LoginPage = () => {
     let [isCodeSent, setIsCodeSent] = useState<boolean>(false);
 
     const sendCode = () => {
         setIsCodeSent(true);
+    }
+
+    const oauth = () => {
+        (async function () {
+            try {
+                await AuthService.oauth();
+            } catch (error: any) {
+                alert(error.response.data);
+            }
+        })()
     }
 
     return (
@@ -32,15 +43,11 @@ const LoginPage = () => {
                         </span>
                     </div>
                     <LoginForm twoFactor={sendCode} />
-                    <div className="oauth">
+                    <div className="oauth" onClick={oauth}>
                         Or use alternative way to sign in <br />
-                        <button className={TooltipCSS.bottomTooltip}>
+                        <button className={TooltipCSS.bottomTooltip} >
                             <img src={Gmail} />
                             <Tooltip tooltipText="Sign in with Gmail account" />
-                        </button>
-                        <button className={TooltipCSS.bottomTooltip}>
-                            <img src={Facebook} />
-                            <Tooltip tooltipText="Sign in with Facebook account" />
                         </button>
                     </div>
                     <div className="authBottomMessage">
@@ -70,7 +77,7 @@ export default LoginPage
 export const Logout = () => {
 
     AuthService.logout()
-    window.location.href = "/";
+    window.location.href = "/login";
 
     return (
         <></>
