@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	"log"
 	"net/http"
+	"path/filepath"
 )
 
 type Server interface {
@@ -22,10 +24,12 @@ func NewDefaultRouter(app *DefaultAppFactory) *DefaultServer {
 }
 
 func (server DefaultServer) ListenAndServe() {
-	fmt.Println("http server runs on :8080")
+	fmt.Println("http server runs on :8443")
 	router := server.initRoutes()
 	handler := server.handleCORS(router)
-	http.ListenAndServe(":8080", handler)
+	//cert, err := tls.LoadX509KeyPair(filepath.Join("public", "server.crt"), filepath.Join("private", "server.key"))
+	//log.Fatalln(http.ListenAndServe(":8080", handler))
+	log.Fatalln(http.ListenAndServeTLS(":8443", filepath.Join("public", "server.crt"), filepath.Join("private", "server.key"), handler))
 }
 
 func (server DefaultServer) handleCORS(router *mux.Router) http.Handler {
@@ -33,6 +37,7 @@ func (server DefaultServer) handleCORS(router *mux.Router) http.Handler {
 		AllowedOrigins: []string{"*"},
 		AllowedHeaders: []string{"*"},
 		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "OPTIONS"},
+		Debug:          true,
 	}).Handler(router)
 	return handler
 }
