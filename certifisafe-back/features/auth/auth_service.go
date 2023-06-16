@@ -93,7 +93,7 @@ func (service *DefaultAuthService) Login(email string, password string) (string,
 		if !user.IsActive {
 			return "", ErrNotActivated
 		}
-		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60*24*30 {
+		if time.Since(user.LastPasswordSet).Milliseconds() > 1000*60*60*24 {
 			err := service.RequestPasswordRecoveryToken(user.Email, 0, 1)
 			if err != nil {
 				return "", err
@@ -101,7 +101,7 @@ func (service *DefaultAuthService) Login(email string, password string) (string,
 			return "", ErrPasswordChange
 		} else {
 			to := []string{user.Email}
-			code, err := service.getVerificationToken(7, true)
+			code, err := service.getVerificationToken(4, true)
 
 			if err != nil {
 				return "", err
@@ -158,8 +158,10 @@ func (service *DefaultAuthService) TwoFactorAuth(code string) (string, error) {
 		return "", err
 	}
 	tokenString, err := service.GenerateJWT(user, err)
-
+	
 	utils.CheckError(err)
+
+	service.verificationRepository.DeleteVerification(int32(verification.ID))
 
 	return tokenString, nil
 
@@ -194,6 +196,7 @@ func (service *DefaultAuthService) Register(u *user.User) (*user.User, error) {
 		passwordBytes, err := service.HashToken(u.Password)
 		utils.CheckError(err)
 		u.Password = string(passwordBytes)
+		u.LastPasswordSet = time.Now()
 		createdUser, err := service.userRepository.CreateUser(*u)
 		if err != nil {
 			return &user.User{}, err

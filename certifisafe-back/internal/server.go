@@ -67,6 +67,8 @@ func (server *DefaultServer) initRoutes() *mux.Router {
 
 	router.HandleFunc("/api/oauth", server.LoggingMiddleware(server.app.Controllers.OauthController.Oauth)).Methods("GET")
 	router.HandleFunc("/api/oauth/callback", server.LoggingMiddleware(server.app.Controllers.OauthController.OauthCallback)).Methods("GET")
+  
+	router.HandleFunc("/api/user-info", server.LoggingMiddleware(server.middleware(server.app.Controllers.AuthController.GetUserInfo))).Methods("GET")
 
 	return router
 }

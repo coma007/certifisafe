@@ -10,12 +10,26 @@ import Tooltip from 'components/view/Tooltip/Tooltip'
 import { useState } from 'react'
 import TwoFactorForm from 'features/auth/components/TwoFactorForm/TwoFactorForm'
 import { useLocation } from 'react-router-dom'
+import PasswordRecoveryForm from 'features/auth/components/PasswordRecoveryForm/PasswordRecoveryForm'
 
 const LoginPage = () => {
     let [isCodeSent, setIsCodeSent] = useState<boolean>(false);
+    let [isPasswordReset, setIsPasswordReset] = useState<boolean>(false);
+    let [isBasePage, setIsBasePage] = useState<boolean>(true);
 
     const sendCode = () => {
         setIsCodeSent(true);
+        setIsBasePage(false);
+    }
+    
+    const resetPassword = () => {
+        setIsPasswordReset(true);
+        setIsBasePage(false);
+    }
+
+    const resetPage = () => {
+        setIsBasePage(true);
+        setIsPasswordReset(false);
     }
 
     const oauth = () => {
@@ -33,7 +47,7 @@ const LoginPage = () => {
             <div>
                 <Banner />
             </div>
-            {isCodeSent === false ? (
+            {isBasePage === true ? (
                 <div className="rightCol">
                     <div className="authTitle">
                         <h2>Sign in</h2>
@@ -42,7 +56,7 @@ const LoginPage = () => {
                             <br />Please enter your login details to access your account.
                         </span>
                     </div>
-                    <LoginForm twoFactor={sendCode} />
+                    <LoginForm twoFactor={sendCode} resetPassword={resetPassword} />
                     <div className="oauth" onClick={oauth}>
                         Or use alternative way to sign in <br />
                         <button className={TooltipCSS.bottomTooltip} >
@@ -55,7 +69,8 @@ const LoginPage = () => {
                         <br /> <a href='register'>Sign up here.</a>
                     </div>
                 </div >
-            ) : (
+            ) : null}
+            { isCodeSent === true ? (
                 <div className="rightCol">
                     <div className="authTitle">
                         <h2>Confirm it is you</h2>
@@ -67,7 +82,22 @@ const LoginPage = () => {
                     </div>
                     <TwoFactorForm />
                 </div >
-            )}
+            ) : null}
+            { isPasswordReset === true ? (
+            <div className="rightCol">
+                <div className="authTitle">
+                    <h2>Renew password</h2>
+                    <span>
+                        Your password is too old, you need to renew it now.
+                        <br />
+                        We have sent you email and SMS with a verification code.
+                        <br />
+                        Please enter the code below and a new password.
+                    </span>
+                </div>
+                <PasswordRecoveryForm resetPage={resetPage} />
+            </div>
+            ) : null}
         </div>
     )
 }
