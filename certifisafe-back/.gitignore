@@ -12,8 +12,17 @@
 *.so
 *.dylib
 
+public/*
+!public/.gitkeep
+private/*
+!private/.gitkeep
+logfile.txt
+
 # Test binary, built with `go test -c`
 *.test
+
+config.yaml
+go.sum
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out

@@ -1,0 +1,24 @@
+.inlineInput {
+    width: 100%;
+    margin: 12px 0px;
+}
+
+.input {
+    width: 100%;
+    margin: 12px 0px;
+}
+
+.button {
+    margin-top: 20px;
+    position: relative;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 20px;
+}
+
+.grid div{
+    width: 100%;
+}

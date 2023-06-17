@@ -1,0 +1,134 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root,
+.App {
+  height: 100%;
+  background-color: white;
+  overflow: hidden;
+  font-family: 'Lato', sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+textarea {
+  font-family: 'Lato', sans-serif;
+}
+
+.alignRight {
+  float: right;
+}
+
+.page {
+  height: 100%;
+}
+
+.pageWithCols {
+  display: grid;
+  grid-auto-flow: column;
+}
+
+.pageTwoCols {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: calc(100% - var(--auth-page-main-width)) var(--auth-page-main-width);
+}
+
+.rightCol {
+  position: relative;
+  margin-top: var(--auth-form-margin-top);
+  margin-bottom: var(--auth-form-margin-bottom);
+  margin-left: var(--auth-form-margin-side);
+  margin-right: var(--auth-form-margin-side);
+  width: calc(100% - 2 * var(--auth-form-margin-side));
+}
+
+.authTitle {
+  font-size: 17px;
+  color: var(--primary-color);
+  margin-bottom: 7%;
+}
+
+.authTitle h2 {
+  color: black;
+  font-size: 35px;
+  margin-bottom: 15px;
+}
+
+.authBottomMessage {
+  position: absolute;
+  bottom: 5%;
+  width: 100%;
+  color: var(--primary-color);
+  font-size: 15px;
+  text-align: center;
+}
+
+.authBottomMessage a {
+  color: black;
+}
+
+.pageWithMenu {
+  grid-template-columns: var(--menu-width) calc(100% - var(--menu-width));
+}
+
+
+.oauth {
+  width: 80%;
+  margin: auto;
+  margin-top: 10%;
+  color: var(--primary-color-transparent);
+  font-size: 17px;
+  text-align: center;
+}
+
+.oauth button {
+  cursor: pointer;
+  padding: 5px;
+  margin: 0 5px;
+  border: none;
+  background-color: transparent;
+}
+
+.oauth button img {
+  height: 30px;
+  width: auto;
+}
+
+.codeField {
+  border: 1px solid var(--primary-color);
+  border-radius: 10px;
+}
+
+.codeFieldInactive {
+  background-color: transparent;
+}
+
+.codeFieldActive {
+  outline: 2px solid var(--primary-color);
+  color: black;
+}
+
+.recaptcha {
+  margin-top: 15px;
+}
+
+#root {
+  --primary-color: #86919D;
+  --primary-color-transparent: rgba(134, 145, 157, 0.9);
+  --card-background: rgba(134, 145, 157, 0.1);
+
+  --auth-page-main-width: 53%;
+  --auth-form-margin-top: 17%;
+  --auth-form-margin-side: 17%;
+  --auth-form-margin-bottom: 2%;
+  --menu-width: 5%;
+}

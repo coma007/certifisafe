@@ -1,0 +1,9 @@
+.item {
+    height: 35px;
+    width: auto;
+    cursor: pointer;
+}
+
+.item:hover {
+    transform: scale(1.2);
+}

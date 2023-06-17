@@ -146,6 +146,8 @@ dist
 **/*.backup.*
 **/*.back.*
 
+**/api_keys.go
+
 node_modules
 
 *.sublime*
@@ -153,6 +155,8 @@ node_modules
 psd
 thumb
 sketch
+
+.env
 
 ### VisualStudioCode ###
 .vscode/*

@@ -1,0 +1,37 @@
+.menu {
+    height: 100%;
+    padding: 30px 0;
+
+    display: grid;
+    grid-template-rows: 3.5fr 0.7fr 0.3fr 1fr 1fr 1fr 4fr 0.9fr 0.7fr;
+    grid-row-gap: 15px;
+
+    background-color: gray;
+    text-align: center;
+}
+
+.logo {
+    height: 32px;
+    width: auto;
+}
+
+.nonMainOption {
+    height: 22px;
+    width: auto;
+    opacity: 90%;
+}
+
+.logo:hover {
+    transform: none;
+}
+
+.separator {
+    width: 50%;
+    height: 0%;
+    border: 1px solid rgb(180, 180, 180);
+    margin: 0 auto;
+}
+
+.margin {
+    margin-left: 3px;
+}
