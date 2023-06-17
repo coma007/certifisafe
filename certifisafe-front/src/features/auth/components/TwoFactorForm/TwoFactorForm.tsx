@@ -2,13 +2,15 @@ import Button from 'components/forms/Button/Button'
 import React, { useState } from 'react'
 import VerificationInput from 'react-verification-input'
 import TwoFactorFormCSS from './TwoFactorForm.module.scss'
-import { useNavigate } from 'react-router'
+
 import { AuthService } from 'features/auth/services/AuthService'
+import { redirect, useNavigate } from 'react-router-dom'
+
 
 const TwoFactorForm = () => {
+    const navigate = useNavigate();
     const [code, setCode] = useState('');
 
-    const navigate= useNavigate();
     const onClick = () => {
         (async function () {
             try {
@@ -20,9 +22,11 @@ const TwoFactorForm = () => {
             }
         })()
     }
+
+
     return (
         <div>
-           <VerificationInput value={code} onChange={(e:string) => {
+            <VerificationInput value={code} onChange={(e:string) => {
                     setCode(e);
                   }} length={4} placeholder={""} autoFocus={true} classNames={{
                 container: TwoFactorFormCSS.container,

@@ -10,12 +10,30 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import ReCAPTCHA from 'react-google-recaptcha'
 import ReactDOM, { render } from 'react-dom'
 
-const LoginForm = (props: { twoFactor: any }) => {
+const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
 
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const onClick = () => {
+    (async function () {
+      try {
+          const jwt = await AuthService.login({ Email: email, Password: password });
+          props.twoFactor();
+          
+          // TODO change flow bellow
+          
+      } catch (error: any) {
+        if (error.response.status == 403) {
+          props.resetPassword();
+        } else {
+          alert(error.response.data);
+        }
+    }
+    })()
+  }
 
   const schema = yup.object().shape({
     email: yup.string().email().required(),
@@ -69,7 +87,7 @@ const LoginForm = (props: { twoFactor: any }) => {
                   }} />
                {errors.password ? <div>{errors.password}</div> : null}
             <div className={LoginFormCSS.button}>
-              <a href="#" className={LoginFormCSS.forgotPassword}>
+              <a href="/passwordRecovery" className={LoginFormCSS.forgotPassword}>
                 Forgot password ?
               </a>
               <span className="alignRight">

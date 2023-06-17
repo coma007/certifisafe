@@ -5,13 +5,25 @@ import EmailFormCSS from "./EmailForm.module.scss"
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { useState } from 'react'
+import { AuthService } from 'features/auth/services/AuthService'
 
 const EmailForm = (props: { onClick: any }) => {
     const [email, setEmail] = useState('');
 
     const schema = yup.object().shape({
         email: yup.string().email().required(),
-      })
+    })
+
+    const onClick = () => {
+        (async function () {
+            try {
+                await AuthService.requestPasswordReset({ Email: email, Type: 0 });
+                props.onClick()
+            } catch (error: any) {
+              alert(error.response.data);
+          }
+        })()
+    }
 
     return (
         <Formik

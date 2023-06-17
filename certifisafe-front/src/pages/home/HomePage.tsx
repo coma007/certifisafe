@@ -6,8 +6,18 @@ import Certificate from "assets/menu/certificate.png"
 import Verify from "assets/menu/verify.png"
 import Create from "assets/menu/create.png"
 import Request from "assets/menu/request.png"
+import RequestCreatePage from 'features/request/pages/Create/RequestCreatePage'
+import { useState } from 'react'
 
 const HomePage = () => {
+    const [createIsOpen, setCreateIsOpen] = useState(false);
+    const openCreateModal = () => {
+        setCreateIsOpen(true);
+    };
+
+    const closeCreateModal = () => {
+        setCreateIsOpen(false);
+    };
     return (
         <div className={`page pageWithCols ${HomePageCSS.cols}`}>
             <Menu />
@@ -33,7 +43,7 @@ const HomePage = () => {
                         <img src={Verify} />
                         <p>Verify any certificate by unique identificator or copy of the certificate.</p>
                     </Card>
-                    <Card link='/request-create'>
+                    <Card onClick={openCreateModal}>
                         <h3>Create new certificate</h3>
                         <img src={Create} />
                         <p>Create request for intermediate or end certificate.</p>
@@ -45,6 +55,7 @@ const HomePage = () => {
                     </Card>
                 </div>
             </div>
+            <RequestCreatePage createIsOpen={createIsOpen} closeCreateModal={closeCreateModal} />
         </div>
     )
 }

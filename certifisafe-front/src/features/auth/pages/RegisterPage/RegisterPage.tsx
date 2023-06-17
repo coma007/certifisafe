@@ -27,10 +27,6 @@ const RegisterPage = () => {
             <img src={Gmail} />
             <Tooltip tooltipText="Sign up with Gmail account" />
           </button>
-          <button className={TooltipCSS.bottomTooltip}>
-            <img src={Facebook} />
-            <Tooltip tooltipText="Sign up with Facebook account" />
-          </button>
         </div>
         <div className="authBottomMessage">
           Already have an account ?

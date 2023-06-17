@@ -32,10 +32,20 @@ func main() {
 	password := config["password"]
 	dbuser := config["user"]
 
-	dbPostgree := postgres.Open(fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disable", dbuser, password))
+	//require& sslrootcert=%s& sslcert=%s& sslkey=%s
+	dbString := fmt.Sprintf("postgres://%s:%s@localhost:5432/certifisafe?sslmode=disabled",
+		dbuser, password, "root.crt", "srv.crt", "srv.key")
+
+	dbPostgree := postgres.Open(dbString)
+
 	db, err := gorm.Open(dbPostgree, &gorm.Config{PrepareStmt: true, TranslateError: true})
 	automigrate(db)
 	utils.CheckError(err)
+
+	//sqlDb, err := db.DB()
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	defer func(db *gorm.DB) {
 		sqlDb, err := db.DB()

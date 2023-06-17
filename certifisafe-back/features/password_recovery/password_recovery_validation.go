@@ -9,7 +9,7 @@ import (
 func (pr PasswordRecoveryRequestDTO) Validate() error {
 	return validation.ValidateStruct(&pr,
 		validation.Field(&pr.Email, validation.Required, validation.Length(5, 50), is.Email),
-		validation.Field(&pr.Type, validation.Required, is.Int),
+
 	)
 }
 

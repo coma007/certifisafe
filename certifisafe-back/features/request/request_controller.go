@@ -163,7 +163,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 	rootDTO := &NewRequestDTO{
 		ParentSerial:    nil,
-		CertificateName: "root",
+		CertificateName: "some root name",
 		CertificateType: "ROOT",
 	}
 
@@ -181,7 +181,7 @@ func (controller *RequestController) GenerateCertificates(w http.ResponseWriter,
 	parentSerial := uint(*root.Serial)
 	intermediateDTO := &NewRequestDTO{
 		ParentSerial:    &parentSerial,
-		CertificateName: "intermediate",
+		CertificateName: "localhost",
 		CertificateType: "INTERMEDIATE",
 	}
 	intermidiate, err := controller.certificateService.CreateCertificate(intermediateDTO.ParentSerial, intermediateDTO.CertificateName, certificate2.StringToType(intermediateDTO.CertificateType), user.ID)

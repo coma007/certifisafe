@@ -7,7 +7,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -111,7 +110,6 @@ func (controller *CertificateController) IsValid(w http.ResponseWriter, r *http.
 	}
 
 	result, err := controller.certificateService.IsValidById(id.Uint64())
-	fmt.Print(result)
 	if err != nil {
 		http.Error(w, err.Error(), getErrorStatus(err))
 		return

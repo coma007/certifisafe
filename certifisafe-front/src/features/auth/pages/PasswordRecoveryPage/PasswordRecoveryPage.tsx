@@ -1,6 +1,7 @@
 import Banner from 'components/navigation/Banner/Banner';
 import EmailForm from 'features/auth/components/EmailForm/EmailForm';
 import PasswordRecoveryForm from 'features/auth/components/PasswordRecoveryForm/PasswordRecoveryForm';
+import { AuthService } from 'features/auth/services/AuthService';
 import { send } from 'process';
 import React, { useState } from 'react'
 
@@ -36,7 +37,7 @@ const PasswordRecoveryPage = () => {
               Please enter the code below and a new password.
             </span>
           </div>
-          <PasswordRecoveryForm />
+          <PasswordRecoveryForm resetPage={null}/>
         </div>
       )}
     </div>
