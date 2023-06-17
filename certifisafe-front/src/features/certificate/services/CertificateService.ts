@@ -37,21 +37,6 @@ export const CertificateService = {
         return response.data;
     },
 
-    accept: async (id: number) => {
-        let url = REQUEST_ACCEPT_URL(id);
-        const response = await axios.patch(url);
-    },
-
-    decline: async (id: number) => {
-        let url = REQUEST_DECLINE_URL(id);
-        const response = await axios.patch(url);
-    },
-
-    delete: async (id: number) => {
-        let url = REQUEST_DELETE_URL(id);
-        const response = await axios.patch(url);
-    },
-
     verifyByFile: async (file: File): Promise<boolean> => {
         let url = CERTIFICATES_IS_VALID_FILE();
         let formData = new FormData();

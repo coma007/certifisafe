@@ -42,24 +42,6 @@ export const AuthService = {
   },
 
   oauth: async () => {
-    // fetch('http://localhost:8080/api/oauth')
-    //   .then(response => {
-    //     if (response.ok) {
-    //       // Redirect the user to the authentication URL received from the backend
-    //       window.location.href = response.url;
-    //     } else {
-    //       console.error('Failed to initiate OAuth process');
-    //     }
-    //   })
-    //   .catch(error => {
-    //     console.error('Error:', error);
-    //   });
-    // let url = OAUTH_URL();
-    // console.log(OAUTH_URL())
-    // window.open(OAUTH_URL(), "_self")
-    // let response = await axios.get(url);
-
-
     window.open(OAUTH_URL(), "_self");
   },
 
