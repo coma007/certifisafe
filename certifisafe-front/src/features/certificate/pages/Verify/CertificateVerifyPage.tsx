@@ -13,6 +13,7 @@ import Valid from "assets/actions/valid.png"
 import Unvalid from "assets/actions/unvalid.png"
 import { CertificateService } from 'features/certificate/services/CertificateService'
 import { AxiosError } from 'axios'
+import ErrorMsg from 'components/error/ErrorMsg'
 
 const CertificateVerifyPage = () => {
   const [isValid, setValid] = useState<boolean | undefined>(undefined);
@@ -106,10 +107,10 @@ const CertificateVerifyPage = () => {
                       setCertificateId(e.target.value);
                       setFieldValue("certificate id", e.target.value);
                     }} />
-                    <ErrorMessage name="certificate id" />
                     <span className={CertificateVerifyPageCSS.button}>
                       <Button submit={"submit"} text={'VERIFY'} onClick={undefined} />
                     </span>
+                    <ErrorMsg val="certificate id" />
                     <br />
                     <small>Certificate ID can be found on the bottom of every certificate. </small>
 

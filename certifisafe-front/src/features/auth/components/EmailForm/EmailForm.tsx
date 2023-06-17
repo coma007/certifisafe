@@ -40,7 +40,7 @@ const EmailForm = (props: { onClick: any }) => {
                     setEmail(e.target.value);
                     setFieldValue("email", e.target.value);
                   }}/>
-                <ErrorMsg val={errors["email"]} />
+                <ErrorMsg val={errors["email"]} customClass={EmailFormCSS.margin}/>
                 <span className="alignRight">
                     <Button submit={"submit"} onClick={null} text="Send code" />
                 </span>

@@ -118,7 +118,7 @@ const RequestCreatePage = (props: { createIsOpen: boolean, okCreateModal : any, 
                             <ErrorMsg val={errors["type"]} />
                         </div>
                         <p className={ModalWindowCSS.warning}>Please note that this certificate will be active if the request is accepted by the signing certificate owner. If so, certificate will be valid from that day until the expiration of the signing certificate.</p>
-                        <ReCAPTCHA className='center' sitekey={process.env.REACT_APP_SITE_KEY as string} ref={captchaRef} />
+                        <ReCAPTCHA className='recaptcha' sitekey={process.env.REACT_APP_SITE_KEY as string} ref={captchaRef} />
                     </Form>
                 )}
             </Formik >

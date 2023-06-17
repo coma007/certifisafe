@@ -39,9 +39,9 @@ const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
   const schema = yup.object().shape({
     email: yup.string().email().required(),
     password: yup.string().min(8, "password is too short")
-    .matches( /[a-z]+/, "needs to contain lowercase letter")
-    .matches( /[A-Z]+/, "needs to contain uppercase letter")
-    .matches( /[0-9]+/, "needs to contain number letter")
+    .matches( /[a-z]+/, "password needs to contain lowercase letter")
+    .matches( /[A-Z]+/, "password needs to contain uppercase letter")
+    .matches( /[0-9]+/, "password needs to contain number letter")
     .required(),
   })
 
@@ -95,7 +95,7 @@ const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
                 <Button onClick={null} text="Sign in" submit={"submit"} />
               </span>
             </div>
-            <ReCAPTCHA className='center' sitekey={process.env.REACT_APP_SITE_KEY as string}  ref={captchaRef}/>
+            <ReCAPTCHA className='recaptcha' sitekey={process.env.REACT_APP_SITE_KEY as string}  ref={captchaRef}/>
           </Form >
       )}
     </Formik>      
