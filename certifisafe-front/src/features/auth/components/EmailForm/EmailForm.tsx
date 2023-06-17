@@ -31,9 +31,7 @@ const EmailForm = (props: { onClick: any }) => {
             email: '',
             }}
             validationSchema={schema}
-            onSubmit={values => {
-    
-            }}
+            onSubmit = {props.onClick}
         >
             {({ errors, touched, setFieldValue }) => (
             <Form>
@@ -43,7 +41,7 @@ const EmailForm = (props: { onClick: any }) => {
                   }}/>
             <ErrorMessage name="email" />
                 <span className="alignRight">
-                    <Button submit={"submit"} onClick={onClick} text="Send code" />
+                    <Button submit={"submit"} onClick={null} text="Send code" />
                 </span>
             </Form>
             )}

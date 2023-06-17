@@ -36,7 +36,7 @@ const RequestOverviewPage = () => {
     useEffect(() => {
         (async function () {
             try {
-                const fetchedRequests = await RequestService.getAllByUserSigning();
+                const fetchedRequests = await RequestService.getByUser();
                 populateMeData(fetchedRequests);
             } catch (error) {
                 console.error(error);
@@ -47,7 +47,7 @@ const RequestOverviewPage = () => {
     useEffect(() => {
         (async function () {
             try {
-                const fetchedRequests = await RequestService.getByUser();
+                const fetchedRequests = await RequestService.getAllByUserSigning();
                 populateMyData(fetchedRequests);
             } catch (error) {
                 console.error(error);

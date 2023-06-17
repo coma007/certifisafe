@@ -62,12 +62,17 @@ func (service *DefaultCertificateService) CreateCertificate(parentSerial *uint, 
 	if parentSerial != nil {
 		temp, err := service.certificateRepo.GetCertificate(uint64(*parentSerial))
 		parentCertificate = &temp
-		utils.CheckError(err)
+		if err != nil {
+			return CertificateDTO{}, err
+		}
+
 		issuer = parentCertificate.Subject
 	}
 
 	newSubject, err := service.userRepo.GetUser(subjectId)
-	utils.CheckError(err)
+	if err != nil {
+		return CertificateDTO{}, err
+	}
 
 	certificateDB := Certificate{
 		Name:              certificateName,

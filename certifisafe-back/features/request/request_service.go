@@ -1,6 +1,7 @@
 package request
 
 import (
+	"certifisafe-back/features/auth"
 	"certifisafe-back/features/certificate"
 	"certifisafe-back/features/user"
 	"errors"
@@ -8,7 +9,7 @@ import (
 )
 
 type RequestService interface {
-	CreateRequest(req *NewRequestDTO) (*RequestDTO, error)
+	CreateRequest(req *NewRequestDTO, subject *user.User) (*RequestDTO, error)
 	GetRequest(id int) (*RequestDTO, error)
 	GetAllRequests() ([]*RequestDTO, error)
 	GetAllRequestsByUserSigning(user user.User) ([]*RequestDTO, error)
@@ -23,14 +24,14 @@ type DefaultRequestService struct {
 	requestRepository  RequestRepository
 	certificateService certificate.CertificateService
 	userRepo           user.UserRepository
+	authService        auth.AuthService
 }
 
-func NewDefaultRequestService(requestRepo RequestRepository, certificateService certificate.CertificateService, userRepo user.UserRepository) *DefaultRequestService {
-	return &DefaultRequestService{requestRepo, certificateService, userRepo}
+func NewDefaultRequestService(requestRepo RequestRepository, certificateService certificate.CertificateService, userRepo user.UserRepository, authService auth.AuthService) *DefaultRequestService {
+	return &DefaultRequestService{requestRepo, certificateService, userRepo, authService}
 }
 
-func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO) (*RequestDTO, error) {
-	subject, err := service.userRepo.GetUser(req.SubjectId)
+func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO, subject *user.User) (*RequestDTO, error) {
 	if req.ParentSerial == nil {
 		req.CertificateType = "ROOT"
 	}
@@ -46,7 +47,7 @@ func (service *DefaultRequestService) CreateRequest(req *NewRequestDTO) (*Reques
 		CertificateType:     certificate.StringToType(req.CertificateType),
 		ParentCertificateID: &parentSerial,
 		ParentCertificate:   certificate.Certificate{},
-		SubjectID:           req.SubjectId,
+		SubjectID:           subject.ID,
 		Subject:             user.User{},
 	}
 	request, err := service.requestRepository.CreateRequest(&newRequest)

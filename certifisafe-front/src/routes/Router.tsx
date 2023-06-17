@@ -8,6 +8,7 @@ import RequestOreviewPage from 'features/request/pages/Overview/RequestOverviewP
 import HomePage from 'pages/home/HomePage';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthGuard, NonAuthGuard } from './GuardedRoute';
+import RequestCreatePage from 'features/request/pages/Create/RequestCreatePage';
 import RedirectPage from 'pages/RedirectPage';
 
 const Router = () => {

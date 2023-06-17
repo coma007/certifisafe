@@ -26,6 +26,8 @@ import (
 )
 
 func main() {
+	//passwordBytes, _ := bcrypt.GenerateFromPassword([]byte("Nemanja3214"), 12)
+	//fmt.Println(string(passwordBytes))
 	config := utils.Config()
 	password := config["password"]
 	dbuser := config["user"]

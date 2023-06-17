@@ -2,6 +2,7 @@ import Button from 'components/forms/Button/Button'
 import React, { useState } from 'react'
 import VerificationInput from 'react-verification-input'
 import TwoFactorFormCSS from './TwoFactorForm.module.scss'
+
 import { AuthService } from 'features/auth/services/AuthService'
 import { redirect, useNavigate } from 'react-router-dom'
 

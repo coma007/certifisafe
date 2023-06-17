@@ -55,7 +55,7 @@ func (server *DefaultServer) initRoutes() *mux.Router {
 	router.HandleFunc("/api/certificate/valid", server.middleware(server.LoggingMiddleware(server.app.Controllers.CertificateController.IsValidFile))).Methods("POST")
 
 	router.HandleFunc("/api/request", server.middleware(server.LoggingMiddleware(server.app.Controllers.RequestController.CreateRequest))).Methods("POST")
-	router.HandleFunc("/api/request/{id}", server.middleware(server.LoggingMiddleware(server.app.Controllers.RequestController.GetRequest))).Methods("GET")
+	router.HandleFunc("/api/request/single/{id}", server.middleware(server.LoggingMiddleware(server.app.Controllers.RequestController.GetRequest))).Methods("GET")
 	router.HandleFunc("/api/request/signing", server.middleware(server.LoggingMiddleware(server.app.Controllers.RequestController.GetAllRequestsByUserSigning))).Methods("GET")
 	router.HandleFunc("/api/request/user", server.middleware(server.LoggingMiddleware(server.app.Controllers.RequestController.GetAllRequestsByUser))).Methods("GET")
 	router.HandleFunc("/api/request/accept/{id}", server.middleware(server.LoggingMiddleware(server.app.Controllers.RequestController.AcceptRequest))).Methods("PATCH")

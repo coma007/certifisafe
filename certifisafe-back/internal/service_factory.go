@@ -30,5 +30,5 @@ func (serviceFactory *DefaultServiceFactory) InitServices() {
 	serviceFactory.AuthService = auth.NewDefaultAuthService(serviceFactory.MailService, serviceFactory.repoFactory.UserRepository, serviceFactory.repoFactory.PasswordRecoveryRepository, serviceFactory.repoFactory.PasswordHistoryRepository, serviceFactory.repoFactory.VerificationRepository)
   serviceFactory.OAuthService = auth.NewDefaultOauthService(serviceFactory.AuthService, serviceFactory.repoFactory.UserRepository)
 	serviceFactory.CertificateService = certificate.NewDefaultCertificateService(serviceFactory.repoFactory.CertificateDBRepository, serviceFactory.repoFactory.CertificateFileStoreRepository, serviceFactory.repoFactory.UserRepository)
-	serviceFactory.RequestService = request.NewDefaultRequestService(serviceFactory.repoFactory.RequestRepository, serviceFactory.CertificateService, serviceFactory.repoFactory.UserRepository)
+	serviceFactory.RequestService = request.NewDefaultRequestService(serviceFactory.repoFactory.RequestRepository, serviceFactory.CertificateService, serviceFactory.repoFactory.UserRepository, serviceFactory.AuthService)
 }

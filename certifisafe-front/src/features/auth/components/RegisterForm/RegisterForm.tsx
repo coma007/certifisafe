@@ -1,11 +1,12 @@
 import Button from 'components/forms/Button/Button'
 import InputField from 'components/forms/InputField/InputField'
 import RegisterFormCSS from './RegisterForm.module.scss'
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { AuthService } from 'features/auth/services/AuthService';
 import { useNavigate } from "react-router-dom";
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const RegisterForm = () => {
 
@@ -37,17 +38,17 @@ const RegisterForm = () => {
   })
 
   const navigate = useNavigate();
+  const captchaRef: any = useRef(null)
 
-  const onClick = () => {
-    (async function () {
+  const handleSubmit = async () =>{
+      const token = captchaRef.current?.getValue();
+      captchaRef.current.reset();
       try {
-        await AuthService.register({ Email: email, Password: password, Phone: phoneNumber, FirstName: firstName, LastName: lastName })
+        await AuthService.register({ Email: email, Password: password, Phone: phoneNumber, FirstName: firstName, LastName: lastName,  Token:  token })
         navigate("/login")
       } catch (error: any) {
-       alert(error.response.data);
+        alert(error.response.data);
       }
-    })()
-
   }
 
   return (
@@ -59,56 +60,57 @@ const RegisterForm = () => {
       email: "",
       password: "",
       "confirm password": "",
+      token: "",
     }}
+    validateOnChange
     validationSchema={schema}
-    onSubmit={values => {
-
-    }}
+    onSubmit={handleSubmit}
   >
-    {({ errors, touched, setFieldValue }) => (
+    {({ errors, touched, setFieldValue, validateForm, isValid }) => (
       <Form>
         <Field name="first name" component={ InputField} className={RegisterFormCSS.inlineInput} usage="First name" value={firstName} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setFirstName(e.target.value);
                     setFieldValue("first name", e.target.value);
                   }}/>
-        <ErrorMessage name="first name" />
+         {errors["first name"] ? <div>{errors["first name"]}</div> : null}
 
         <Field component={ InputField} className={`alignRight ${RegisterFormCSS.inlineInput}`}  usage="Last name" value={lastName} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setLastName(e.target.value);
                     setFieldValue("last name", e.target.value);
                   }}/>
-        <ErrorMessage name="last name" />
+        {errors["last name"] ? <div>{errors["last name"]}</div> : null}
 
         <Field component={ InputField} className={RegisterFormCSS.inlineInput} usage="Email" value={email} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setEmail(e.target.value);
                     setFieldValue("email", e.target.value);
                   }}/>
-        <ErrorMessage name="email" />
+        {errors["email"] ? <div>{errors["email"]}</div> : null}
 
         <Field component={ InputField} className={`alignRight ${RegisterFormCSS.inlineInput}`} usage="Phone number" value={phoneNumber} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setPhoneNumber(e.target.value);
                     setFieldValue("phone number", e.target.value);
                   }}/>
-        <ErrorMessage name="phone number" />
+        {errors["phone number"] ? <div>{errors["phone number"]}</div> : null}
 
         <Field component={ InputField} className={RegisterFormCSS.inlineInput} usage="Password" value={password} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setPassword(e.target.value);
                     setFieldValue("password", e.target.value);
                   }}/>
-        <ErrorMessage name="password" />
+        {errors["password"] ? <div>{errors["password"]}</div> : null}
 
         <Field component={ InputField} className={`alignRight ${RegisterFormCSS.inlineInput}`} usage="Confirm password" value={confirmPassword} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setConfirmPassword(e.target.value);
                     setFieldValue("confirm password", e.target.value);
                   }}/>
-        <ErrorMessage name="confirm password" />
+        {errors["confirm password"] ? <div>{errors["confirm password"]}</div> : null}
 
 
         <div className={RegisterFormCSS.button}>
           <span className="alignRight">
-            <Button submit="submit" onClick={onClick} text="Get started" />
+            <Button submit="submit" onClick={null} text="Get started" />
           </span>
         </div>
+        <ReCAPTCHA className='center' sitekey={process.env.REACT_APP_SITE_KEY as string}  ref={captchaRef}/>
       </Form>
   )}
   </Formik >

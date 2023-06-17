@@ -8,6 +8,7 @@ export interface User {
 export interface Credentials {
     Email: string
     Password: string
+    Token?: string
 }
 
 export interface UserRegister {
@@ -16,4 +17,5 @@ export interface UserRegister {
     FirstName: string
     LastName: string
     Phone: string
+    Token?: string
 }

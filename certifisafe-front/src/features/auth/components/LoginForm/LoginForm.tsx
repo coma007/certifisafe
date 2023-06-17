@@ -2,10 +2,13 @@ import Button from 'components/forms/Button/Button'
 import InputField from 'components/forms/InputField/InputField'
 import LoginFormCSS from "./LoginForm.module.scss"
 import { AuthService } from 'features/auth/services/AuthService'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from "react-router-dom";
 import * as yup from 'yup' 
 import { Formik, Form, Field, ErrorMessage } from 'formik';
+// import reCAPTCHA from "react-google-recaptcha"
+import ReCAPTCHA from 'react-google-recaptcha'
+import ReactDOM, { render } from 'react-dom'
 
 const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
 
@@ -41,44 +44,63 @@ const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
     .required(),
   })
 
+  const captchaRef: any = useRef(null)
 
-  return (
+  const handleSubmit = async () => {
+    try {
+      const token = captchaRef.current?.getValue();
+      captchaRef.current.reset();
+      const jwt = await AuthService.login({ Email: email, Password: password, Token: token});
+      props.twoFactor();
+      // TODO change flow bellow
+      localStorage.setItem("token", jwt)
+      // navigate("/")
+  } catch (error: any) {
+    alert(error.response.data);
+}
+}
+
+
+  return ( 
     <Formik
        initialValues={{
          password: '',
          email: '',
+         token: '',
        }}
        validationSchema={schema}
-       onSubmit={values => {
-
-       }}
+       validateOnChange
+       onSubmit={handleSubmit}
      >
-       {({ errors, touched, setFieldValue }) => (
-          <Form className={LoginFormCSS.form}>
+       {({ errors, touched, setFieldValue, validateForm, isValid, handleSubmit }) => (
+
+          <Form className={LoginFormCSS.form}> 
             <Field name="email" component={InputField} className={LoginFormCSS.input} usage="Email" value={email} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setEmail(e.target.value);
                     setFieldValue("email", e.target.value);
                   }}/>
-            <ErrorMessage name="email" />
+            {errors.email ? <div>{errors.email}</div> : null}
 
             <Field name="password" component={InputField} className={LoginFormCSS.input} usage="Password" value={password} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setPassword(e.target.value);
                     setFieldValue("password", e.target.value);
                   }} />
-            <ErrorMessage name="password" />
+               {errors.password ? <div>{errors.password}</div> : null}
             <div className={LoginFormCSS.button}>
               <a href="/passwordRecovery" className={LoginFormCSS.forgotPassword}>
                 Forgot password ?
               </a>
               <span className="alignRight">
-                <Button onClick={onClick} text="Sign in" submit={"submit"} />
+                <Button onClick={null} text="Sign in" submit={"submit"} />
               </span>
             </div>
+            <ReCAPTCHA className='center' sitekey={process.env.REACT_APP_SITE_KEY as string}  ref={captchaRef}/>
           </Form >
       )}
-    </Formik>
-  )
+    </Formik>      
+    )
 
 }
+
 
 export default LoginForm
