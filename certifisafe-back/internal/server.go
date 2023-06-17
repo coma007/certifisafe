@@ -37,7 +37,7 @@ func (server DefaultServer) handleCORS(router *mux.Router) http.Handler {
 	handler := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedHeaders: []string{"*"},
-		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "OPTIONS"},
+		AllowedMethods: []string{"GET", "HEAD", "POST", "PUT", "OPTIONS", "PATCH"},
 		Debug:          true,
 	}).Handler(router)
 	return handler

@@ -65,7 +65,7 @@ textarea {
 
 .authBottomMessage {
   position: absolute;
-  bottom: 6%;
+  bottom: 5%;
   width: 100%;
   color: var(--primary-color);
   font-size: 15px;
@@ -84,7 +84,7 @@ textarea {
 .oauth {
   width: 80%;
   margin: auto;
-  margin-top: 15%;
+  margin-top: 10%;
   color: var(--primary-color-transparent);
   font-size: 17px;
   text-align: center;
@@ -115,6 +115,10 @@ textarea {
 .codeFieldActive {
   outline: 2px solid var(--primary-color);
   color: black;
+}
+
+.recaptcha {
+  margin-top: 15px;
 }
 
 #root {

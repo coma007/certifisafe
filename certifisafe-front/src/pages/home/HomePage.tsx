@@ -55,7 +55,7 @@ const HomePage = () => {
                     </Card>
                 </div>
             </div>
-            <RequestCreatePage createIsOpen={createIsOpen} closeCreateModal={closeCreateModal} />
+            <RequestCreatePage okCreateModal={null} createIsOpen={createIsOpen} closeCreateModal={closeCreateModal} />
         </div>
     )
 }

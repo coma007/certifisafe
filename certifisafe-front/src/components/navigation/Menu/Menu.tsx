@@ -32,7 +32,7 @@ const Menu = () => {
             <MenuItem className={MenuCSS.margin} tooltipText="Requests" tooltip={true} image={Request} path="/requests" />
             <MenuItem className={MenuCSS.nonMainOption} tooltipText="Profile" tooltip={true} image={Profile} path="/profile" />
             <MenuItem className={MenuCSS.nonMainOption} tooltipText="Sign out" tooltip={true} image={Logout} path="/logout" />
-            <RequestCreatePage createIsOpen={createIsOpen} closeCreateModal={closeCreateModal} />
+            <RequestCreatePage okCreateModal={null} createIsOpen={createIsOpen} closeCreateModal={closeCreateModal} />
         </div>
     )
 }

@@ -8,11 +8,13 @@ import (
 
 type RequestDTO struct {
 	ParentCertificate *certificate.CertificateDTO
+	Serial            *uint
 	CertificateName   string
 	CertificateType   string
 	Subject           *user.UserBaseDTO
 	Datetime          time.Time
 	Status            string
+	ID                uint
 }
 
 type NewRequestDTO struct {
@@ -28,11 +30,13 @@ func RequestToDTO(req *Request) *RequestDTO {
 	}
 	request := RequestDTO{
 		ParentCertificate: certificate.CertificateToDTO(&req.ParentCertificate),
+		Serial:            &req.SubjectID,
 		CertificateName:   req.CertificateName,
 		CertificateType:   certificate.TypeToString(req.CertificateType),
 		Subject:           user.ModelToUserBaseDTO(&req.Subject),
 		Datetime:          req.Datetime,
 		Status:            RequestStatusToString(req.Status),
+		ID:                req.ID,
 	}
 	return &request
 }
