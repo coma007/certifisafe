@@ -8,6 +8,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { useState } from 'react';
 import { AuthService } from 'features/auth/services/AuthService'
 import { useNavigate } from 'react-router-dom'
+import ErrorMsg from 'components/error/ErrorMsg'
 
 
 const PasswordRecoveryForm = (props : {resetPage : any}) => {
@@ -78,13 +79,13 @@ const PasswordRecoveryForm = (props : {resetPage : any}) => {
                         setNewPassword(e.target.value);
                         setFieldValue("new password", e.target.value);
                     }}/>
-                <ErrorMessage name="new password" />
+                <ErrorMsg val={errors["new password"]} />
 
                 <Field name="confirm password" component={ InputField} className={PasswordRecoveryFormCSS.input} usage="Confirm password" value={confirmPassword} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                             setConfirmPassword(e.target.value);
                             setFieldValue("confirm password", e.target.value);
                         }}/>
-                <ErrorMessage name="confirm password" />
+                <ErrorMsg val={errors["confirm password"]} />
                 <span className="alignRight">
                     <Button submit={undefined} onClick={onClick} text="Reset" />
                 </span>

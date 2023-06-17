@@ -1,6 +1,7 @@
 import { User } from "features/auth/types/User"
 
 export interface Request {
+    Serial: number
     CertificateName: string
     Date: Date
     Subject: User

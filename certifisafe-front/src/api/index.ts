@@ -4,6 +4,9 @@ export const CERTIFICATES_URL = () => API_URL + "certificate";
 export const CERTIFICATES_ID_URL = (id: number) => API_URL + "certificate/" + id;
 export const CERTIFICATES_DOWNLOAD_URL = (id: number) => API_URL + "certificate/" + id + "/download";
 export const CERTIFICATES_WITHDRAW_URL = (id: number) => API_URL + "certificate/" + id + "/withdraw";
+export const REQUEST_ACCEPT_URL = (id: number) => API_URL + "request/accept/" + id;
+export const REQUEST_DECLINE_URL = (id: number) => API_URL + "request/decline/" + id;
+export const REQUEST_DELETE_URL = (id: number) => API_URL + "request/delete/" + id;
 export const CERTIFICATES_IS_VALID_ID = (id: number) => API_URL + "certificate/" + id + "/valid";
 export const CERTIFICATES_IS_VALID_FILE = () => API_URL + "certificate/valid";
 

@@ -11,8 +11,9 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import ReactDOM from 'react-dom'
 import { RequestService } from 'features/request/service/RequestService'
 import { useNavigate } from 'react-router'
+import ErrorMsg from 'components/error/ErrorMsg'
 
-const RequestCreatePage = (props: { createIsOpen: boolean, closeCreateModal: any }) => {
+const RequestCreatePage = (props: { createIsOpen: boolean, okCreateModal : any, closeCreateModal: any }) => {
 
     const [signerSerial, setSignerSerial] = useState('');
     const [name, setName] = useState('');
@@ -31,20 +32,17 @@ const RequestCreatePage = (props: { createIsOpen: boolean, closeCreateModal: any
             const token = captchaRef.current?.getValue();
             captchaRef.current.reset();
             await RequestService.createRequest({ ParentSerial: parseInt(signerSerial), CertificateType: values.type, CertificateName: name, Token:  token })
-            navigate("/login")
+            alert("success")
           } catch (error: any) {
            alert(error.response.data);
           }
     }
-    const navigate = useNavigate();
-
-    let formRef = useRef<HTMLFormElement>();
-
     return (
         <ModalWindow
             height="82%"
             isOpen={props.createIsOpen}
             closeWithdrawalModal={props.closeCreateModal}
+            okWithdrawalModal={props.okCreateModal}
             title="Create new certificate"
             buttonText="REQUEST"
             formId="request-create-form">
@@ -68,14 +66,14 @@ const RequestCreatePage = (props: { createIsOpen: boolean, closeCreateModal: any
                         setSignerSerial(e.target.value);
                         setFieldValue("signer serial", e.target.value);
                         }} />
-                       {errors["signer serial"] ? <div>{errors["signer serial"]}</div> : null}
+                    <ErrorMsg val={errors["signer serial"]} />
 
                     <Field name="name" component={ InputField} usage="Certificate name" className={ModalWindowCSS.input} 
                         value={name} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                             setName(e.target.value);
                             setFieldValue("name", e.target.value);
                         }} />
-                      {errors["name"] ? <div>{errors["name"]}</div> : null}
+                    <ErrorMsg val={errors["name"]} />
 
                     <div>
                         <p>
@@ -117,7 +115,7 @@ const RequestCreatePage = (props: { createIsOpen: boolean, closeCreateModal: any
                                 <span className={RequestCreatePageCSS.description}>Must be signed by other certificate and cannot sign other certificates.</span>
                             </div>
                         </p>
-                        {errors["type"] ? <div>{errors["type"]}</div> : null}
+                        <ErrorMsg val={errors["type"]} />
                     </div>
                     <p className={ModalWindowCSS.warning}>Please note that this certificate will be active if the request is accepted by the signing certificate owner. If so, certificate will be valid from that day until the expiration of the signing certificate.</p>
                     <ReCAPTCHA className='center' sitekey={process.env.REACT_APP_SITE_KEY as string}  ref={captchaRef}/>

@@ -16,6 +16,7 @@ import { Certificate } from "features/certificate/types/Certificate"
 const CertificateOreviewPage = () => {
 
     const [withdrawIsOpen, setWithdrawModalIsOpen] = useState(false);
+    const [selectedCertificate, setSelectedCertificate] = useState<Certificate|undefined>(undefined);
     const [tableData, setTableData] = useState<TableRowData[][]>([]);
 
     useEffect(() => {
@@ -29,11 +30,17 @@ const CertificateOreviewPage = () => {
         })()
     }, []);
 
-    const openWithdrawModal = () => {
+    const openWithdrawModal = (certificate : Certificate) => {
+        setSelectedCertificate(certificate)
         setWithdrawModalIsOpen(true);
     };
 
     const closeWithdrawModal = () => {
+        setWithdrawModalIsOpen(false);
+    };
+
+    const okWithdrawModal = () => {
+        CertificateService.withdraw(selectedCertificate!.Serial)
         setWithdrawModalIsOpen(false);
     };
 
@@ -62,10 +69,10 @@ const CertificateOreviewPage = () => {
                     { content: <i> {certificate.Status}</i>, widthPercentage: 10 },
                     {
                         content: <ImageButton path={Download} tooltipText="Download" onClick={() => {
-                            CertificateService.download(certificate.Serial); console.log("usao")
+                            CertificateService.download(certificate.Serial);
                         }} />, widthPercentage: 5
                     },
-                    { content: <ImageButton path={Withdraw} tooltipText="Withdraw" onClick={openWithdrawModal} />, widthPercentage: 5 }]
+                    { content: <ImageButton path={Withdraw} tooltipText="Withdraw" onClick={() => openWithdrawModal(certificate)} />, widthPercentage: 5 }]
                 );
             });
         }
@@ -85,6 +92,7 @@ const CertificateOreviewPage = () => {
                     height="75%"
                     isOpen={withdrawIsOpen}
                     closeWithdrawalModal={closeWithdrawModal}
+                    okWithdrawalModal={okWithdrawModal}
                     title="Withdraw certificate"
                     buttonText="WITHDRAW" >
                     <p>To withdraw the certificate, you need to provide us some more info on why you want to withdraw it. </p>

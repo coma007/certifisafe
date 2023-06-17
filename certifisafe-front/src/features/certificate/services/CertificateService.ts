@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { CERTIFICATES_DOWNLOAD_URL, CERTIFICATES_ID_URL, CERTIFICATES_URL, CERTIFICATES_WITHDRAW_URL, CERTIFICATES_IS_VALID_FILE, CERTIFICATES_IS_VALID_ID   } from 'api/index';
+import { CERTIFICATES_DOWNLOAD_URL, CERTIFICATES_ID_URL, CERTIFICATES_URL, CERTIFICATES_WITHDRAW_URL, CERTIFICATES_IS_VALID_FILE, CERTIFICATES_IS_VALID_ID, REQUEST_ACCEPT_URL, REQUEST_DECLINE_URL, REQUEST_DELETE_URL   } from 'api/index';
 import { Certificate } from '../types/Certificate';
 
 export const CertificateService = {
@@ -37,6 +37,21 @@ export const CertificateService = {
         return response.data;
     },
 
+    accept: async (id: number) => {
+        let url = REQUEST_ACCEPT_URL(id);
+        const response = await axios.patch(url);
+    },
+
+    decline: async (id: number) => {
+        let url = REQUEST_DECLINE_URL(id);
+        const response = await axios.patch(url);
+    },
+
+    delete: async (id: number) => {
+        let url = REQUEST_DELETE_URL(id);
+        const response = await axios.patch(url);
+    },
+
     verifyByFile: async (file: File): Promise<boolean> => {
         let url = CERTIFICATES_IS_VALID_FILE();
         let formData = new FormData();
@@ -49,7 +64,6 @@ export const CertificateService = {
         })
         return response.data;
     },
-
 
     verifyById: async (id: number): Promise<boolean> => {
         let url = CERTIFICATES_IS_VALID_ID(id);
