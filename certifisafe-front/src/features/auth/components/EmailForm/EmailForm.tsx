@@ -6,6 +6,7 @@ import * as yup from 'yup'
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { useState } from 'react'
 import { AuthService } from 'features/auth/services/AuthService'
+import ErrorMsg from 'components/error/ErrorMsg'
 
 const EmailForm = (props: { onClick: any }) => {
     const [email, setEmail] = useState('');
@@ -39,7 +40,7 @@ const EmailForm = (props: { onClick: any }) => {
                     setEmail(e.target.value);
                     setFieldValue("email", e.target.value);
                   }}/>
-            <ErrorMessage name="email" />
+                <ErrorMsg val={errors["email"]} />
                 <span className="alignRight">
                     <Button submit={"submit"} onClick={null} text="Send code" />
                 </span>
