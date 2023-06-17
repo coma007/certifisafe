@@ -1,8 +1,6 @@
 
-import axios from "axios";
-import { OAUTH_URL, LOGIN_URL, REGISTER_URL, TWO_FACTOR_AUTH_URL  } from "api";
 import { useLocation } from "react-router-dom";
-import { GET_USER_URL, LOGIN_URL, PASSWORD_RESET_REQUEST_URL, PASSWORD_RESET_URL, REGISTER_URL, TWO_FACTOR_AUTH_URL } from "api";
+import { GET_USER_URL, LOGIN_URL, OAUTH_URL, PASSWORD_RESET_REQUEST_URL, PASSWORD_RESET_URL, REGISTER_URL, TWO_FACTOR_AUTH_URL } from "api";
 import axios from "axios";
 import { Credentials, User, UserRegister } from "../types/User";
 import { Code, PasswordReset, PasswordResetRequest } from "../types/Verification";
@@ -65,11 +63,6 @@ export const AuthService = {
     window.open(OAUTH_URL(), "_self");
   },
 
-  tfactorauth: async (code: Code): Promise<string> => {
-    let url = TWO_FACTOR_AUTH_URL();
-    let response = await axios.post(url, code);
-    return response.data;
-  },
 
   getUserData: async (): Promise<User> => {
     let url = GET_USER_URL();
