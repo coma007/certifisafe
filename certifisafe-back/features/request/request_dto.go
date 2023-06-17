@@ -14,6 +14,7 @@ type RequestDTO struct {
 	Subject           *user.UserBaseDTO
 	Datetime          time.Time
 	Status            string
+	ID                uint
 }
 
 type NewRequestDTO struct {
@@ -35,6 +36,7 @@ func RequestToDTO(req *Request) *RequestDTO {
 		Subject:           user.ModelToUserBaseDTO(&req.Subject),
 		Datetime:          req.Datetime,
 		Status:            RequestStatusToString(req.Status),
+		ID:                req.ID,
 	}
 	return &request
 }

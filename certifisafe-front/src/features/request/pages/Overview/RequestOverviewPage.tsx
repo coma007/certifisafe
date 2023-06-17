@@ -33,7 +33,7 @@ const RequestOverviewPage = () => {
     };
 
     const okDeclineModal = () => {
-        CertificateService.decline(selectedRequest!.Serial)
+        CertificateService.decline(selectedRequest!.ID)
         setDeclineModalIsOpen(false);
     };
 
@@ -44,7 +44,7 @@ const RequestOverviewPage = () => {
     useEffect(() => {
         (async function () {
             try {
-                const fetchedRequests = await RequestService.getByUser();
+                const fetchedRequests = await RequestService.getAllByUserSigning();
                 populateMeData(fetchedRequests);
             } catch (error) {
                 console.error(error);
@@ -55,7 +55,7 @@ const RequestOverviewPage = () => {
     useEffect(() => {
         (async function () {
             try {
-                const fetchedRequests = await RequestService.getAllByUserSigning();
+                const fetchedRequests = await RequestService.getByUser();
                 populateMyData(fetchedRequests);
             } catch (error) {
                 console.error(error);
@@ -73,10 +73,8 @@ const RequestOverviewPage = () => {
                     { content: formatDate(new Date(request.Date)), widthPercentage: 12 },
                     { content: request.Subject.FirstName, widthPercentage: 25 },
                     { content: request.CertificateType, widthPercentage: 13 },
-                    { content: request.Status.toLowerCase() === "pending" ? <ImageButton path={Accept} tooltipText="Accept" onClick={() => CertificateService.accept(request.Serial)} /> : null, widthPercentage: 10 },
+                    { content: request.Status.toLowerCase() === "pending" ? <ImageButton path={Accept} tooltipText="Accept" onClick={() => CertificateService.accept(request.ID)} /> : null, widthPercentage: 10 },
                     { content: request.Status.toLowerCase() === "pending" ? <ImageButton path={Decline} tooltipText="Decline" onClick={() => openDeclineModal(request)} /> : null, widthPercentage: 5 },
-                    //{ content: <ImageButton path={Accept} tooltipText="Accept" onClick={() => null} />, widthPercentage: 10 },
-                    //{ content: <ImageButton path={Decline} tooltipText="Decline" onClick={openDeclineModal} />, widthPercentage: 5 }
                 ]);
             });
         }
@@ -94,7 +92,7 @@ const RequestOverviewPage = () => {
                     { content: request.Subject.FirstName, widthPercentage: 25 },
                     { content: request.CertificateType, widthPercentage: 13 },
                     { content: request.Status, widthPercentage: 10 },
-                    { content: <ImageButton path={Remove} tooltipText="Remove" onClick={() => CertificateService.delete(request.Serial)} />, widthPercentage: 5 }
+                    { content: <ImageButton path={Remove} tooltipText="Remove" onClick={() => CertificateService.delete(request.ID)} />, widthPercentage: 5 }
                 ]);
             });
         }
