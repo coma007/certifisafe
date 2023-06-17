@@ -9,6 +9,7 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 // import reCAPTCHA from "react-google-recaptcha"
 import ReCAPTCHA from 'react-google-recaptcha'
 import ReactDOM, { render } from 'react-dom'
+import ErrorMsg from 'components/error/ErrorMsg'
 
 const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
 
@@ -79,13 +80,13 @@ const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
                     setEmail(e.target.value);
                     setFieldValue("email", e.target.value);
                   }}/>
-            {errors.email ? <div>{errors.email}</div> : null}
+            <ErrorMsg val={errors["email"]} />
 
             <Field name="password" component={InputField} className={LoginFormCSS.input} usage="Password" value={password} onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
                     setPassword(e.target.value);
                     setFieldValue("password", e.target.value);
                   }} />
-               {errors.password ? <div>{errors.password}</div> : null}
+            <ErrorMsg val={errors["password"]} />
             <div className={LoginFormCSS.button}>
               <a href="/passwordRecovery" className={LoginFormCSS.forgotPassword}>
                 Forgot password ?
