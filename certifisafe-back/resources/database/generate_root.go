@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 )
 
-func GenerateRoot(db certificate.CertificateRepository) error {
+func GenerateRoot() error {
 	config := utils.Config()
 
 	subject := pkix.Name{

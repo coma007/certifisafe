@@ -25,7 +25,7 @@ func main() {
 	app.InitApp()
 
 	// if needed, uncomment this:
-	database.GenerateRoot()
+	//database.GenerateRoot()
 
 	router := internal.NewDefaultRouter(app)
 	router.ListenAndServe()
