@@ -1,0 +1,20 @@
+user:
+password:
+keystore-password:
+organization:
+country:
+street:
+postal:
+name:
+oauth-client-id:
+oauth-client-secret:
+oauth-api-url:
+oauth-redirect-url:
+client-url :
+recaptcha-secret:
+recaptcha-site:
+twillio-api-username:
+twillio-api-password:
+mailgun-api-domain:
+mailgun-api-key:
+mailgun-api-base: 

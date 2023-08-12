@@ -161,7 +161,7 @@ func (service *DefaultAuthService) TwoFactorAuth(code string) (string, error) {
 		return "", err
 	}
 	tokenString, err := service.GenerateJWT(user, err)
-	
+
 	utils.CheckError(err)
 
 	service.verificationRepository.DeleteVerification(int32(verification.ID))
@@ -325,9 +325,10 @@ func (service *DefaultAuthService) RequestPasswordRecoveryToken(value string, t 
 }
 
 func (service *DefaultAuthService) sendSMS(verificationToken string) error {
+	config := utils.Config()
 	client := twilio.NewRestClientWithParams(twilio.ClientParams{
-		Username: TwillioApiUsername,
-		Password: TwillioApiPassword,
+		Username: config["twilio-api-username"],
+		Password: config["twilio-api-password"],
 	})
 
 	params := &openapi.CreateMessageParams{}
@@ -545,7 +546,7 @@ type siteVerifyResponse struct {
 
 func (service *DefaultAuthService) CheckRecaptcha(token string) error {
 	config := utils.Config()
-	secret := config["recaptcha_secret"]
+	secret := config["recaptcha-secret"]
 	const siteVerifyURL = "https://www.google.com/recaptcha/api/siteverify"
 	//siteVerifyURL := fmt.Sprintf("https://www.google.com/recaptcha/api/siteverify?secret=%s&response=%s",
 	//	secret, token)

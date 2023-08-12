@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"certifisafe-back/utils"
 	"github.com/mailgun/mailgun-go"
 	"net/smtp"
 )
@@ -31,8 +32,9 @@ func (service *DefaultMailService) SendMail1(to []string, body bytes.Buffer) err
 }
 
 func (service *DefaultMailService) SendMail(to []string, body bytes.Buffer) error {
-	mg := mailgun.NewMailgun(MailgunApiDomain, MailgunApiKey)
-	mg.SetAPIBase(MailgunApiBase)
+	config := utils.Config()
+	mg := mailgun.NewMailgun(config["mailgun-api-domain"], config["mailgun-api-key"])
+	mg.SetAPIBase(config["mailgun-api-base"])
 	m := mg.NewMessage(
 		"Certifisafe <certifisafe@mailgun.org>",
 		"Hello",
