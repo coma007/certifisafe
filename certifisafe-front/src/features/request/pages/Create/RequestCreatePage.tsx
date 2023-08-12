@@ -13,7 +13,7 @@ import { RequestService } from 'features/request/service/RequestService'
 import { useNavigate } from 'react-router'
 import ErrorMsg from 'components/error/ErrorMsg'
 
-const RequestCreatePage = (props: { createIsOpen: boolean, okCreateModal: any, closeCreateModal: any }) => {
+const RequestCreatePage = (props: { createIsOpen: boolean, okCreateModal : any, closeCreateModal: any }) => {
 
     const [signerSerial, setSignerSerial] = useState('');
     const [name, setName] = useState('');
