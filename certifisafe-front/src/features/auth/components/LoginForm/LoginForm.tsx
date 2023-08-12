@@ -95,7 +95,7 @@ const LoginForm = (props: { twoFactor: any, resetPassword : any }) => {
                 <Button onClick={null} text="Sign in" submit={"submit"} />
               </span>
             </div>
-            <ReCAPTCHA className='recaptcha' sitekey={process.env.REACT_APP_SITE_KEY as string}  ref={captchaRef}/>
+            <ReCAPTCHA className='recaptcha' sitekey={process.env.RECAPTCHA_SITE_KEY as string}  ref={captchaRef}/>
           </Form >
       )}
     </Formik>      
