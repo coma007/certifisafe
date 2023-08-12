@@ -25,7 +25,7 @@ func main() {
 	app.InitApp()
 
 	// if needed, uncomment this:
-	//database.GenerateRoot(app.Repos.CertificateDBRepository)
+	database.GenerateRoot()
 
 	router := internal.NewDefaultRouter(app)
 	router.ListenAndServe()
