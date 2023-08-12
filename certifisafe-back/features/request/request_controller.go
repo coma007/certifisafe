@@ -70,8 +70,6 @@ func (controller *RequestController) GetRequest(w http.ResponseWriter, r *http.R
 func (controller *RequestController) GetAllRequestsByUserSigning(w http.ResponseWriter, r *http.Request) {
 	user := controller.authService.GetUserFromToken(r.Header.Get("Authorization"))
 
-	//TODO check if error is returned
-
 	requests, err := controller.service.GetAllRequestsByUserSigning(user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

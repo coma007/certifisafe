@@ -16,6 +16,7 @@ type RequestRepository interface {
 	GetRequest(id int) (*Request, error)
 	GetAllRequests() ([]*Request, error)
 	GetAllRequestsByUser(userId int) ([]*Request, error)
+	GetAllRequestsByUserSigning(userId int) ([]*Request, error)
 	UpdateRequest(request *Request) error
 	DeleteRequest(id int) error
 }
@@ -58,6 +59,12 @@ func (repository *DefaultRequestRepository) GetAllRequests() ([]*Request, error)
 func (repository *DefaultRequestRepository) GetAllRequestsByUser(userId int) ([]*Request, error) {
 	requests := []*Request{}
 	result := repository.DB.Preload("ParentCertificate").Preload("Subject").Where("subject_id=?", userId).Find(&requests)
+	return requests, result.Error
+}
+
+func (repository *DefaultRequestRepository) GetAllRequestsByUserSigning(userId int) ([]*Request, error) {
+	requests := []*Request{}
+	result := repository.DB.Preload("ParentCertificate").Where("parent_certificates.issuer_id = ?", userId).Find(&requests)
 	return requests, result.Error
 }
 

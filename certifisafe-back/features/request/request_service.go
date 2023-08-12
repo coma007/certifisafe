@@ -73,7 +73,7 @@ func (service *DefaultRequestService) GetAllRequestsByUserSigning(user user.User
 	if user.IsAdmin {
 		return service.GetAllRequests()
 	}
-	requests, err := service.requestRepository.GetAllRequestsByUser(int(user.ID))
+	requests, err := service.requestRepository.GetAllRequestsByUserSigning(int(user.ID))
 	var requestsDTO []*RequestDTO
 	for i := 0; i < len(requests); i++ {
 		requestsDTO = append(requestsDTO, RequestToDTO(requests[i]))
